@@ -5,3 +5,6 @@ def ggT(a,b):
         return a
     return (ggT(b,a%b))
 
+
+print(ggT(10,4))
+
