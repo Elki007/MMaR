@@ -11,18 +11,19 @@ class Main_window(qw.QMainWindow):
         self.initUI()
 
     def initUI(self):
-
         #########################Menu#########################
         menubar = self.menuBar()
         fileMenu = menubar.addMenu('Game')
 
         impMenu = qw.QMenu('Settings', self)
-        impAct = qw.QAction('Defaults', self)
-        impMenu.addAction(impAct)
-
+        impCus = qw.QAction('Customize', self)
+        impDef = qw.QAction('Defaults', self)
+        impMenu.addAction(impCus)
+        impMenu.addAction(impDef)
 
         newAct = qw.QAction('New', self)
         menu_quit = qw.QAction('Quit', self)
+        #menu_quit.triggered.connect(self.close)
         menu_quit.triggered.connect(self.close)
 
         fileMenu.addAction(newAct)
@@ -30,16 +31,9 @@ class Main_window(qw.QMainWindow):
         fileMenu.addAction(menu_quit)
 
         #########################Window#########################
-        btn_newgame = qw.QPushButton('New game', self)
-        btn_newgame.move(350, 200)
 
-        btn_HS = qw.QPushButton('High scores', self)
-        btn_HS.move(350, 250)
-
-        btn_Quit = qw.QPushButton('Quit', self)
-        btn_Quit.move(350, 300)
-        btn_Quit.clicked.connect(self.close)
-
+        self.main_widget = Main_menu()
+        self.setCentralWidget(self.main_widget)
 
         #########################Initialize#########################
         self.resize(800, 600)
@@ -64,6 +58,36 @@ class Main_window(qw.QMainWindow):
             event.accept()
         else:
             event.ignore()
+
+
+class Main_menu(qw.QFrame):
+    def __init__(self):
+        super().__init__()
+
+        self.initUI()
+
+    def initUI(self):
+        btn_newgame = qw.QPushButton('New game', self)
+        btn_HS = qw.QPushButton('High scores', self)
+        btn_Quit = qw.QPushButton('Quit', self)
+        btn_Quit.clicked.connect(self.close)
+
+        vbox = qw.QVBoxLayout()
+        vbox.addStretch(1)
+        vbox.addWidget(btn_newgame)
+        vbox.addWidget(btn_HS)
+        vbox.addWidget(btn_Quit)
+        vbox.addStretch(1)
+
+        hbox = qw.QHBoxLayout()
+        hbox.addStretch(1)
+        hbox.addLayout(vbox)
+        hbox.addStretch(1)
+
+        self.setLayout(hbox)
+
+
+
 
 
 if __name__ == '__main__':
