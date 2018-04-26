@@ -13,10 +13,14 @@ class Main_window(qw.QMainWindow):
     def __str__(self):
         return "Main_window"
 
+    #def __init__(self):
+     #   super().__init__()
+
     def __init__(self):
         super().__init__()
 
         self.initUI()
+
 
     def initUI(self):
         #########################Menu#########################
@@ -40,18 +44,39 @@ class Main_window(qw.QMainWindow):
         fileMenu.addAction(new_game)
         fileMenu.addMenu(impSettings)
         fileMenu.addAction(menu_quit)
-
-        #########################Window#########################
-
-        #self.main_widget = Settings()
-        self.main_widget = Main_menu()
-        self.setCentralWidget(self.main_widget)
-
-        #########################Initialize#########################
         self.resize(800, 600)
         self.center()
         self.setWindowTitle('Snake')
         self.setWindowIcon(qg.QIcon('icon.png'))
+
+        #########################Window#########################
+        #btn_newgame = qw.QPushButton('New game', self)
+        #new_game.triggered.connect(self.showSettings)
+        #btn_HS = qw.QPushButton('High scores', self)
+        #btn_Quit = qw.QPushButton('Quit', self)
+        #btn_Quit.clicked.connect(self.close)
+
+        vbox = qw.QVBoxLayout()
+        vbox.addStretch(1)
+        #vbox.addWidget(btn_newgame)
+        #vbox.addWidget(btn_HS)
+        #vbox.addWidget(btn_Quit)
+        vbox.addStretch(1)
+
+        hbox = qw.QHBoxLayout()
+        hbox.addStretch(1)
+        hbox.addLayout(vbox)
+        hbox.addStretch(1)
+
+
+
+        #self.main_widget = Settings()
+        #self.main_widget = Main_menu()
+        #self.setCentralWidget(self.main_widget)
+
+        #########################Initialize#########################
+
+        self.setLayout(hbox)
         self.show()
 
     def center(self):   ##### screen center
@@ -76,53 +101,9 @@ class Main_window(qw.QMainWindow):
         #Main_window.main_widget = Settings()
         self.setCentralWidget(Settings())
 
-
-class Main_menu(qw.QFrame):
-    def __repr__(self):
-        return "Main menu()"
-
-    def __str__(self):
-        return "Main menu"
-
-    def __init__(self):
-        super().__init__()
-        print("main menu")
-        self.initUI()
-
-    def initUI(self):
-        btn_newgame = qw.QPushButton('New game', self)
-        btn_HS = qw.QPushButton('High scores', self)
-        btn_Quit = qw.QPushButton('Quit', self)
-        #btn_Quit.clicked.connect(self.on_pushButtonClose_clicked)
-
-        vbox = qw.QVBoxLayout()
-        vbox.addStretch(1)
-        vbox.addWidget(btn_newgame)
-        vbox.addWidget(btn_HS)
-        vbox.addWidget(btn_Quit)
-        vbox.addStretch(1)
-
-        hbox = qw.QHBoxLayout()
-        hbox.addStretch(1)
-        hbox.addLayout(vbox)
-        hbox.addStretch(1)
-
-        self.setLayout(hbox)
-
-    def on_pushButtonClose_clicked(self):
-        app = qg.QApplication.instance()
-        app.closeAllWindows()
-
-
-    def open_settings(self):
-        self.close()
-        Main_window.showSettings(self)
-
-    def on_pushButtonClose_clicked(self):
-        app = qg.QApplication.instance()
-        app.closeAllWindows()
-
 if __name__ == '__main__':
     app = qw.QApplication(sys.argv)
     ex = Main_window()
     sys.exit(app.exec_())
+
+
