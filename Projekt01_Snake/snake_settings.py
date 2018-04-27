@@ -8,13 +8,14 @@ from PyQt5 import QtCore as qc
 #
 # QFormLayout
 #
+
 class Settings(qw.QFrame):
 
     def __repr__(self):
-        return "Main_window()"
+        return "MainWindow"
 
     def __str__(self):
-        return "Main_window"
+        return "MainWindow"
 
     def __init__(self):
         super().__init__()
@@ -24,14 +25,14 @@ class Settings(qw.QFrame):
     def initUI(self):
         print(self)
         form = qw.QFormLayout()
-        form.addRow(qw.QLabel("Spielername"), qw.QLineEdit())
+        form.addRow(qw.QLabel("Player"), qw.QLineEdit())
 
 
         hbox = qw.QHBoxLayout()
-        hbox.addWidget(qw.QCheckBox("an"))
-        hbox.addWidget(qw.QCheckBox("aus"))
+        hbox.addWidget(qw.QCheckBox("on"))
+        hbox.addWidget(qw.QCheckBox("off"))
 
-        form.addRow(qw.QLabel("Randbegrenzung"), hbox)
+        form.addRow(qw.QLabel("Border"), hbox)
 
         form.addRow(qw.QLabel("Beschleunigungsfaktor"), qw.QLineEdit())
         form.addRow(qw.QLabel("Startgeschwindigkeit"), qw.QLineEdit())
