@@ -6,12 +6,19 @@ from PyQt5 import QtCore as qc
 from snake_settings import Settings
 
 
-class MainWindow(qw.QMainWindow):
+class Main_window(qw.QMainWindow):
+
+
+    def halloYeah(self):
+        y = 4
+        x = y
+
+
     def __repr__(self):
-        return "MainWindow()"
+        return "Main_Max()"
 
     def __str__(self):
-        return "MainWindow"
+        return "Main_window"
 
     def __init__(self):
         super().__init__()
@@ -70,6 +77,8 @@ class MainWindow(qw.QMainWindow):
             event.accept()
         else:
             event.ignore()
+
+
     def showSettings(self):
         print("call Settings")
         print("who is self:", self)
@@ -81,19 +90,22 @@ class Main_menu(qw.QFrame):
     def __repr__(self):
         return "Main menu()"
 
+
     def __str__(self):
         return "Main menu"
+
 
     def __init__(self):
         super().__init__()
         print("main menu")
         self.initUI()
 
+
     def initUI(self):
         btn_newgame = qw.QPushButton('New game', self)
         btn_HS = qw.QPushButton('High scores', self)
         btn_Quit = qw.QPushButton('Quit', self)
-        #btn_Quit.clicked.connect(self.on_pushButtonClose_clicked)
+        btn_Quit.clicked.connect(Main_window.close)
 
         vbox = qw.QVBoxLayout()
         vbox.addStretch(1)
@@ -109,6 +121,7 @@ class Main_menu(qw.QFrame):
 
         self.setLayout(hbox)
 
+
     def on_pushButtonClose_clicked(self):
         app = qg.QApplication.instance()
         app.closeAllWindows()
@@ -116,7 +129,8 @@ class Main_menu(qw.QFrame):
 
     def open_settings(self):
         self.close()
-        MainWindow.showSettings(self)
+        Main_window.showSettings(self)
+
 
     def on_pushButtonClose_clicked(self):
         app = qg.QApplication.instance()
@@ -124,5 +138,5 @@ class Main_menu(qw.QFrame):
 
 if __name__ == '__main__':
     app = qw.QApplication(sys.argv)
-    ex = MainWindow()
+    ex = Main_window()
     sys.exit(app.exec_())
