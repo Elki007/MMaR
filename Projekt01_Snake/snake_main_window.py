@@ -6,7 +6,7 @@ from PyQt5 import QtCore as qc
 from snake_settings import Settings
 
 
-class Main_window(qw.QMainWindow):
+class MainWindow(qw.QMainWindow):
 
 
     def halloYeah(self):
@@ -15,10 +15,10 @@ class Main_window(qw.QMainWindow):
 
 
     def __repr__(self):
-        return "Main_Max()"
+        return "MainWindow"
 
     def __str__(self):
-        return "Main_window"
+        return "MainWindow"
 
     def __init__(self):
         super().__init__()
@@ -105,7 +105,7 @@ class Main_menu(qw.QFrame):
         btn_newgame = qw.QPushButton('New game', self)
         btn_HS = qw.QPushButton('High scores', self)
         btn_Quit = qw.QPushButton('Quit', self)
-        btn_Quit.clicked.connect(Main_window.close)
+        btn_Quit.clicked.connect(MainWindow.close)
 
         vbox = qw.QVBoxLayout()
         vbox.addStretch(1)
@@ -129,7 +129,7 @@ class Main_menu(qw.QFrame):
 
     def open_settings(self):
         self.close()
-        Main_window.showSettings(self)
+        MainWindow.showSettings(self)
 
 
     def on_pushButtonClose_clicked(self):
@@ -138,5 +138,5 @@ class Main_menu(qw.QFrame):
 
 if __name__ == '__main__':
     app = qw.QApplication(sys.argv)
-    ex = Main_window()
+    ex = MainWindow()
     sys.exit(app.exec_())
