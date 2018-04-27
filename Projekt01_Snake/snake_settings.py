@@ -12,10 +12,10 @@ from PyQt5 import QtCore as qc
 class Settings(qw.QFrame):
 
     def __repr__(self):
-        return "MainWindow"
+        return "Settings"
 
     def __str__(self):
-        return "MainWindow"
+        return "Settings"
 
     def __init__(self):
         super().__init__()

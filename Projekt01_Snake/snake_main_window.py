@@ -4,6 +4,7 @@ from PyQt5 import QtWidgets as qw
 from PyQt5 import QtGui as qg
 from PyQt5 import QtCore as qc
 from snake_settings import Settings
+#from snake_game import Game
 
 
 class MainWindow(qw.QMainWindow):
@@ -22,7 +23,9 @@ class MainWindow(qw.QMainWindow):
     def initUI(self):
         #########################Menu#########################
         menubar = self.menuBar()
+
         fileMenu = menubar.addMenu('Game')
+        fileMenu.triggered.connect(self.showGame)
 
         impSettings = qw.QMenu('Settings', self)
         impCus = qw.QAction('Customize', self)
@@ -80,6 +83,12 @@ class MainWindow(qw.QMainWindow):
         self.setCentralWidget(Settings())
 
 
+    def showGame(self):
+        print("call Game")
+        print("who is self:", self)
+        #Main_window.main_widget = Settings()
+        self.setCentralWidget(Game())
+
 class Main_menu(qw.QFrame):
     def __repr__(self):
         return "Main menu()"
@@ -97,6 +106,7 @@ class Main_menu(qw.QFrame):
 
     def initUI(self):
         btn_newgame = qw.QPushButton('New game', self)
+        #btn_newgame.clicked.connect(self.on_pushButtonCall_newGame())
         btn_HS = qw.QPushButton('High scores', self)
         btn_Quit = qw.QPushButton('Quit', self)
         btn_Quit.clicked.connect(self.on_pushButtonClose_clicked)
