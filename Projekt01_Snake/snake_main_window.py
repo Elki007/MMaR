@@ -7,6 +7,13 @@ from snake_settings import Settings
 
 
 class Main_window(qw.QMainWindow):
+
+
+    def halloYeah(self):
+        y = 4
+        x = y
+
+
     def __repr__(self):
         return "Main_Max()"
 
@@ -70,6 +77,8 @@ class Main_window(qw.QMainWindow):
             event.accept()
         else:
             event.ignore()
+
+
     def showSettings(self):
         print("call Settings")
         print("who is self:", self)
@@ -81,13 +90,16 @@ class Main_menu(qw.QFrame):
     def __repr__(self):
         return "Main menu()"
 
+
     def __str__(self):
         return "Main menu"
+
 
     def __init__(self):
         super().__init__()
         print("main menu")
         self.initUI()
+
 
     def initUI(self):
         btn_newgame = qw.QPushButton('New game', self)
@@ -109,6 +121,7 @@ class Main_menu(qw.QFrame):
 
         self.setLayout(hbox)
 
+
     def on_pushButtonClose_clicked(self):
         app = qg.QApplication.instance()
         app.closeAllWindows()
@@ -117,6 +130,7 @@ class Main_menu(qw.QFrame):
     def open_settings(self):
         self.close()
         Main_window.showSettings(self)
+
 
     def on_pushButtonClose_clicked(self):
         app = qg.QApplication.instance()
