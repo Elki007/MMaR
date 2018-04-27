@@ -8,7 +8,7 @@ from snake_settings import Settings
 
 class Main_window(qw.QMainWindow):
     def __repr__(self):
-        return "Main_window()"
+        return "Main_Max()"
 
     def __str__(self):
         return "Main_window"
