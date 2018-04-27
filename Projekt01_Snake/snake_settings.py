@@ -34,14 +34,14 @@ class Settings(qw.QFrame):
 
         form.addRow(qw.QLabel("Border"), hbox)
 
-        form.addRow(qw.QLabel("Beschleunigungsfaktor"), qw.QLineEdit())
-        form.addRow(qw.QLabel("Startgeschwindigkeit"), qw.QLineEdit())
-        form.addRow(qw.QLabel("Maximale Geschwindigkeit"), qw.QLineEdit())
-        form.addRow(qw.QLabel("Schrittgröße"), qw.QLineEdit())
-        form.addRow(qw.QLabel("Anfangslänge"), qw.QLineEdit())
-        form.addRow(qw.QLabel("Früchtehäufigkeit"), qw.QLineEdit())
-        form.addRow(qw.QLabel("Früchte max Lebenslänge"), qw.QLineEdit())
-        form.addRow(qw.QLabel("Früchte min Lebenslänge"), qw.QLineEdit())
+        form.addRow(qw.QLabel("Acceleration"), qw.QLineEdit())
+        form.addRow(qw.QLabel("Speed"), qw.QLineEdit())
+        form.addRow(qw.QLabel("Maximum speed"), qw.QLineEdit())
+        form.addRow(qw.QLabel("Step Speed"), qw.QLineEdit())
+        form.addRow(qw.QLabel("length"), qw.QLineEdit())
+        form.addRow(qw.QLabel("Fruit probability"), qw.QLineEdit())
+        form.addRow(qw.QLabel("Fruit maximum lifespan"), qw.QLineEdit())
+        form.addRow(qw.QLabel("Fruit minimum lifespan"), qw.QLineEdit())
 
         h2box = qw.QHBoxLayout()
         h2box.addWidget(qw.QLineEdit())

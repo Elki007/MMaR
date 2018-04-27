@@ -8,12 +8,6 @@ from snake_settings import Settings
 
 class MainWindow(qw.QMainWindow):
 
-
-    def halloYeah(self):
-        y = 4
-        x = y
-
-
     def __repr__(self):
         return "MainWindow"
 
@@ -105,7 +99,7 @@ class Main_menu(qw.QFrame):
         btn_newgame = qw.QPushButton('New game', self)
         btn_HS = qw.QPushButton('High scores', self)
         btn_Quit = qw.QPushButton('Quit', self)
-        btn_Quit.clicked.connect(MainWindow.close)
+        btn_Quit.clicked.connect(self.on_pushButtonClose_clicked)
 
         vbox = qw.QVBoxLayout()
         vbox.addStretch(1)
@@ -123,18 +117,13 @@ class Main_menu(qw.QFrame):
 
 
     def on_pushButtonClose_clicked(self):
-        app = qg.QApplication.instance()
+        app = qw.QApplication.instance()
         app.closeAllWindows()
 
 
     def open_settings(self):
         self.close()
         MainWindow.showSettings(self)
-
-
-    def on_pushButtonClose_clicked(self):
-        app = qg.QApplication.instance()
-        app.closeAllWindows()
 
 if __name__ == '__main__':
     app = qw.QApplication(sys.argv)
