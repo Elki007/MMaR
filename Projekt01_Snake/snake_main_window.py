@@ -4,7 +4,7 @@ from PyQt5 import QtWidgets as qw
 from PyQt5 import QtGui as qg
 from PyQt5 import QtCore as qc
 from snake_settings import Settings
-#from snake_game import Game
+from snake_game import Board
 
 
 class MainWindow(qw.QMainWindow):
@@ -25,7 +25,6 @@ class MainWindow(qw.QMainWindow):
         menubar = self.menuBar()
 
         fileMenu = menubar.addMenu('Game')
-        fileMenu.triggered.connect(self.showGame)
 
         impSettings = qw.QMenu('Settings', self)
         impCus = qw.QAction('Customize', self)
@@ -36,7 +35,7 @@ class MainWindow(qw.QMainWindow):
         impSettings.addAction(impDef)
 
         new_game = qw.QAction('New game', self)
-        new_game.triggered.connect(self.showSettings)
+        new_game.triggered.connect(self.showGame)
         menu_quit = qw.QAction('Quit', self)
         #menu_quit.triggered.connect(self.close)
         menu_quit.triggered.connect(self.close)
@@ -45,9 +44,9 @@ class MainWindow(qw.QMainWindow):
         fileMenu.addMenu(impSettings)
         fileMenu.addAction(menu_quit)
 
+
         #########################Window#########################
 
-        #self.main_widget = Settings()
         self.main_widget = Main_menu()
         self.setCentralWidget(self.main_widget)
 
@@ -76,18 +75,47 @@ class MainWindow(qw.QMainWindow):
             event.ignore()
 
 
+    def keyPressEvent(self, e):
+        key = e.key()
+
+        if key == qc.Qt.Key_P:
+            self.board.pause()
+        elif key == qc.Qt.Key_Right:
+            self.board.direct = 0
+        elif key == qc.Qt.Key_Left:
+            self.board.direct = 1
+        elif key == qc.Qt.Key_Up:
+            self.board.direct = 2
+        elif key == qc.Qt.Key_Down:
+            self.board.direct = 3
+
+
     def showSettings(self):
         print("call Settings")
         print("who is self:", self)
         #Main_window.main_widget = Settings()
+        Board.close
         self.setCentralWidget(Settings())
 
 
     def showGame(self):
         print("call Game")
         print("who is self:", self)
-        #Main_window.main_widget = Settings()
-        self.setCentralWidget(Game())
+
+        self.board = Board(self)
+        board = self.board
+        self.setCentralWidget(board)
+
+        self.statusbar = self.statusBar()
+        self.board.ScoreSignal[str].connect(self.statusbar.showMessage)
+
+        board.start()
+
+        self.resize(board.BoardWidth * board.scale, board.BoardHeight * board.scale)
+        self.center()
+        self.setWindowTitle('Snake')
+        self.show()
+
 
 class Main_menu(qw.QFrame):
     def __repr__(self):
