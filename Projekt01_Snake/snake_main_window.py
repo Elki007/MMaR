@@ -93,7 +93,7 @@ class Main_menu(qw.QFrame):
         btn_newgame = qw.QPushButton('New game', self)
         btn_HS = qw.QPushButton('High scores', self)
         btn_Quit = qw.QPushButton('Quit', self)
-        #btn_Quit.clicked.connect(self.on_pushButtonClose_clicked)
+        btn_Quit.clicked.connect(Main_window.close)
 
         vbox = qw.QVBoxLayout()
         vbox.addStretch(1)
