@@ -2,7 +2,7 @@ import sys,random
 from PyQt5.QtWidgets import QMainWindow, QFrame, QDesktopWidget, QApplication
 from PyQt5.QtCore import Qt, QBasicTimer, pyqtSignal
 from PyQt5.QtGui import QPainter, QColor, QPen
-from snake_settings import Settings
+import configparser
 
 class Board(QFrame):
     ScoreSignal = pyqtSignal(str)
@@ -64,9 +64,12 @@ class Board(QFrame):
 
     def __init__(self, parent):
         super().__init__(parent)
+        config = configparser.ConfigParser()
+        config.read('config.ini')
+
         print("parent: ",parent)
-        print(parent.player_str)
-        self.player_str = parent.player_str
+        #print(parent.player_str)
+        self.player = config.get('SectionOne', 'player')
         self.setNewParamets(parent)
         self.initBoard()
 
@@ -117,7 +120,7 @@ class Board(QFrame):
         elif scords[0][1] == -1:
             scords[0][1] = 20
 
-        self.ScoreSignal.emit(self.player_str  + " score: " + str(self.score))
+        self.ScoreSignal.emit(self.player  + " score: " + str(self.score))
 
         self.speed_update()
 
@@ -183,5 +186,5 @@ class Board(QFrame):
         if len(self.snake_cords) == 2:
             self.timer.stop()
             self.timerOn = False
-            self.ScoreSignal.emit('Game Over you got '+str(self.score)+' apples')
+            self.ScoreSignal.emit("Game Over! " + self.player + ", you got" +str(self.score)+ " apples")
 

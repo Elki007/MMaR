@@ -2,6 +2,7 @@ import sys
 from PyQt5 import QtWidgets as qw
 from PyQt5 import QtGui as qg
 from PyQt5 import QtCore as qc
+import configparser
 
 #app = qw.QApplication(sys.argv)
 
@@ -19,17 +20,22 @@ class Settings(qw.QFrame):
 
     def __init__(self, parent):
         super().__init__()
+        config = configparser.ConfigParser()
+        config.read('config.ini')
+        self.player_str = config.get('SectionOne', 'player')
+
         #print("I'm in settings, parent", parent)
-        self.player_str = parent.player_str
+        #self.player_str = parent.player_str
         self.initUI(parent)
 
     def initUI(self, parent):
         #print(parent)
+        #properties = Properties()
         form = qw.QFormLayout()
 
         self.player = qw.QLineEdit(self)
         self.player.setText(self.player_str)
-        self.player_str = self.player.text()
+        #self.player_str = self.player.text()
 
         form.addRow(qw.QLabel("Player"), self.player)
 
@@ -75,16 +81,16 @@ class Settings(qw.QFrame):
         self.player_str = self.player.text()
 
 
-    def intraShowGame(self):
-        #print(self.parent())
-        #parent.showGame
-        #parent.player = self.player.text()
-        print("intra")
-
     def closeEvent(self, event):
+        #properties = Properties()
         print("closing Settings")
         print("")
-        # report_session()
+        config = configparser.ConfigParser()
+        config.read('config.ini')
+        config.set('SectionOne', 'player', self.player.text())
+        with open('config.ini', "w") as config_file:
+            config.write(config_file)
+
 
 #win.setLayout(form)      # Wichtig! Erst hier wird das Layout an win angefügt
 #win.show()

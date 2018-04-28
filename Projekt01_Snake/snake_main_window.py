@@ -5,6 +5,7 @@ from PyQt5 import QtGui as qg
 from PyQt5 import QtCore as qc
 from snake_settings import Settings
 from snake_game import Board
+import configparser
 
 
 class MainWindow(qw.QMainWindow):
@@ -17,7 +18,9 @@ class MainWindow(qw.QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.player_str = "Player_1"
+        config = configparser.ConfigParser()
+        config.read('config.ini')
+        self.player = config.get('SectionOne', 'player')
         self.initUI()
 
     def initUI(self):
@@ -71,6 +74,7 @@ class MainWindow(qw.QMainWindow):
                                      qw.QMessageBox.No, qw.QMessageBox.No)
 
         if reply == qw.QMessageBox.Yes:
+            ############# place to set defaults##############
             event.accept()
         else:
             event.ignore()
@@ -133,15 +137,10 @@ class MainWindow(qw.QMainWindow):
 
 
         self.resize((self.board.BoardWidth+1.1) * self.board.scale, (self.board.BoardHeight+2.5) * self.board.scale)
-        #self.resize(600, 600)
-        #print("parent: ", self.board.BoardHeight * self.board.scale)
         self.center()
 
         board.start()
-        #self.show()
 
-    def test(self):
-        print("player from main ", self.player_str)
 
 
 class Main_menu(qw.QFrame):
