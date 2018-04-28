@@ -1,5 +1,5 @@
 import sys
-import time
+import sip
 from PyQt5 import QtWidgets as qw
 from PyQt5 import QtGui as qg
 from PyQt5 import QtCore as qc
@@ -47,7 +47,7 @@ class MainWindow(qw.QMainWindow):
 
         #########################Window#########################
 
-        self.main_widget = Main_menu()
+        self.main_widget = Main_menu(self)
         self.setCentralWidget(self.main_widget)
 
         #########################Initialize#########################
@@ -80,6 +80,8 @@ class MainWindow(qw.QMainWindow):
 
         if key == qc.Qt.Key_P:
             self.board.pause()
+        elif key == qc.Qt.Key_E:
+            self.exit()
         elif key == qc.Qt.Key_Right:
             self.board.direct = 0
         elif key == qc.Qt.Key_Left:
@@ -89,6 +91,17 @@ class MainWindow(qw.QMainWindow):
         elif key == qc.Qt.Key_Down:
             self.board.direct = 3
 
+    def exit(self):
+        ########## am i in board ? #############################
+        if self.board != None:
+            if self.board.timerOn:
+                self.board.timer.stop()
+            self.board.deleteLater()
+            self.board = None
+            ##################################################
+            # Right place to show message that the game is
+            ##################################################
+            self.setCentralWidget(Main_menu(self))
 
     def showSettings(self):
         print("call Settings")
@@ -126,15 +139,16 @@ class Main_menu(qw.QFrame):
         return "Main menu"
 
 
-    def __init__(self):
+    def __init__(self,parent):
         super().__init__()
         print("main menu")
-        self.initUI()
+        print("parent", parent)
+        self.initUI(parent)
 
 
-    def initUI(self):
+    def initUI(self,parent):
         btn_newgame = qw.QPushButton('New game', self)
-        #btn_newgame.clicked.connect(self.on_pushButtonCall_newGame())
+        btn_newgame.clicked.connect(parent.showGame)
         btn_HS = qw.QPushButton('High scores', self)
         btn_Quit = qw.QPushButton('Quit', self)
         btn_Quit.clicked.connect(self.on_pushButtonClose_clicked)

@@ -5,34 +5,67 @@ from PyQt5.QtGui import QPainter, QColor, QPen
 
 
 class Board(QFrame):
-
     ScoreSignal = pyqtSignal(str)
 
     BoardWidth = 20
     BoardHeight = 20
 
     speed = 500
-
+    print(speed)
     score = 0
 
-    scale = 30 #one cell scale
+    scale = 30  # one cell scale
 
     ######
     snake_cords = [
-        [1,0],
-        [0,0],
-        [-1,0]
+        [1, 0],
+        [0, 0],
+        [-1, 0]
     ]
 
-    direct = 0 #Direction
+    direct = 0  # Direction
     ######
     num = 10
 
-    apples_cords = [[random.randint(0,20),random.randint(0,20)] for i in range(num)]
+    apples_cords = [[random.randint(0, 20), random.randint(0, 20)] for i in range(num)]
+
+    def setNewParamets(self):
+        ScoreSignal = pyqtSignal(str)
+        #self.ScoreSignal = ScoreSignal
+
+        BoardWidth = 20
+        BoardHeight = 20
+        #self.BoardWidth = BoardWidth
+        #self.BoardHeight =BoardHeight
+
+        speed = 500
+        print("new speed: ",speed)
+        #self.speed = speed
+        score = 0
+        #self.score = score
+        scale = 30  # one cell scale
+        #self.scale = scale
+        ######
+        snake_cords = [
+            [1, 0],
+            [0, 0],
+            [-1, 0]
+        ]
+        self.snake_cords = snake_cords
+        print("new snake_cords: ", snake_cords)
+        direct = 0  # Direction
+        #self.direct = direct
+        ######
+        num = 10
+        #self.num = num
+
+        apples_cords = [[random.randint(0, 20), random.randint(0, 20)] for i in range(num)]
+        self.apples_cords = apples_cords
 
     def __init__(self, parent):
         super().__init__(parent)
-
+        print("parent: ",parent)
+        self.setNewParamets()
         self.initBoard()
 
     def initBoard(self):
@@ -110,6 +143,7 @@ class Board(QFrame):
             self.timer.start(Board.speed, self)
 
         self.timerOn = not self.timerOn
+
 
     def paintEvent(self, QP):
         QP = QPainter()
