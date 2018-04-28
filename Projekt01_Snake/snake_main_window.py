@@ -151,7 +151,7 @@ class Main_menu(qw.QFrame):
         btn_newgame.clicked.connect(parent.showGame)
         btn_HS = qw.QPushButton('High scores', self)
         btn_Quit = qw.QPushButton('Quit', self)
-        btn_Quit.clicked.connect(self.on_pushButtonClose_clicked)
+        btn_Quit.clicked.connect(parent.close)#self.on_pushButtonClose_clicked)
 
         vbox = qw.QVBoxLayout()
         vbox.addStretch(1)
@@ -168,9 +168,10 @@ class Main_menu(qw.QFrame):
         self.setLayout(hbox)
 
 
-    def on_pushButtonClose_clicked(self):
-        app = qw.QApplication.instance()
-        app.closeAllWindows()
+    ########## no need in this function, Question: are all processes terminated with self.close?###################
+    #def on_pushButtonClose_clicked(self):
+    #    app = qw.QApplication.instance()
+    #    app.closeAllWindows()
 
 
     def open_settings(self):
