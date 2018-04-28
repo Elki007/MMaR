@@ -44,7 +44,8 @@ class MainWindow(qw.QMainWindow):
         fileMenu.addMenu(impSettings)
         fileMenu.addAction(menu_quit)
 
-
+        ########initialize board as None #####################
+        self.board = None
         #########################Window#########################
 
         self.main_widget = Main_menu(self)
@@ -104,16 +105,23 @@ class MainWindow(qw.QMainWindow):
             self.setCentralWidget(Main_menu(self))
 
     def showSettings(self):
-        print("call Settings")
-        print("who is self:", self)
-        #Main_window.main_widget = Settings()
-        Board.close
-        self.setCentralWidget(Settings())
+        #print(self.board)
+        if self.board != None:
+            if self.board.timerOn:
+                self.board.timer.stop()
+            self.board.deleteLater()
+            self.board = None
+            #Main_window.main_widget = Settings()
+            Board.close
+        #print("call Settings")
+        #print("who is self:", self)
+        self.setCentralWidget(Settings(self))
 
 
     def showGame(self):
-        print("call Game")
-        print("who is self:", self)
+        #print("call Game")
+        #print("who is self:", self)
+        #Settings.get_values(Settings, self)
 
         self.board = Board(self)
         board = self.board
@@ -122,12 +130,15 @@ class MainWindow(qw.QMainWindow):
         self.statusbar = self.statusBar()
         self.board.ScoreSignal[str].connect(self.statusbar.showMessage)
 
-        board.start()
 
-        self.resize(board.BoardWidth * board.scale, board.BoardHeight * board.scale)
+
+        self.resize((self.board.BoardWidth+1.1) * self.board.scale, (self.board.BoardHeight+2.5) * self.board.scale)
+        #self.resize(600, 600)
+        #print("parent: ", self.board.BoardHeight * self.board.scale)
         self.center()
-        self.setWindowTitle('Snake')
-        self.show()
+
+        board.start()
+        #self.show()
 
 
 class Main_menu(qw.QFrame):
@@ -141,8 +152,8 @@ class Main_menu(qw.QFrame):
 
     def __init__(self,parent):
         super().__init__()
-        print("main menu")
-        print("parent", parent)
+        #print("main menu")
+        #print("parent", parent)
         self.initUI(parent)
 
 
@@ -174,9 +185,9 @@ class Main_menu(qw.QFrame):
     #    app.closeAllWindows()
 
 
-    def open_settings(self):
-        self.close()
-        MainWindow.showSettings(self)
+    #def open_settings(self):
+    #    self.close()
+    #    MainWindow.showSettings(self)
 
 if __name__ == '__main__':
     app = qw.QApplication(sys.argv)

@@ -17,15 +17,16 @@ class Settings(qw.QFrame):
     def __str__(self):
         return "Settings"
 
-    def __init__(self):
+    def __init__(self, parent):
         super().__init__()
-        print("I'm in settings")
-        self.initUI()
+        #print("I'm in settings, parent", parent)
+        self.initUI(parent)
 
-    def initUI(self):
-        print(self)
+    def initUI(self, parent):
+        #print(parent)
         form = qw.QFormLayout()
-        form.addRow(qw.QLabel("Player"), qw.QLineEdit())
+        self.player = qw.QLineEdit(self)
+        form.addRow(qw.QLabel("Player"), self.player)
 
 
         hbox = qw.QHBoxLayout()
@@ -53,12 +54,22 @@ class Settings(qw.QFrame):
         form.addRow(qw.QLabel("Spielfeldzoom"), qw.QLineEdit())
 
         h3box = qw.QHBoxLayout()
-        h3box.addWidget(qw.QPushButton("Spiel starten"))
+        self.play = qw.QPushButton("Play", self)
+        self.play.clicked.connect(parent.showGame)
+        h3box.addWidget(self.play)
         h3box.addStretch()
-        h3box.addWidget(qw.QPushButton("Highscore-Liste"))
+        self.highscore = qw.QPushButton("Highscore-Liste", self)
+        #self.highscore.clicked.connect(self.on_click)
+        h3box.addWidget(self.highscore)
+
 
         form.addRow(h3box)
         self.setLayout(form)
+
+        self.player_str = self.player.text()
+
+
+
 
 
 #win.setLayout(form)      # Wichtig! Erst hier wird das Layout an win angefügt

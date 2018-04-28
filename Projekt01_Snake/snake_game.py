@@ -2,7 +2,7 @@ import sys,random
 from PyQt5.QtWidgets import QMainWindow, QFrame, QDesktopWidget, QApplication
 from PyQt5.QtCore import Qt, QBasicTimer, pyqtSignal
 from PyQt5.QtGui import QPainter, QColor, QPen
-
+from snake_settings import Settings
 
 class Board(QFrame):
     ScoreSignal = pyqtSignal(str)
@@ -11,7 +11,7 @@ class Board(QFrame):
     BoardHeight = 20
 
     speed = 500
-    print(speed)
+    print("speed: ",speed)
     score = 0
 
     scale = 30  # one cell scale
@@ -29,17 +29,17 @@ class Board(QFrame):
 
     apples_cords = [[random.randint(0, 20), random.randint(0, 20)] for i in range(num)]
 
-    def setNewParamets(self):
+    def setNewParamets(self, parent):
         ScoreSignal = pyqtSignal(str)
         #self.ScoreSignal = ScoreSignal
-
+        #self.player_str = parent.player_str
         BoardWidth = 20
         BoardHeight = 20
         #self.BoardWidth = BoardWidth
         #self.BoardHeight =BoardHeight
 
         speed = 500
-        print("new speed: ",speed)
+        #print("new speed: ",speed)
         #self.speed = speed
         score = 0
         #self.score = score
@@ -64,8 +64,8 @@ class Board(QFrame):
 
     def __init__(self, parent):
         super().__init__(parent)
-        print("parent: ",parent)
-        self.setNewParamets()
+        #print("parent: ",parent)
+        self.setNewParamets(parent)
         self.initBoard()
 
     def initBoard(self):
@@ -115,7 +115,7 @@ class Board(QFrame):
         elif scords[0][1] == -1:
             scords[0][1] = 20
 
-        self.ScoreSignal.emit(str(self.score))
+        self.ScoreSignal.emit("self.player_str " + " score: " + str(self.score))
 
         self.speed_update()
 
@@ -139,10 +139,12 @@ class Board(QFrame):
 
         if self.timerOn:
             self.timer.stop()
+            self.ScoreSignal.emit('Paused, current Score: ' + str(self.score))
         else:
             self.timer.start(Board.speed, self)
 
         self.timerOn = not self.timerOn
+
 
 
     def paintEvent(self, QP):
@@ -155,7 +157,7 @@ class Board(QFrame):
 
     def drawSnake(self, QP):
         QP.setBrush(QColor(0, 128, 0))
-        print(self.snake_cords)
+        #print(self.snake_cords)
         for i in self.snake_cords:
             QP.drawRect(i[0]*self.scale,i[1]*self.scale, self.scale, self.scale)
 
