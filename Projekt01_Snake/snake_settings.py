@@ -20,12 +20,17 @@ class Settings(qw.QFrame):
     def __init__(self, parent):
         super().__init__()
         #print("I'm in settings, parent", parent)
+        self.player_str = parent.player_str
         self.initUI(parent)
 
     def initUI(self, parent):
         #print(parent)
         form = qw.QFormLayout()
+
         self.player = qw.QLineEdit(self)
+        self.player.setText(self.player_str)
+        self.player_str = self.player.text()
+
         form.addRow(qw.QLabel("Player"), self.player)
 
 
@@ -55,6 +60,7 @@ class Settings(qw.QFrame):
 
         h3box = qw.QHBoxLayout()
         self.play = qw.QPushButton("Play", self)
+        self.play.clicked.connect(self.close)
         self.play.clicked.connect(parent.showGame)
         h3box.addWidget(self.play)
         h3box.addStretch()
@@ -69,8 +75,16 @@ class Settings(qw.QFrame):
         self.player_str = self.player.text()
 
 
+    def intraShowGame(self):
+        #print(self.parent())
+        #parent.showGame
+        #parent.player = self.player.text()
+        print("intra")
 
-
+    def closeEvent(self, event):
+        print("closing Settings")
+        print("")
+        # report_session()
 
 #win.setLayout(form)      # Wichtig! Erst hier wird das Layout an win angefügt
 #win.show()

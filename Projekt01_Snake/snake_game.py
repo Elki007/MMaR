@@ -11,7 +11,7 @@ class Board(QFrame):
     BoardHeight = 20
 
     speed = 500
-    print("speed: ",speed)
+    print("speed: ", speed)
     score = 0
 
     scale = 30  # one cell scale
@@ -64,7 +64,9 @@ class Board(QFrame):
 
     def __init__(self, parent):
         super().__init__(parent)
-        #print("parent: ",parent)
+        print("parent: ",parent)
+        print(parent.player_str)
+        self.player_str = parent.player_str
         self.setNewParamets(parent)
         self.initBoard()
 
@@ -115,7 +117,7 @@ class Board(QFrame):
         elif scords[0][1] == -1:
             scords[0][1] = 20
 
-        self.ScoreSignal.emit("self.player_str " + " score: " + str(self.score))
+        self.ScoreSignal.emit(self.player_str  + " score: " + str(self.score))
 
         self.speed_update()
 

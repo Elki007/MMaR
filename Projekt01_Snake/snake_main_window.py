@@ -17,7 +17,7 @@ class MainWindow(qw.QMainWindow):
 
     def __init__(self):
         super().__init__()
-
+        self.player_str = "Player_1"
         self.initUI()
 
     def initUI(self):
@@ -139,6 +139,9 @@ class MainWindow(qw.QMainWindow):
 
         board.start()
         #self.show()
+
+    def test(self):
+        print("player from main ", self.player_str)
 
 
 class Main_menu(qw.QFrame):
