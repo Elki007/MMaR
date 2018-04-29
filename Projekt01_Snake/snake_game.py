@@ -109,7 +109,7 @@ class Board(QFrame):
     def snake_step(self):
         #######update direction#####
 
-        print(self.timer)
+        #print(self.timer)
         scords = self.snake_cords
         acords = self.apples_cords
 

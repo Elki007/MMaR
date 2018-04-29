@@ -100,7 +100,7 @@ class MainWindow(qw.QMainWindow):
 
     def keyPressEvent(self, e):
         key = e.key()
-        print(self.board.direct)
+        #print(self.board.direct)
         if key == qc.Qt.Key_P:
             self.board.pause()
         elif key == qc.Qt.Key_E:
