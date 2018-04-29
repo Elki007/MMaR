@@ -1,5 +1,4 @@
 import sys
-import sip
 from PyQt5 import QtWidgets as qw
 from PyQt5 import QtGui as qg
 from PyQt5 import QtCore as qc
@@ -80,7 +79,8 @@ class MainWindow(qw.QMainWindow):
         config.set('SectionOne', "Fruit probability", "1")
         config.set('SectionOne', "Fruit maximum lifespan", "1")
         config.set('SectionOne', "Fruit minimum lifespan", "1")
-        config.set('SectionOne', "Field", "20")
+        config.set('SectionOne', "field width", "30")
+        config.set('SectionOne', "field height", "30")
         config.set('SectionOne', "Field zoom", "30")
         with open('config.ini', "w") as config_file:
             config.write(config_file)
@@ -154,7 +154,7 @@ class MainWindow(qw.QMainWindow):
 
 
 
-        self.resize((self.board.BoardWidth+1.1) * self.board.scale, (self.board.BoardHeight+2.5) * self.board.scale)
+        self.resize((self.board.BoardWidth+1) * self.board.scale+1, (self.board.BoardHeight+1) * self.board.scale+50)
         self.center()
 
         board.start()

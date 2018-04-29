@@ -1,7 +1,7 @@
-import sys,random
-from PyQt5.QtWidgets import QMainWindow, QFrame, QDesktopWidget, QApplication
-from PyQt5.QtCore import Qt, QBasicTimer, pyqtSignal
-from PyQt5.QtGui import QPainter, QColor, QPen, QPixmap
+import random
+from PyQt5.QtWidgets import QFrame
+from PyQt5.QtCore import QBasicTimer, pyqtSignal, Qt
+from PyQt5.QtGui import QPainter, QColor, QPixmap, QPen
 import configparser
 
 class Board(QFrame):
@@ -66,7 +66,7 @@ class Board(QFrame):
         self.fruitMaxLife_value = config.get('SectionOne', "Fruit maximum lifespan")
         self.fruitMinLife_value = config.get('SectionOne', "Fruit minimum lifespan")
         self.fieldWidth_value = config.get('SectionOne', "Field width")
-        self.fieldHigh_value = config.get('SectionOne', "Field high")
+        self.fieldHeight_value = config.get('SectionOne', "Field height")
         self.scale_value = config.get('SectionOne', "Field zoom")
 
 
@@ -77,7 +77,7 @@ class Board(QFrame):
         #self.score = score
         self.scale = int(self.scale_value)  # one cell scale
         self.BoardWidth = int(self.fieldWidth_value)
-        self.BoardHeight = int(self.fieldHigh_value)
+        self.BoardHeight = int(self.fieldHeight_value)
 
 
         #self.scale = scale
@@ -194,11 +194,34 @@ class Board(QFrame):
 
     def drawSnake(self, QP):
         QP.setBrush(QColor(0, 128, 0))
-        #print(self.snake_cords)
+        #print(self.direct)
         for i in self.snake_cords:
             #QP.drawRect(i[0]*self.scale,i[1]*self.scale, self.scale, self.scale)
             QP.drawEllipse(i[0] * self.scale, i[1] * self.scale, self.scale, self.scale)
 
+
+        ###### Snake's head####
+        self.headDeltaY = 0
+        self.headDeltaX = 0
+        if self.direct == 1:
+            self.headDeltaX = (self.scale//2 )
+        elif self.direct == -1:
+            self.headDeltaX = - (self.scale//2)
+        elif self.direct == -2:
+            self.headDeltaY = (self.scale//2)
+        elif self.direct == 2:
+            self.headDeltaY = - (self.scale//2)
+
+
+        for i in self.snake_cords[:1]:
+            QP.setBrush(QColor(200, 0, 0))
+            pen = QPen(Qt.red, 2, Qt.SolidLine)
+            QP.setPen(pen)
+            #painter = QPainter(self)
+            QP.drawLine(i[0] * self.scale+self.scale//2+self.headDeltaX//2, i[1] * self.scale+self.scale//2 + self.headDeltaY//2,
+                        i[0] * self.scale+self.scale//2+self.headDeltaX, i[1] * self.scale+self.scale//2 + self.headDeltaY)
+        pen = QPen(Qt.black, 1, Qt.SolidLine)
+        QP.setPen(pen)
 
     def drawApples(self, QP):
         QP.setBrush(QColor(200, 0, 0))

@@ -1,7 +1,4 @@
-import sys
 from PyQt5 import QtWidgets as qw
-from PyQt5 import QtGui as qg
-from PyQt5 import QtCore as qc
 import configparser
 
 #app = qw.QApplication(sys.argv)
@@ -33,7 +30,7 @@ class Settings(qw.QFrame):
         self.fruitMaxLife_value = config.get('SectionOne', "Fruit maximum lifespan")
         self.fruitMinLife_value = config.get('SectionOne', "Fruit minimum lifespan")
         self.fieldWidth_value = config.get('SectionOne', "Field width")
-        self.fieldHigh_value = config.get('SectionOne', "Field high")
+        self.fieldHeight_value = config.get('SectionOne', "Field height")
         self.scale_value = config.get('SectionOne', "Field zoom")
 
         #print("I'm in settings, parent", parent)
@@ -50,8 +47,8 @@ class Settings(qw.QFrame):
 
         self.fieldWidth = qw.QLineEdit(self)
         self.fieldWidth.setText(self.fieldWidth_value)
-        self.fieldHigh = qw.QLineEdit(self)
-        self.fieldHigh.setText(self.fieldHigh_value)
+        self.fieldHeight = qw.QLineEdit(self)
+        self.fieldHeight.setText(self.fieldHeight_value)
         self.fruitPrbbl = qw.QLineEdit(self)
         self.fruitPrbbl.setText(self.fruitPrbbl_value)
         self.scale = qw.QLineEdit(self)
@@ -79,7 +76,7 @@ class Settings(qw.QFrame):
         h2box = qw.QHBoxLayout()
         h2box.addWidget(self.fieldWidth)
         h2box.addWidget(qw.QLabel("x"))
-        h2box.addWidget(self.fieldHigh)
+        h2box.addWidget(self.fieldHeight)
 
         form.addRow(qw.QLabel("Field"), h2box)
 
@@ -111,8 +108,9 @@ class Settings(qw.QFrame):
         config.set('SectionOne', 'player', self.player.text())
         config.set('SectionOne', 'Field zoom', self.scale.text())
         config.set('SectionOne', "Field width", self.fieldWidth.text())
+        config.set('SectionOne', "Field height", self.fieldHeight.text())
         config.set('SectionOne', "Fruit probability", self.fruitPrbbl.text())
-        config.set('SectionOne', "Field high", self.fieldHigh.text())
+
         with open('config.ini', "w") as config_file:
             config.write(config_file)
 
