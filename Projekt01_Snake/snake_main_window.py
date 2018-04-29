@@ -67,6 +67,23 @@ class MainWindow(qw.QMainWindow):
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
+    def defaultSettings(self):
+        config = configparser.ConfigParser()
+        config.read('config.ini')
+        config.set('SectionOne', 'player', 'Player_1')
+        config.set('SectionOne', "Border", "0")
+        config.set('SectionOne', "Acceleration", "")
+        config.set('SectionOne', "Speed", "500")
+        config.set('SectionOne', "Maximum speed","1500")
+        config.set('SectionOne', "Step Speed","10")
+        config.set('SectionOne', "length", "3")
+        config.set('SectionOne', "Fruit probability", "1")
+        config.set('SectionOne', "Fruit maximum lifespan", "1")
+        config.set('SectionOne', "Fruit minimum lifespan", "1")
+        config.set('SectionOne', "Field", "20")
+        config.set('SectionOne', "Field zoom", "30")
+        with open('config.ini', "w") as config_file:
+            config.write(config_file)
 
     def closeEvent(self, event): #### Dialog on quit
         reply = qw.QMessageBox.question(self, 'Message',
@@ -75,6 +92,7 @@ class MainWindow(qw.QMainWindow):
 
         if reply == qw.QMessageBox.Yes:
             ############# place to set defaults##############
+            self.defaultSettings()
             event.accept()
         else:
             event.ignore()
@@ -82,19 +100,19 @@ class MainWindow(qw.QMainWindow):
 
     def keyPressEvent(self, e):
         key = e.key()
-
+        print(self.board.direct)
         if key == qc.Qt.Key_P:
             self.board.pause()
         elif key == qc.Qt.Key_E:
             self.exit()
         elif key == qc.Qt.Key_Right:
-            self.board.direct = 0
+            self.board.newdirect = 1
         elif key == qc.Qt.Key_Left:
-            self.board.direct = 1
+            self.board.newdirect = -1
         elif key == qc.Qt.Key_Up:
-            self.board.direct = 2
+            self.board.newdirect = 2
         elif key == qc.Qt.Key_Down:
-            self.board.direct = 3
+            self.board.newdirect = -2
 
     def exit(self):
         ########## am i in board ? #############################
@@ -104,7 +122,7 @@ class MainWindow(qw.QMainWindow):
             self.board.deleteLater()
             self.board = None
             ##################################################
-            # Right place to show message that the game is
+            # Right place to show message that the game is over
             ##################################################
             self.setCentralWidget(Main_menu(self))
 
