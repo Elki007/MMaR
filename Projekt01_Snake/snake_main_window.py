@@ -115,6 +115,26 @@ class MainWindow(qw.QMainWindow):
             self.board.newdirect = -2
 
     def exit(self):
+        if self.board != None:
+            if self.board.timerOn:
+                self.board.pause()
+
+            reply = qw.QMessageBox.question(self, 'Message',
+                                            "Back to Main Menu?", qw.QMessageBox.Yes |
+                                            qw.QMessageBox.No, qw.QMessageBox.No)
+
+            if reply == qw.QMessageBox.Yes:
+                ############# place to set defaults##############
+                self.board.deleteLater()
+                self.board = None
+                ##################################################
+                # Right place to show message that the game is over
+                ##################################################
+                self.setCentralWidget(Main_menu(self))
+            else:
+                self.board.pause()
+
+        """
         ########## am i in board ? #############################
         if self.board != None:
             if self.board.timerOn:
@@ -125,12 +145,15 @@ class MainWindow(qw.QMainWindow):
             # Right place to show message that the game is over
             ##################################################
             self.setCentralWidget(Main_menu(self))
+        """
+
 
     def showSettings(self):
         #print(self.board)
         if self.board != None:
-            if self.board.timerOn:
-                self.board.timer.stop()
+            # should be irrelevant
+            #if self.board.timerOn:
+            #   self.board.timer.stop()
             self.board.deleteLater()
             self.board = None
             #Main_window.main_widget = Settings()
@@ -154,7 +177,7 @@ class MainWindow(qw.QMainWindow):
 
 
 
-        self.resize((self.board.BoardWidth+1) * self.board.scale+1, (self.board.BoardHeight+1) * self.board.scale+50)
+        self.resize((self.board.BoardWidth+1) * self.board.scale+1, (self.board.BoardHeight+2) * self.board.scale+50)
         self.center()
 
         board.start()
