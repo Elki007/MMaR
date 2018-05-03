@@ -4,6 +4,7 @@ from PyQt5 import QtGui as qg
 from PyQt5 import QtCore as qc
 from snake_settings import Settings
 from snake_game import Board
+from snake_highscores import Highscores
 import configparser
 
 
@@ -55,6 +56,8 @@ class MainWindow(qw.QMainWindow):
 
         #########################Initialize#########################
         self.resize(800, 600)
+
+
         self.center()
         self.setWindowTitle('Snake')
         self.setWindowIcon(qg.QIcon('icon.png'))
@@ -81,21 +84,41 @@ class MainWindow(qw.QMainWindow):
         config.set('SectionOne', "Fruit minimum lifespan", "1")
         config.set('SectionOne', "field width", "30")
         config.set('SectionOne', "field height", "30")
-        config.set('SectionOne', "Field zoom", "30")
+        config.set('SectionOne', "Field zoom", "20")
         with open('config.ini', "w") as config_file:
             config.write(config_file)
 
     def closeEvent(self, event): #### Dialog on quit
+        if self.board != None:
+            if self.board.timerOn:
+                self.board.pause()
         reply = qw.QMessageBox.question(self, 'Message',
                                      "Are you sure to quit?", qw.QMessageBox.Yes |
                                      qw.QMessageBox.No, qw.QMessageBox.No)
 
         if reply == qw.QMessageBox.Yes:
             ############# place to set defaults##############
+            if self.board != None:
+                self.write_to_HS()
             self.defaultSettings()
             event.accept()
         else:
             event.ignore()
+            if self.board != None:
+                if not self.board.timerOn:
+                    self.board.pause()
+
+
+    def looser(self): #### Dialog on quit
+        if self.board != None:
+            if self.board.timerOn:
+                self.board.pause()
+            self.write_to_HS()
+            self.board.deleteLater()
+            self.board = None
+            self.statusbar = None
+            self.setCentralWidget(Main_menu(self))
+
 
 
     def keyPressEvent(self, e):
@@ -114,6 +137,15 @@ class MainWindow(qw.QMainWindow):
         elif key == qc.Qt.Key_Down:
             self.board.newdirect = -2
 
+    def write_to_HS(self):
+        if self.board.score > 0:
+            config = configparser.ConfigParser()
+            config.read('highscores.ini')
+            if config.get('HIGHSCORES', str(self.board.player_value)) < str(self.board.score):
+                config.set('HIGHSCORES', str(self.board.player_value), str(self.board.score))
+                with open('highscores.ini', "w") as config_file:
+                    config.write(config_file)
+
     def exit(self):
         if self.board != None:
             if self.board.timerOn:
@@ -125,6 +157,8 @@ class MainWindow(qw.QMainWindow):
 
             if reply == qw.QMessageBox.Yes:
                 ############# place to set defaults##############
+                self.write_to_HS()
+                #self.defaultSettings()
                 self.board.deleteLater()
                 self.board = None
                 ##################################################
@@ -182,6 +216,16 @@ class MainWindow(qw.QMainWindow):
 
         board.start()
 
+    def showHS(self):
+        if self.board != None:
+            self.board.deleteLater()
+            self.board = None
+            #Main_window.main_widget = Settings()
+            Board.close
+        #print("call Settings")
+        #print("who is self:", self)
+        self.setCentralWidget(Highscores(self))
+
 
 
 class Main_menu(qw.QFrame):
@@ -204,6 +248,7 @@ class Main_menu(qw.QFrame):
         btn_newgame = qw.QPushButton('New game', self)
         btn_newgame.clicked.connect(parent.showGame)
         btn_HS = qw.QPushButton('High scores', self)
+        btn_HS.clicked.connect(parent.showHS)
         btn_Quit = qw.QPushButton('Quit', self)
         btn_Quit.clicked.connect(parent.close)#self.on_pushButtonClose_clicked)
 

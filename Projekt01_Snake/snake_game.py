@@ -1,7 +1,7 @@
 import random
-from PyQt5.QtWidgets import QFrame
-from PyQt5.QtCore import QBasicTimer, pyqtSignal, Qt
-from PyQt5.QtGui import QPainter, QColor, QPixmap, QPen
+from PyQt5.QtWidgets import QFrame, QDialog, QLabel,QVBoxLayout
+from PyQt5.QtCore import QBasicTimer, pyqtSignal, Qt,QSize
+from PyQt5.QtGui import QPainter, QColor, QPixmap, QPen, QImage, QPalette, QBrush
 import configparser
 
 class Board(QFrame):
@@ -11,7 +11,7 @@ class Board(QFrame):
     BoardHeight = 20
 
     speed = 500
-    print("speed: ", speed)
+    #print("speed: ", speed)
     score = 0
 
     scale = 30  # one cell scale
@@ -34,8 +34,9 @@ class Board(QFrame):
     def __init__(self, parent):
         super().__init__(parent)
 
-        print("self: ", self)
-        print("parent: ", parent)
+        #print("self: ", self)
+        #print("parent: ", parent)
+        self.parent = parent
         #print(parent.player_str)
 
         self.initBoard()
@@ -56,7 +57,7 @@ class Board(QFrame):
         config = configparser.ConfigParser()
         config.read('config.ini')
         self.player_value = config.get('SectionOne', 'player')
-        self.border_value = config.get('SectionOne', "Border")
+        self.border_value = 1 #config.get('SectionOne', "Border")
         self.acceleration_value = config.get('SectionOne', "Acceleration")
         self.speed_value = config.get('SectionOne', "Speed")
         self.maxSpeed_value = config.get('SectionOne', "Maximum speed")
@@ -88,7 +89,7 @@ class Board(QFrame):
             [-1, 0]
         ]
         self.snake_cords = snake_cords
-        print("new snake_cords: ", snake_cords)
+        #print("new snake_cords: ", snake_cords)
         direct = 0  # Direction
         #self.direct = direct
         ######
@@ -104,9 +105,9 @@ class Board(QFrame):
         self.timerOn = False
 
     def timerEvent(self, event):
-        self.snake_step()
+        self.snake_step(self.parent)
 
-    def snake_step(self):
+    def snake_step(self, parent):
         #######update direction#####
 
         #print(self.timer)
@@ -142,28 +143,31 @@ class Board(QFrame):
                 break
         #########################################################
         ############boarders for snake##########################
-        if scords[0][0] == self.BoardWidth+1:#21:
+        if scords[0][0] == self.BoardWidth+1:
+            self.game_over(parent)
             scords[0][0] = 0
         elif scords[0][0] == -1:
+            self.game_over(parent)
             scords[0][0] = self.BoardWidth
-
         if scords[0][1] == self.BoardHeight+1:
+            self.game_over(parent)
             scords[0][1] = 0
         elif scords[0][1] == -1:
+            self.game_over(parent)
             scords[0][1] = self.BoardHeight
 
         self.ScoreSignal.emit(self.player_value  + " score: " + str(self.score))
 
         self.speed_update()
 
-        self.game_over()
+        #self.game_over()
 
         self.update()
 
     def apple_update(self):
         if len(self.apples_cords) < self.num:
             cord = [random.randint(0,self.BoardWidth),random.randint(0,self.BoardHeight)]
-            while cord in self.apples_cords or cord in self.snake_cords:
+            while cord in self.apples_cords and cord not in self.snake_cords:
                 cord = [random.randint(0, self.BoardWidth), random.randint(0, self.BoardHeight)]
             self.apples_cords.append(cord)
 
@@ -187,6 +191,11 @@ class Board(QFrame):
     def paintEvent(self, QP):
         QP = QPainter()
         QP.begin(self)
+        oImage = QImage("background.png")
+        sImage = oImage.scaled(QSize(400, 300))  # resize Image to widgets size
+        palette = QPalette()
+        palette.setBrush(10, QBrush(sImage))  # 10 = Windowrole
+        self.setPalette(palette)
         self.drawSnake(QP)
         self.drawApples(QP)
         self.drawBoard(QP)
@@ -245,9 +254,51 @@ class Board(QFrame):
         Board.speed = 1500//len(self.snake_cords)
         self.start()
 
-    def game_over(self):
-        if len(self.snake_cords) == 2:
-            self.timer.stop()
-            self.timerOn = False
-            self.ScoreSignal.emit("Game Over! " + self.player_value + ", you got " + str(self.score) + " apples")
+    def game_over(self,parent):
+        #if len(self.snake_cords) == 2:
+        if self.border_value !=1:
+            return 0
+        #print("game over")
+        self.pause()
+        #self.timer.stop()
+        #self.timerOn = False
+        if self.score > 0:
+            config = configparser.ConfigParser()
+            config.read('highscores.ini')
+            if config.get('HIGHSCORES', str(self.player_value)) < str(self.score):
+                config.set('HIGHSCORES', str(self.player_value), str(self.score))
+                with open('highscores.ini', "w") as config_file:
+                    config.write(config_file)
+        self.ScoreSignal.emit("Game Over! " + self.player_value + ", you got " + str(self.score) + " apples")
+        #self.deleteLater()
+        #self.board = None
+        ##################################################
+        # Right place to show message that the game is over
+        ##################################################
+        #self.setCentralWidget(Main_menu(self))
+        #print(parent)
+        parent.looser()
+        self.showdialog()
+
+    def showdialog(self):
+        d = QDialog()
+
+        d.setWindowTitle("Game Over!")
+        d.setWindowModality(Qt.ApplicationModal)
+
+        l1 = QLabel()
+        l1.setText("Game Over! " + self.player_value + ", you got " + str(self.score) + " apples")
+        l1.setAlignment(Qt.AlignCenter)
+
+        vbox = QVBoxLayout()
+        vbox.addStretch()
+        vbox.addWidget(l1)
+        vbox.addStretch()
+
+        d.setLayout(vbox)
+
+        d.setWindowModality(Qt.ApplicationModal)
+
+        d.exec_()
+
 

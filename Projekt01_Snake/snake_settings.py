@@ -43,15 +43,20 @@ class Settings(qw.QFrame):
         form = qw.QFormLayout()
 
         self.player = qw.QLineEdit(self)
+        self.player.setToolTip("Your nickname")
         self.player.setText(self.player_value)
 
         self.fieldWidth = qw.QLineEdit(self)
+        self.fieldWidth.setToolTip("How wide should be a field?")
         self.fieldWidth.setText(self.fieldWidth_value)
         self.fieldHeight = qw.QLineEdit(self)
+        self.fieldHeight.setToolTip("How high should be a field?")
         self.fieldHeight.setText(self.fieldHeight_value)
         self.fruitPrbbl = qw.QLineEdit(self)
+        self.fruitPrbbl.setToolTip("How many apples shoud be in game at the same time?")
         self.fruitPrbbl.setText(self.fruitPrbbl_value)
         self.scale = qw.QLineEdit(self)
+        self.scale.setToolTip("Default: 1 column= 1px. Isn't this too small? Let's set a multiplier!")
         self.scale.setText(self.scale_value)
         #self.player_str = self.player.text()
 
@@ -115,7 +120,7 @@ class Settings(qw.QFrame):
             config.write(config_file)
 
 
-#win.setLayout(form)      # Wichtig! Erst hier wird das Layout an win angefügt
+#win.setLayout(form)      # Wichtig! Erst hier wird das Layout an win angef�gt
 #win.show()
 
 #app.exec_()
