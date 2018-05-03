@@ -169,7 +169,7 @@ class MainWindow(qw.QMainWindow):
                 self.board.pause()
 
         """
-        ########## am i in board ? #############################
+        ########## am i in board ?? #############################
         if self.board != None:
             if self.board.timerOn:
                 self.board.timer.stop()
