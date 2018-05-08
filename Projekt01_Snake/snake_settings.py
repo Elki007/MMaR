@@ -64,8 +64,8 @@ class Settings(qw.QFrame):
 
 
         hbox = qw.QHBoxLayout()
-        hbox.addWidget(qw.QCheckBox("on"))
-        hbox.addWidget(qw.QCheckBox("off"))
+        hbox.addWidget(qw.QRadioButton("on"))
+        hbox.addWidget(qw.QRadioButton("off"))
 
         form.addRow(qw.QLabel("Border"), hbox)
 

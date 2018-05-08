@@ -239,7 +239,7 @@ class Board(QFrame):
         #print("im here")
         for i in self.apples_cords:
             #QP.drawRect(i[0] * self.scale, i[1] * self.scale, self.scale, self.scale)
-            QP.drawPixmap(i[0]* self.scale, i[1]* self.scale, self.scale, self.scale, pixmap)
+            QP.drawPixmap(i[0] * self.scale, i[1] * self.scale, self.scale, self.scale, pixmap)
 
 
 
