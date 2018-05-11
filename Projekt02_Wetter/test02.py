@@ -35,15 +35,40 @@ class PlotWindow(qw.QDialog):
         x = np.linspace(0,10, 10)
         y = np.cos(x)*np.cos(2*x)+np.sin(x)
 
+        x1 = np.linspace(0, 10, 250)
+        y1 = np.cos(x1) * np.cos(2 * x1) + np.sin(x1)
+
+        xp = np.linspace(0, 10, 250)
+        yp= self.polynome(xp,x,y)
+
 
         # Zeichnen und Anzeige
         self.axis.plot(x, y,'o')
-        print(y)
+        self.axis.plot(x1, y1)
+        self.axis.plot(xp, yp)
+        #self.
 
 
         # Achtung: keine plt.show!
         # (Neu-)Zeichnen des Canva
         self.canvas.draw()
+
+    def polynome(self, x, pointx, pointy):
+        total = 0
+        n = len(pointx)
+        for i in range(n):
+            xi, yi = pointx[i], pointy[i]
+
+            total += yi * self.g(i, n, x, pointx, xi)
+        return total
+
+    def g(self, i, n, x, pointx, xk):
+        tot_mul = 1
+        for j in range(n):
+            if i != j:
+                xj = pointx[j]
+                tot_mul *= (x - xj) / (xk - xj)
+        return tot_mul
 
 
 if __name__ == '__main__':
