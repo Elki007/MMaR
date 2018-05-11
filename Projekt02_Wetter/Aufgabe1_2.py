@@ -1,97 +1,79 @@
-import numpy as np
-import matplotlib.pyplot as plt
-<<<<<<< HEAD
 import sys
+from PyQt5 import QtWidgets as qw
+from PyQt5 import QtGui as qg
+# from PyQt5 import QtCore as qc
 
-def main():
-    if len(sys.argv) == 1 or "-h" in sys.argv or "--help" in sys.argv:
-        print("python lagrange.py <x1.y1> .. <x_k.y_k>")
-        print ("Example:")
-        print ("python lagrange.py 0.1 2.4 4.5 3.2")
-        exit()
-    points = []
-    for i in range(len(sys.argv)):
-        if i != 0:
-            points.append((int(sys.argv[i].split(".")[0]),int(sys.argv[i].split(".")[1])))
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+import matplotlib.pyplot as plt
+import numpy as np
 
-        #points =[(0,0),(25,30),(50,10), (57,0)]
-    P = lagrange(points)
-    nr = 2
-    print ("(" + str(points[nr][0]) + ", " + str(points[nr][1]) +") P(" + str(points[nr][0]) +")= " +str(P(points[nr][0])))
-    plot(P, points)
+class PlotWindow(qw.QDialog):
+    def __init__(self, parent=None):
+        super(PlotWindow, self).__init__(parent)
+
+        # das Diagramm auf dem wir zeichnen
+        self.figure, self.axis = plt.subplots()
+        self.setWindowTitle('Aufgabe1_2')
+
+		# FigueCanvas ist ein qt-Widget, das das Diagramm anzeigen kann
+        self.canvas = FigureCanvas(self.figure)
+
+        # die Matplotlib-NavigationsLeiste
+        self.toolbar = NavigationToolbar(self.canvas, self)
+
+		# Layout (wie Sie es bereits kennen)
+        self.button = qw.QPushButton('Plot')
+        self.button.clicked.connect(self.plot)
+        layout = qw.QVBoxLayout()
+        layout.addWidget(self.toolbar)
+        layout.addWidget(self.canvas)
+        layout.addWidget(self.button)
+        self.setLayout(layout)
+
+	# Die Plot-Funktion kann nun wie vorher definiert werden:
+    def plot(self):
+        x = np.linspace(0,10, 10)
+        y = np.cos(x)*np.cos(2*x)+np.sin(x)
+
+        x1 = np.linspace(0, 10, 250)
+        y1 = np.cos(x1) * np.cos(2 * x1) + np.sin(x1)
+
+        xp = np.linspace(0, 10, 250)
+        yp= self.polynome(xp,x,y)
 
 
-def lagrange(points):
+        # Zeichnen und Anzeige
+        self.axis.plot(x, y,'o',label="Ausgewählte Punkte")
+        self.axis.plot(x1, y1,label="Ursprüngliche Funktion")
+        self.axis.plot(xp, yp,label="Polynominterpolation")
+        plt.legend()
+
+        # Achtung: keine plt.show!
+        # (Neu-)Zeichnen des Canva
+        self.canvas.draw()
+
+    def polynome(self, x, pointx, pointy):
         total = 0
-        n = len(points)
+        n = len(pointx)
         for i in range(n):
-            xi, yi = points[i]
+            xi, yi = pointx[i], pointy[i]
 
-            total += yi * g(i, n)
+            total += yi * self.g(i, n, x, pointx, xi)
         return total
-def g(i, n):
 
-    tot_mul = 1
-    for j in range(n):
-        if i == j:
-            continue
-            xj, yj = points[j]
-            tot_mul *= (x - xj) / float(xi - xj)
-
-    return tot_mul
+    def g(self, i, n, x, pointx, xk):
+        tot_mul = 1
+        for j in range(n):
+            if i != j:
+                xj = pointx[j]
+                tot_mul *= (x - xj) / (xk - xj)
+        return tot_mul
 
 
-def plot(f, points):
-    x = range(-10, 100)
-    y = map(f, x)
-    print (y)
-    plt.plot( x, y, linewidth=2.0)
-    x_list = []
-    y_list = []
-    for x_p, y_p in points:
-        x_list.append(x_p)
-        y_list.append(y_p)
-    print (x_list)
-    print (y_list)
-    plt.plot(x_list, y_list,  'ro')
+if __name__ == '__main__':
+    app = qw.QApplication(sys.argv)
+    main = PlotWindow()
+    main.show()
 
-    plt.show()
-
-
-points=[[1,2],[2,4],[3,2],[4,5]]
-print(lagrange(points))
-
-
-if __name__ == "__main__":
-    main()
-x=np.linspace(0, 5, 10)
-
-
-
-points=[[1,2],[2,4],[3,2],[4,5]]
-print(lagrange(points))
-=======
-
-tabelle = np.loadtxt("wetterdaten2.txt", delimiter=';',skiprows=1, usecols=np.arange(15))
-
-spalte_tx = np.linspace(2.0, 20.0, num=2)
-xAchse = np.arange(len(spalte_tx))
-print(spalte_tx)
-print(np.linspace(2.0, 20.0, num=2))
-
-# Achsen
-fig, plot_tx = plt.subplots()
-plot_tx.plot(xAchse, spalte_tx, 'o', label="Max Temp. 2m über dem Erdboden")
-plt.legend()
-
-# aus xlabel und xlim wird set_xlabel und set_xlim
-plot_tx.set_xlabel('Punkte')
-
-
-# Färben der y-Achse
-plot_tx.tick_params('y', colors='g')
-
-# Zeichnen und Anzeige
-plt.legend()
-plt.show()
->>>>>>> origin/master
+    sys.exit(app.exec_())

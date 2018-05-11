@@ -14,6 +14,7 @@ class PlotWindow(qw.QDialog):
 
         # das Diagramm auf dem wir zeichnen
         self.figure, self.axis = plt.subplots()
+        self.setWindowTitle('Aufgabe1_2')
 
 		# FigueCanvas ist ein qt-Widget, das das Diagramm anzeigen kann
         self.canvas = FigureCanvas(self.figure)
@@ -43,11 +44,10 @@ class PlotWindow(qw.QDialog):
 
 
         # Zeichnen und Anzeige
-        self.axis.plot(x, y,'o')
-        self.axis.plot(x1, y1)
-        self.axis.plot(xp, yp)
-        #self.
-
+        self.axis.plot(x, y,'o',label="Ausgewählte Punkte")
+        self.axis.plot(x1, y1,label="Ursprüngliche Funktion")
+        self.axis.plot(xp, yp,label="Polynominterpolation")
+        plt.legend()
 
         # Achtung: keine plt.show!
         # (Neu-)Zeichnen des Canva
