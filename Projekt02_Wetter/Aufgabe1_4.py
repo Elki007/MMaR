@@ -49,13 +49,18 @@ class PlotWindow(qw.QDialog):
         yAchse = tabelle[:, 6]
         n = len(yAchse)
         xAchse = np.arange(n)
+
+        #####laut der Aufgabe müssen wir nur zwei Punkte nehmen####
+        xAchseL = np.linspace(0,18,2, endpoint=True)
+
+        print(xAchseL)
         xAchseP = np.linspace(0, 18, 250)
 
         mit_x = np.sum(xAchse)/n
         mit_y = np.sum(yAchse)/n
         m = (n*mit_x*mit_y-np.sum(xAchse*yAchse))/(n*mit_x**2-np.sum(xAchse**2))
         b = mit_y - m*mit_x
-        l_Reg = m*xAchse+b
+        l_Reg = m*xAchseL+b
 
         grad = self.grad
 
@@ -66,7 +71,7 @@ class PlotWindow(qw.QDialog):
 
 
         # Zeichnen und Anzeige
-        self.axis.plot(xAchse, l_Reg, label="lineare Regression")
+        self.axis.plot(xAchseL, l_Reg, label="lineare Regression")
         self.axis.plot(xAchse, yAchse, label="spalte_tx")
         self.axis.plot(xAchseP, zz, label="polynomiell Regression, grad:" + str(grad))
 
