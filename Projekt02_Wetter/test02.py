@@ -32,15 +32,19 @@ class PlotWindow(qw.QDialog):
 
 	# Die Plot-Funktion kann nun wie vorher definiert werden:
     def plot(self):
-        x = np.linspace(0,10, 250)
+        x = np.linspace(0,10, 10)
         y = np.cos(x)*np.cos(2*x)+np.sin(x)
 
+
         # Zeichnen und Anzeige
-        self.axis.plot(x, y)
+        self.axis.plot(x, y,'o')
+        print(y)
+
 
         # Achtung: keine plt.show!
         # (Neu-)Zeichnen des Canva
         self.canvas.draw()
+
 
 if __name__ == '__main__':
     app = qw.QApplication(sys.argv)

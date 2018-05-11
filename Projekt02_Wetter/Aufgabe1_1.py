@@ -22,11 +22,13 @@ plt.legend()
 plot_tx.set_xlabel('Punkte')
 
 # Färben der y-Achse
-plot_tx.tick_params('y', colors='g')
+plot_tx.tick_params('y', colors='b')
 
 # zweite y-Achse (mit der gleichen x-Achse)
 plot_rr = plot_tx.twinx()
 plot_rr.plot(xAchse, spalte_rr, 'g-', label="Niederschlagsmenge")
+
+plot_rr.tick_params('y', colors='g')
 
 # Zeichnen und Anzeige
 #plt.plot(xAchse, spalte_tx, '.')
