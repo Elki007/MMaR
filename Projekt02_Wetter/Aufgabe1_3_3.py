@@ -14,7 +14,7 @@ class PlotWindow(qw.QDialog):
 
         # das Diagramm auf dem wir zeichnen
         self.figure, self.axis = plt.subplots()
-        self.setWindowTitle('Aufgabe1_2')
+        self.setWindowTitle('Aufgabe1_3_3')
 
         # FigueCanvas ist ein qt-Widget, das das Diagramm anzeigen kann
         self.canvas = FigureCanvas(self.figure)
@@ -33,28 +33,29 @@ class PlotWindow(qw.QDialog):
 
     # Die Plot-Funktion kann nun wie vorher definiert werden:
     def plot(self):
-        x = np.linspace(0,10, 10)
-        y = np.cos(x)*np.cos(2*x)+np.sin(x)
+        tabelle = np.loadtxt("wetterdaten2.txt", delimiter=';', skiprows=1, usecols=np.arange(15))
 
-        x1 = np.linspace(0, 10, 250)
-        y1 = np.cos(x1) * np.cos(2 * x1) + np.sin(x1)
+        yAchse = tabelle[:, 6]
+        n = len(yAchse)
+        xAchse = np.arange(n)
+        x4=np.array(range(1,n-1))
+        y4=[]
 
-        xp = np.linspace(0, 10, 250)
-        yp= self.polynome(xp,x,y)
-
-        xz = np.linspace(0,18, 2)
-        z=np.array([np.mean(y)]*2)
+        for i in range(1,n-1):
+            y4.append(np.mean(yAchse[i-1:i+2]))
 
         # Zeichnen und Anzeige
-        self.axis.plot(x, y,'o',label="Ausgewählte Punkte")
-        self.axis.plot(x1, y1,label="Ursprüngliche Funktion")
-        self.axis.plot(xp, yp,label="Polynominterpolation")
-        self.axis.plot(xz, z, label="konstante Mittelwert")
+        self.axis.plot(xAchse, yAchse,'o',label="Daten")
+        self.axis.plot(x4, y4,'-',label="Ausgewählte Punkte")
+        #self.axis.plot(xp, yp,label="Polynominterpolation")
+        #plt.plot(x4, y4)
         plt.legend()
+
 
         # Achtung: keine plt.show!
         # (Neu-)Zeichnen des Canva
         self.canvas.draw()
+        #plt.show()
     def polynome(self, x, pointx, pointy):
         total = 0
         n = len(pointx)

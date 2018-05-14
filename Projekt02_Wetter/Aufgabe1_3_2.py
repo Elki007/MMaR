@@ -33,45 +33,38 @@ class PlotWindow(qw.QDialog):
 
     # Die Plot-Funktion kann nun wie vorher definiert werden:
     def plot(self):
-        x4=np.array([])
-        y4=np.array([])
-        x = np.linspace(0,10, 10)
-        y = np.cos(x)*np.cos(2*x)+np.sin(x)
+        tabelle = np.loadtxt("wetterdaten2.txt", delimiter=';', skiprows=1, usecols=np.arange(15))
 
-        x1 = np.linspace(0, 10, 250)
-        y1 = np.cos(x1) * np.cos(2 * x1) + np.sin(x1)
+        yAchse = tabelle[:, 6]
+        n = len(yAchse)
+        xAchse = np.arange(n)
 
-        xp = np.linspace(0, 10, 250)
-        yp= self.polynome(xp,x,y)
+        x4=np.array(range(1,18,3))
+        y4=np.array(range(6))
 
-        for i in range(3):
-            if i==0:
-                x4[i] = x[1:3]/3
-                y4[i] = np.mean(y[1:3])
-            elif i==1:
-                x4[i] = x[4:6]/3
-                y4[i] = np.mean(y[4:6])
-            elif i==2:
-                x4[i] = x[7:9]/3
-                y4[i] = np.mean(y[7:9])
-            elif i==3:
-                x4[i] = x[10:11]/2
-                y4[i] = np.mean(y[10:11])
+        #xp = np.linspace(0, 10, 250)
+        #yp= self.polynome(xp,x,y)
 
+        for i in range(6):
+            ii=i*3
+            #x4[i] = np.mean(xAchse[ii:ii+3])
+            y4[i] = np.mean(yAchse[ii:ii+3])
 
+        print(x4)
+        print(y4)
 
         # Zeichnen und Anzeige
-        self.axis.plot(x, y,'o',label="Ausgewählte Punkte")
-        self.axis.plot(x1, y1,label="Ursprüngliche Funktion")
-        self.axis.plot(xp, yp,label="Polynominterpolation")
-        plt.plot(x4, y4)
+        self.axis.plot(xAchse, yAchse,'o',label="Daten")
+        self.axis.plot(x4, y4,'-',label="Ausgewählte Punkte")
+        #self.axis.plot(xp, yp,label="Polynominterpolation")
+        #plt.plot(x4, y4)
         plt.legend()
 
 
         # Achtung: keine plt.show!
         # (Neu-)Zeichnen des Canva
         self.canvas.draw()
-        plt.show()
+        #plt.show()
     def polynome(self, x, pointx, pointy):
         total = 0
         n = len(pointx)

@@ -82,22 +82,6 @@ class PlotWindow(qw.QDialog):
         # (Neu-)Zeichnen des Canva
         self.canvas.draw()
 
-    def polynome(self, x, pointx, pointy):
-        total = 0
-        n = len(pointx)
-        for i in range(n):
-            xi, yi = pointx[i], pointy[i]
-
-            total += yi * self.g(i, n, x, pointx, xi)
-        return total
-
-    def g(self, i, n, x, pointx, xk):
-        tot_mul = 1
-        for j in range(n):
-            if i != j:
-                xj = pointx[j]
-                tot_mul *= (x - xj) / (xk - xj)
-        return tot_mul
 
 
 if __name__ == '__main__':
