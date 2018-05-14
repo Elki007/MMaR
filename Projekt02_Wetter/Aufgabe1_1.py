@@ -8,6 +8,15 @@ tabelle = np.loadtxt("wetterdaten2.txt", delimiter=';',skiprows=1, usecols=np.ar
 spalte_tx = tabelle[:,6]
 spalte_rr = tabelle[:,14]
 
+
+# Falls in der Spalte rr Werte von -999 geführt werden, werden sie auf 0 gesetzt.
+len_rr = len(spalte_rr)
+print(len_rr)
+
+for i in range(len_rr):
+    if (spalte_rr[i] == -999):
+        spalte_rr[i] = 0
+
 # x-Achse von Zeilenanzahl abhängig machen
 xAchse = np.arange(len(spalte_rr))
 
