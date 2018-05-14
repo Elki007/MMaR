@@ -68,7 +68,7 @@ class PlotWindow(qw.QDialog):
         # x-Achse geht vom (bereich//2). bis zum (bereich//2).letzten Element
         # y-Achse, ist eine Liste, die später gefüllt wird
         x_teilachse = np.array(range(grenze,n-grenze))
-        y4=[]
+        y_mw = []
 
         # Was will ich machen:
         #   polyfit über n Punkte laufen lassen, deren Mittelpunkt nehmen und als ein Punkt einfügen
@@ -83,7 +83,7 @@ class PlotWindow(qw.QDialog):
             poly_func = np.poly1d(poly)
 
             mw_func = poly_func(xAchse[i-grenze:i+grenze+1])
-            y4.append(np.mean(mw_func))
+            y_mw.append(np.mean(mw_func))
 
         z = np.polyfit(xAchse, yAchse, grad)
         f = np.poly1d(z)
@@ -92,8 +92,7 @@ class PlotWindow(qw.QDialog):
 
         # Zeichnen und Anzeige
         self.axis.plot(xAchse, yAchse, label="spalte_tx")
-
-        self.axis.plot(x_teilachse, y4, 'y-', label="Ausgewählte Punkte")
+        self.axis.plot(x_teilachse, y_mw, 'y-', label="Moving-Least-Squares")
         self.axis.plot(xAchseP, zz, label="polynomiell Regression, grad:" + str(grad))
 
         plt.legend()
