@@ -89,9 +89,15 @@ class PlotWindow(qw.QDialog):
 
         #E(b,m)#
         #for i in range (teil,n):
+        """
+        Grad:2
+        Fehler_L:  15704.246763612948
+        Fehler_P:  105232.546053088
+        """
         Fehler_L = 0
         Fehler_P = 0
-        for i in range(18,8,-1):
+        #for i in range(18,8,-1):
+        for i in range(9, 19):
             Fehler_L += (l_Reg[i]-yAchse[i])**2
             Fehler_P += (zz2[i] - yAchse[i]) ** 2
 
