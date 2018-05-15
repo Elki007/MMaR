@@ -40,8 +40,7 @@ class PlotWindow(qw.QDialog):
         y1 = np.cos(x1) * np.cos(2 * x1) + np.sin(x1)
 
         xp = np.linspace(0, 10, 250)
-        yp= self.polynome(xp,x,y)
-
+        yp= self.polynome(xp , x, y)
 
         # Zeichnen und Anzeige
         self.axis.plot(x, y,'o',label="Ausgewählte Punkte")

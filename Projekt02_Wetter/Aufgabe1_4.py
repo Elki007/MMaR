@@ -67,8 +67,7 @@ class PlotWindow(qw.QDialog):
         z = np.polyfit(xAchse, yAchse, grad)
         f = np.poly1d(z)
         for i in range(len(xAchseP)):
-            zz = f(xAchseP)#, 'b+')
-
+            zz = f(xAchseP)
 
         # Zeichnen und Anzeige
         self.axis.plot(xAchseL, l_Reg, label="lineare Regression")

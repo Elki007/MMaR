@@ -73,7 +73,6 @@ class PlotWindow(qw.QDialog):
 
         # Anwendung auf vorherige Struktur, zur besseren Erklärung/Nachvollziehbarkeit
 
-
         xAchse = np.arange(n)
         xAchse_train = x_zufall_1
         xAchse_test = x_zufall_2
@@ -81,13 +80,14 @@ class PlotWindow(qw.QDialog):
         yAchse_test = y_zufall_2
 
         #####laut der Aufgabe müssen wir nur zwei Punkte nehmen####
-
         xAchseL = np.linspace(0, n-1, 19, endpoint=True)
         xAchseP = np.linspace(0, n-1, 250)
 
+        n_anz = len(xAchse_train)
+
         mit_x = np.sum(xAchse_train)/teil
         mit_y = np.sum(yAchse_train)/teil
-        m = (n*mit_x*mit_y-np.sum(xAchse_train*yAchse_train))/(n*mit_x**2-np.sum(xAchse_train**2))
+        m = (teil*mit_x*mit_y-np.sum(xAchse_train*yAchse_train))/(teil*mit_x**2-np.sum(xAchse_train**2))
         b = mit_y - m*mit_x
         l_Reg = m * xAchseL + b
 
@@ -117,6 +117,7 @@ class PlotWindow(qw.QDialog):
         #for i in range (teil,n):
         Fehler_L = 0
         Fehler_P = 0
+
         for i in xAchse_test:
             Fehler_L += (l_Reg[i] - yAchse[i]) ** 2
             Fehler_P += (zz2[i] - yAchse[i]) ** 2
@@ -131,9 +132,86 @@ class PlotWindow(qw.QDialog):
 
         """
 
+
         print("Fehler_L: ", Fehler_L)
         print("Fehler_P: ", Fehler_P)
         print()
+
+        #
+        # Spontaner Durchlauftest für gemittelten Fehlerwert (# Durchläufe = fehler_durchlauf):
+        #
+
+        Fehler_L_Ges = 0
+        Fehler_P_Ges = 0
+
+        Fehler_L = 0
+        Fehler_P = 0
+
+        fehler_durchlauf = 10
+
+        for i in range(fehler_durchlauf):
+            indices = np.random.permutation(n)
+
+            x_zufall_1 = indices[:teil]
+            x_zufall_2 = indices[teil:]
+
+            x_zufall_1.sort()
+            x_zufall_2.sort()
+
+            y_zufall_1 = []
+            y_zufall_2 = []
+
+            for i in x_zufall_1:
+                y_zufall_1.append(yAchse[i])
+
+            for i in x_zufall_2:
+                y_zufall_2.append(yAchse[i])
+
+            # Anwendung auf vorherige Struktur, zur besseren Erklärung/Nachvollziehbarkeit
+
+            xAchse_train = x_zufall_1
+            xAchse_test = x_zufall_2
+            yAchse_train = y_zufall_1
+
+            #####laut der Aufgabe müssen wir nur zwei Punkte nehmen####
+
+            xAchseL = np.linspace(0, n - 1, 19, endpoint=True)
+            xAchseP = np.linspace(0, n - 1, 250)
+
+            mit_x = np.sum(xAchse_train) / teil
+            mit_y = np.sum(yAchse_train) / teil
+
+            m = (n * mit_x * mit_y - np.sum(xAchse_train * yAchse_train)) / (n * mit_x ** 2 - np.sum(xAchse_train ** 2))
+            b = mit_y - m * mit_x
+
+            l_Reg = m * xAchseL + b
+
+            z = np.polyfit(xAchse_train, yAchse_train, grad)
+            f = np.poly1d(z)
+
+            zz2 = f(xAchseL)
+
+
+            for i in xAchse_test:
+                Fehler_L += (l_Reg[i] - yAchse[i]) ** 2
+                Fehler_P += (zz2[i] - yAchse[i]) ** 2
+
+            Fehler_L /= len(xAchse_test)
+            Fehler_P /= len(xAchse_test)
+
+            Fehler_L_Ges += Fehler_L
+            Fehler_P_Ges += Fehler_P
+
+            Fehler_L, Fehler_P = 0, 0
+
+
+        Fehler_P_Ges /= fehler_durchlauf
+        Fehler_L_Ges /= fehler_durchlauf
+
+        print("Fehler_L_Ges (", fehler_durchlauf, "): ", Fehler_L_Ges, sep='')
+        print("Fehler_P_Ges (", fehler_durchlauf, "): ", Fehler_P_Ges, sep='')
+
+        print("Teeeeeest")
         '''print("l_Reg", l_Reg[18])
         print(len(l_Reg))
 

@@ -17,7 +17,7 @@ class PlotWindow(qw.QDialog):
         self.setWindowTitle('Aufgabe1_5')
 
         # Größe des Fensters bzw. Teildaten-Abschnitts - Wie viele Werte sollen für einen Mittelwert genommen werden?
-        self.bereich = 5
+        self.bereich = 6
 
 		# FigueCanvas ist ein qt-Widget, das das Diagramm anzeigen kann
         self.canvas = FigureCanvas(self.figure)
@@ -71,12 +71,7 @@ class PlotWindow(qw.QDialog):
         y_mw = []
 
         # Was will ich machen:
-        #   polyfit über n Punkte laufen lassen, deren Mittelpunkt nehmen und als ein Punkt einfügen
-        """
-            3 -> 1 - n-1
-            4 -> 2 - n-2
-            5 -> 2 - n-2
-        """
+        #   polyfit in Grad "grad" über n Punkte laufen lassen, deren Mittelpunkt nehmen und als ein Punkt einfügen
 
         for i in range(grenze, n-grenze):
             poly = np.polyfit(xAchse[i-grenze:i+grenze+1], yAchse[i-grenze:i+grenze+1], grad)
@@ -84,6 +79,7 @@ class PlotWindow(qw.QDialog):
 
             mw_func = poly_func(xAchse[i-grenze:i+grenze+1])
             y_mw.append(np.mean(mw_func))
+
 
         z = np.polyfit(xAchse, yAchse, grad)
         f = np.poly1d(z)
