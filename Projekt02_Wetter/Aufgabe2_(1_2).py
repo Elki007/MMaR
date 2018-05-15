@@ -14,7 +14,7 @@ class PlotWindow(qw.QDialog):
 
         # das Diagramm auf dem wir zeichnen
         self.figure, self.axis = plt.subplots()
-        self.setWindowTitle('Aufgabe2_Extrapolation')
+        self.setWindowTitle('Aufgabe2_1_2')
 
 		# FigueCanvas ist ein qt-Widget, das das Diagramm anzeigen kann
         self.canvas = FigureCanvas(self.figure)
@@ -44,7 +44,7 @@ class PlotWindow(qw.QDialog):
             self.grad = int(sel[0])
 
     def plot(self):
-        tabelle = np.loadtxt("wetterdaten2.txt", delimiter=';', skiprows=1, usecols=np.arange(15))
+        '''tabelle = np.loadtxt("wetterdaten2.txt", delimiter=';', skiprows=1, usecols=np.arange(15))
 
         yAchse = tabelle[:, 6]
         n = len(yAchse)
@@ -81,12 +81,6 @@ class PlotWindow(qw.QDialog):
             zz = f(xAchseP)#, 'b+')
             zz2 = f(xAchseL)
 
-        '''print("xAchseL",xAchseL)
-        print("l_Reg",l_Reg)
-        print("xAchse",xAchse)
-        print("yAchse",yAchse)
-        print("xAchseP",xAchseP)
-        print("zz",zz)'''
         # Zeichnen und Anzeige
         self.axis.plot(xAchseL, l_Reg, label="lineare Regression")
         self.axis.plot(xAchse_train, yAchse_train,'g-', label="spalte_tx_train")
@@ -96,11 +90,11 @@ class PlotWindow(qw.QDialog):
 
         #E(b,m)#
         #for i in range (teil,n):
-        """
+
         Grad:2
         Fehler_L:  15704.246763612948
         Fehler_P:  105232.546053088
-        """
+
         Fehler_L = 0
         Fehler_P = 0
         #for i in range(18,8,-1):
@@ -114,18 +108,29 @@ class PlotWindow(qw.QDialog):
         print("Fehler_L: ", Fehler_L)
         print("Fehler_P: ", Fehler_P)
 
-        '''print("l_Reg", l_Reg[18])
-        print(len(l_Reg))
-
-        print("zz2", zz2[18])
-        print(len(l_Reg))
-
-        print("y", yAchse_test[0])
-        print(len(yAchse_test))'''
-        plt.legend()
+        plt.legend()'''
 
         # Achtung: keine plt.show!
         # (Neu-)Zeichnen des Canva
+
+        #Teil 1_2
+
+        x = np.linspace(0, 10, 5)
+        y = np.cos(x) * np.cos(2 * x) + np.sin(x)
+
+        x1 = np.linspace(0, 10, 250)
+        y1 = np.cos(x1) * np.cos(2 * x1) + np.sin(x1)
+
+        xp = np.linspace(0, 10, 250)
+        yp = self.polynome(xp, x, y)
+
+        # Zeichnen und Anzeige
+        self.axis.plot(x, y, 'o', label="Ausgewählte Punkte")
+        self.axis.plot(x1, y1, label="Ursprüngliche Funktion")
+        self.axis.plot(xp, yp, label="Polynominterpolation")
+        plt.legend()
+
+
         self.canvas.draw()
 
 

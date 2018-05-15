@@ -14,7 +14,7 @@ class PlotWindow(qw.QDialog):
 
         # das Diagramm auf dem wir zeichnen
         self.figure, self.axis = plt.subplots()
-        self.setWindowTitle('Aufgabe2_Extrapolation')
+        self.setWindowTitle('Aufgabe2_Interpolation')
 
 		# FigueCanvas ist ein qt-Widget, das das Diagramm anzeigen kann
         self.canvas = FigureCanvas(self.figure)
@@ -49,11 +49,15 @@ class PlotWindow(qw.QDialog):
         yAchse = tabelle[:, 6]
         n = len(yAchse)
 
+        # Verhältnis von Test- und Trainingswerten
+        anteil = 4
+        teil = n // anteil
+
         # Datensatz zufällig aufteilen (Interpolation)
         indices = np.random.permutation(n)
 
-        x_zufall_1 = indices[:n//2]
-        x_zufall_2 = indices[n//2:]
+        x_zufall_1 = indices[:teil]
+        x_zufall_2 = indices[teil:]
 
         x_zufall_1.sort()
         x_zufall_2.sort()
@@ -68,7 +72,8 @@ class PlotWindow(qw.QDialog):
             y_zufall_2.append(yAchse[i])
 
         # Anwendung auf vorherige Struktur, zur besseren Erklärung/Nachvollziehbarkeit
-        teil = n//2
+
+
         xAchse = np.arange(n)
         xAchse_train = x_zufall_1
         xAchse_test = x_zufall_2
