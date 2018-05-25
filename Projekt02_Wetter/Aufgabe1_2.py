@@ -33,7 +33,7 @@ class PlotWindow(qw.QDialog):
 
 	# Die Plot-Funktion kann nun wie vorher definiert werden:
     def plot(self):
-        x = np.linspace(0,10, 5)
+        x = np.linspace(0,10, 3)
         y = np.cos(x)*np.cos(2*x)+np.sin(x)
 
         x1 = np.linspace(0, 10, 250)

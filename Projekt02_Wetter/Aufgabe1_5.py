@@ -17,7 +17,7 @@ class PlotWindow(qw.QDialog):
         self.setWindowTitle('Aufgabe1_5')
 
         # Größe des Fensters bzw. Teildaten-Abschnitts - Wie viele Werte sollen für einen Mittelwert genommen werden?
-        self.bereich = 6
+        self.bereich = 3
 
 		# FigueCanvas ist ein qt-Widget, das das Diagramm anzeigen kann
         self.canvas = FigureCanvas(self.figure)

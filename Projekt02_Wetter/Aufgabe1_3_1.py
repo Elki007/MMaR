@@ -14,7 +14,7 @@ class PlotWindow(qw.QDialog):
 
         # das Diagramm auf dem wir zeichnen
         self.figure, self.axis = plt.subplots()
-        self.setWindowTitle('Aufgabe1_2')
+        self.setWindowTitle('Aufgabe1_3_1')
 
         # FigueCanvas ist ein qt-Widget, das das Diagramm anzeigen kann
         self.canvas = FigureCanvas(self.figure)
