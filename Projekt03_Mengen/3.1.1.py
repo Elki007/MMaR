@@ -1,4 +1,5 @@
 import numpy as np
+import itertools as it
 
 class Set():
 
@@ -43,6 +44,7 @@ class Set():
     def complement(self,other):
         return Set(np.setdiff1d(self.a,other.a))
 
+
     #ohne unterclasse!!!!!!!!!!!!!!!Wofür???
     def cartesian_product(self,other):
         menge=[]
@@ -50,6 +52,15 @@ class Set():
         for element in itertools.product(self.a,other.a):
             menge.append(element)
         return Set(menge)
+
+
+    def power(self,pow):
+        menge=[]
+        for i in range (len(self.a)):
+            menge.extend(it.combinations(self.a,i))
+            #itertools does not show it correctly, need to perfom it manually
+        return Set(menge)
+
 
 
 
@@ -80,6 +91,10 @@ def Menge(i,a=Set([])):
     return Menge(i-1,a.union(Set(a)))
 
 print (Menge(5))
+
+Apow=A.power(2)
+print("Apow: ", Apow)
+
 
 ####################################Aufgabe 3.1.3#################################################################
 
