@@ -16,11 +16,12 @@ class Set():
             print("{", end='')
             for i in range(0,len(self.a)):
                 if i != len(self.a)-1:
-                    print(self.a[i],", ", end='')
+                    print(self.a[i],", ", sep='', end='')
                 else:
-                    print(self.a[i], end='')
+                    print(self.a[i], sep='', end='')
             return ("}")
         return  u"\u2205" #unicode für lehre Menge
+
 
     def subset(self, auswahl):
         menge=[]
@@ -45,13 +46,12 @@ class Set():
         return Set(np.setdiff1d(self.a,other.a))
 
 
-    #ohne unterclasse!!!!!!!!!!!!!!!Wofür???
     def cartesian_product(self,other):
         menge=[]
-        import itertools
-        for element in itertools.product(self.a,other.a):
+        for element in it.product(self.a,other.a):
             menge.append(element)
-        return Set(menge)
+        return menge
+        #return Set(menge)
 
 
     def power(self,pow):
@@ -79,6 +79,36 @@ class Set():
             menge = menge.union(Set(Set(m)))
 
         return menge
+
+
+class Kartesisches_Produkt(Set):
+    def __init__(self,first,second):
+        self.first=first
+        self.second=second
+        #print(self.first.cartesian_product(self.second))
+        self.a = self.first.cartesian_product(self.second)
+
+    '''def cartesian_product(self, other):
+        menge = []
+        import itertools
+        for element in itertools.product(self.a, other.a):
+            menge.append(element)
+        return menge'''
+
+class Relation(Kartesisches_Produkt):
+    def __init__(self,Kartesisches_Produkt):
+        self.k = Kartesisches_Produkt
+        self.a = Kartesisches_Produkt.a
+
+
+    #def Reflexivitaet(self):
+
+
+    #def Symmetrie(self):
+
+
+    #def Transitivitaet(self):
+
 
 ####################################Aufgabe 3.1.1#################################################################
 print("Aufgabe 3.1.1: Mengenklasse\n")
@@ -120,8 +150,17 @@ print("Potenzmengen P(A): ", Apow)
 
 ####################################Aufgabe 3.1.3#################################################################
 print("\n\nAufgabe 3.1.3: Kartesisches Produkt\n")
-AxC=A.cartesian_product(C)
-print("AxC: ",AxC)
+# AxC=A.cartesian_product(C)
+#print("AxC: ",AxC)
+
+AAxCC = Kartesisches_Produkt(A,C)
+print(AAxCC)
 
 ####################################Aufgabe 3.1.5#################################################################
 print("\n\nAufgabe 3.1.5: (Äquivalenz-)Relationen\n")
+
+N = Set(range(101))
+print("N:",N)
+
+R = Relation(Kartesisches_Produkt(A,B))
+print(R)
