@@ -114,10 +114,14 @@ def Menge(i,a=Set([])):
 print ("Definition der Natürlichen Zahlen allein aus Mengen, n=5: ", Menge(5))
 
 Apow=A.power(2)
-print("Potenzmengen: ", Apow)
+print("A:",A)
+print("Potenzmengen P(A): ", Apow)
 
 
 ####################################Aufgabe 3.1.3#################################################################
-
+print("\n\nAufgabe 3.1.3: Kartesisches Produkt\n")
 AxC=A.cartesian_product(C)
-print(AxC)
+print("AxC: ",AxC)
+
+####################################Aufgabe 3.1.5#################################################################
+print("\n\nAufgabe 3.1.5: (Äquivalenz-)Relationen\n")
