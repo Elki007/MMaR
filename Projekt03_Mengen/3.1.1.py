@@ -4,8 +4,18 @@ import itertools as it
 class Set():
 
     def __init__(self,a):
-        self.a=a
+        # Hier müssen wir noch die Liste von doppelten Elementen befreien, geht ähnlich wie bei der Methode von subset
 
+        """
+        new_list_Set = []
+        for i in a:
+            if i not in new_list_Set:
+                new_list_Set.append(i)
+
+        self.a = new_list_Set
+        """
+
+        self.a = a
 
     def __lt__(self, other):
         return (len(self.a)<len(other.a))
@@ -54,7 +64,8 @@ class Set():
         #return Set(menge)
 
 
-    def power(self,pow):
+    #def power(self,pow):
+    def power(self):
         menge=Set([])
         lens=1
         lene=len(self.a)+1
@@ -80,6 +91,9 @@ class Set():
 
         return menge
 
+    def binomialCoefficients(num):
+        binomial_menge = Set([x for x in range(num)])
+        coeffi = binomial_menge.power()
 
 class Kartesisches_Produkt(Set):
     def __init__(self,first,second):
@@ -113,7 +127,7 @@ class Relation(Kartesisches_Produkt):
 ####################################Aufgabe 3.1.1#################################################################
 print("Aufgabe 3.1.1: Mengenklasse\n")
 
-A = Set(["hund","katze",7.8])
+A = Set(["hund","katze",7.8, "hund"])
 B = A.subset("a")
 AuB =A.union(B)
 C = Set (["auto", "vehicle"])
@@ -141,9 +155,9 @@ def Menge(i,a=Set([])):
         return a
     return Menge(i-1,a.union(Set(a)))
 
-print ("Definition der Natürlichen Zahlen allein aus Mengen, n=5: ", Menge(5))
+print("Definition der Natürlichen Zahlen allein aus Mengen, n=5: ", Menge(5))
 
-Apow=A.power(2)
+Apow=A.power()
 print("A:",A)
 print("Potenzmengen P(A): ", Apow)
 
