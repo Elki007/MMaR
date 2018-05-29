@@ -110,18 +110,81 @@ class Kartesisches_Produkt(Set):
         return menge'''
 
 class Relation(Kartesisches_Produkt):
-    def __init__(self,Kartesisches_Produkt):
+    def __init__(self,Kartesisches_Produkt,a):
         self.k = Kartesisches_Produkt
         self.a = Kartesisches_Produkt.a
+        self.p= Set(a)
 
+    def Reflexivitaet(self):
+        result = []
+        a = []
+        y = []
+        for a1, a2 in self.p:
+            if (a1 == a2):
+                result.append((a1,a2))
+                y.append(a1)
 
-    #def Reflexivitaet(self):
+            if (a1 not in a):
+                a.append(a1) #contains list of a0
 
+        if (Set(a) == Set(y)):
+            print("Reflexive")
+            return (result, True)
 
-    #def Symmetrie(self):
+        print("Not Reflexive")
+        return ([] , False)
 
+    def Symmetrie(self):
+        result = []
+        a = []
+        y = []
 
-    #def Transitivitaet(self):
+        for a1, a2 in self.p:
+            if  (not (a1 == a2)) and (a2==a1):
+                result.append((a1,a2))
+                y.append(a1)
+                y.append(a2)
+
+            if (a1 not in a):
+                a.append(a1) #contains list of a0
+
+            if (a2 not in a):
+                a.append(a1)
+
+        if (Set(a) == Set(y)):
+            print("Symmetrisch")
+            return (result, True)
+
+        print("Not Symmetrisch")
+        return ([] , False)
+
+    def Transitivitaet(self):
+        result = []
+        a = []
+        y = []
+
+        for a1, a2, a3 in self.p:
+            if  (not ((a1 == a2)) and (a2==a3) and (a1==a3)):
+                result.append((a1,a2,a3))
+                y.append(a1)
+                y.append(a2)
+                y.append(a3)
+
+            if (a1 not in a):
+                a.append(a1) #contains list of a0
+
+            if (a2 not in a):
+                a.append(a1)
+
+            if (a3 not in a):
+                a.append(a3)
+
+        if (Set(a) == Set(y)):
+            print("transitiv")
+            return (result, True)
+
+        print("Not transitiv")
+        return ([] , False)
 
 
 ####################################Aufgabe 3.1.1#################################################################
@@ -143,6 +206,7 @@ print("AuBuC:",AuBuC)
 
 print("AuB intersect C:",AuB.intersect(C))
 print("AuBuC intersect D:",AuBuC.intersect(D))
+print(Symmetrie(A))
 
 
 #N=Set( [Set([]),Set([Set([])])])
