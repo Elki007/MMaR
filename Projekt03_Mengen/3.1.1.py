@@ -110,81 +110,54 @@ class Kartesisches_Produkt(Set):
         return menge'''
 
 class Relation(Kartesisches_Produkt):
-    def __init__(self,Kartesisches_Produkt,a):
+    def __init__(self,Kartesisches_Produkt):
         self.k = Kartesisches_Produkt
         self.a = Kartesisches_Produkt.a
-        self.p= Set(a)
 
     def Reflexivitaet(self):
-        result = []
-        a = []
         y = []
-        for a1, a2 in self.p:
-            if (a1 == a2):
-                result.append((a1,a2))
-                y.append(a1)
-
-            if (a1 not in a):
-                a.append(a1) #contains list of a0
-
-        if (Set(a) == Set(y)):
-            print("Reflexive")
-            return (result, True)
-
-        print("Not Reflexive")
-        return ([] , False)
+        for i in range(len(self.a)):
+            for j in range(len(self.a)):
+                if i!=j:
+                    if self.a[i]==self.a[j]:
+                        y.append(self.a[i])
+        if len(y)!=0:
+            return True
+        return False
 
     def Symmetrie(self):
-        result = []
-        a = []
         y = []
+        for i in range(len(self.a)):
+            for j in range(len(self.a)):
+                if i!=j:
+                    if (self.a[i][0],self.a[i][1])==(self.a[j][1],self.a[j][0]):
+                        y.append(self.a[i])
+        if len(y)!=0:
+            return True
+        return False
 
-        for a1, a2 in self.p:
-            if  (not (a1 == a2)) and (a2==a1):
-                result.append((a1,a2))
-                y.append(a1)
-                y.append(a2)
-
-            if (a1 not in a):
-                a.append(a1) #contains list of a0
-
-            if (a2 not in a):
-                a.append(a1)
-
-        if (Set(a) == Set(y)):
-            print("Symmetrisch")
-            return (result, True)
-
-        print("Not Symmetrisch")
-        return ([] , False)
 
     def Transitivitaet(self):
-        result = []
-        a = []
+        #(a,b)(b,c)(a,c)
         y = []
+        for i in range(len(self.a)):
+            for j in range(len(self.a)):
+                if i!=j:
+                    a=self.a[i][0]
+                    if self.a[i][1]==self.a[j][0]:
+                        b=self.a[j][0]
+                    for k in range(len(self.a)):
+                        if k!=i:
+                            if self.a[k][0]==b:
+                                if self.a[k][1]==a:
+                                    return True
+        return False
 
-        for a1, a2, a3 in self.p:
-            if  (not ((a1 == a2)) and (a2==a3) and (a1==a3)):
-                result.append((a1,a2,a3))
-                y.append(a1)
-                y.append(a2)
-                y.append(a3)
+    def Aquivalenz(self):
+        if (self.Transitivitaet()==True)and(self.Symmetrie()==True)and(self.Reflexivitaet()==True):
+            return True
+        return False
 
-            if (a1 not in a):
-                a.append(a1) #contains list of a0
-
-            if (a2 not in a):
-                a.append(a1)
-
-            if (a3 not in a):
-                a.append(a3)
-
-        if (Set(a) == Set(y)):
-            print("transitiv")
-            return (result, True)
-
-        print("Not transitiv")
-        return ([] , False)
 
 
 ####################################Aufgabe 3.1.1#################################################################
@@ -206,7 +179,7 @@ print("AuBuC:",AuBuC)
 
 print("AuB intersect C:",AuB.intersect(C))
 print("AuBuC intersect D:",AuBuC.intersect(D))
-print(Symmetrie(A))
+#print(Symmetrie(A))
 
 
 #N=Set( [Set([]),Set([Set([])])])
@@ -241,4 +214,11 @@ N = Set(range(101))
 print("N:",N)
 
 R = Relation(Kartesisches_Produkt(A,B))
+print(A)
+print(B)
 print(R)
+print("reflexiv") if R.Reflexivitaet()==True else print("nicht reflexiv")
+print("symmetrisch") if R.Symmetrie()==True else print("nicht symmetrisch")
+print("transitiv") if R.Transitivitaet()==True else print("nicht transitiv")
+
+print("äquivalent") if R.Aquivalenz()==True else print("nicht äquivalent")
