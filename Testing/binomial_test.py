@@ -9,7 +9,6 @@ class Set:
         for i in a:
             if i not in new_list_Set:
                 new_list_Set.append(i)
-
         self.a = new_list_Set
 
         # self.a = a
@@ -53,7 +52,7 @@ class Set:
         return Set([x for x in self.a if x not in other.a])
 
     def subset(self, auswahl):
-        return Set((list(filter(auswahl, self.a))))
+        return Set(list(filter(auswahl, self.a)))
 
     # Nicht notwendig, da durch __getitem__ gelöst?
 #    def __iter__(self):
@@ -86,37 +85,93 @@ class Set:
 
 class Kartesisches_Produkt(Set):
     def __init__(self, first, second):
+        self.first = first.a
+        self.second = second.a
         self.a = first.product(second)
 
 
 ### Aufgabe 3.1.5 ###
 
+
 class Relation(Kartesisches_Produkt):
-    def __init__(self, Kartesisches_Produkt):
+    def __init__(self,Kartesisches_Produkt):
+        #super().__init__(Kartesisches_Produkt)
         self.k = Kartesisches_Produkt
         self.a = Kartesisches_Produkt.a
+        self.proof_one = []
+        self.proof_two = []
+        for x in self.a:
+            if x[0] not in self.proof_one:
+                self.proof_one.append(x[0])
+            if x[1] not in self.proof_two:
+                self.proof_two.append(x[1])
 
-    # Benutzen von lambda und subset
-
-    # Eigenschaften der Äquivalenzrelation
-    # Für jedes Element a von A gibt es ein Element (a,a) in R mit R = A²
     def Reflexivitaet(self):
-        for i in Relation:
-            print("Whoop", Relation)
+        y = []
+        for x in self.a:
+            if x[0] not in self.proof_one:
+                self.proof_one.append(x[0])
+            if x[1] not in self.proof_two:
+                self.proof_two.append(x[1])
+            if x[0] == x[1]:
+                y.append(x[0])
+
+        if len(y) != 0 and (y == self.proof_two) and(y == self.proof_one):
+            return True
+        return False
+
+    def Symmetrie(self):
+        y = []
+        for i in range(len(self.a)):
+            for j in range(len(self.a)):
+                #if i!=j:
+                if (self.a[i][0],self.a[i][1])==(self.a[j][1],self.a[j][0]):
+                    y.append(self.a[i])
+        #print("y", y)
+        if len(y)==(len(self.proof_one)*len(self.proof_two)):
+
+            #print(self.proof_one)
+            #print(len(self.proof_two))
+            return True
+        return False
 
 
-    # Für alle Elemente a,b in A UND (a,b) in R folgt die Existenz von (b,a) in R
-    #def Symmetrie(self):
+    def Transitivitaet(self):
+        #(a,b)(b,c)(a,c)
+        y = []
+        b=""
+        for i in range(len(self.a)):
+            for j in range(len(self.a)):
+                if i==j:
+                    continue                         #i(a,b)
+                if self.a[i][1]==self.a[j][0]:      #j(b,c)
+                    a = self.a[i][0]
+                    b = self.a[j][0]
+                    c = self.a[j][1]
+                    for k in range(len(self.a)):   #k(a,c)?
+                        if k==i:
+                            continue
+                        if self.a[k][0]==a:
+                            if self.a[k][1]==c:
+                                y.append((self.a[i],self.a[j],self.a[k]))
 
+                                #return True
+        #print("len y:", len(y))
+        #print(y)
+        if len(y)==(len(self.proof_one)*len(self.proof_two)*3):
+            return True
+        return False
 
-    # Für alle Elemente a,b,c in A UND (a,b),(b,c) in R folgt die Existenz von (a,c) in R
-    #def Transitivitaet(self):
+    def Aquivalenz(self):
+        if (self.Transitivitaet()==True)and(self.Symmetrie()==True)and(self.Reflexivitaet()==True):
+            return True
+        return False
 
 
 
 ####################################  Aufgabe 3.1.1  ####################################
 
-"""
+#"""
 A = Set(["hund","katze","maus"])
 
 # subset
@@ -135,7 +190,7 @@ print(len(A))
 
 # _getitem_
 print(A[2])
-"""
+#"""
 
 ####################################  Aufgabe 3.1.2  ####################################
 
@@ -155,7 +210,7 @@ def binomialCoefficients(num):
     binomial_combinations = binomial_menge.powerset()
 
     combination_anzahl = [len(x) for x in binomial_combinations]
-
+    print(combination_anzahl)
     coefficients = [combination_anzahl.count(x) for x in range(num+1)]
 
     return coefficients
@@ -168,7 +223,7 @@ A = Set(["hund","katze","maus"])
 
 print(A.powerset())
 
-print(binomialCoefficients(10))
+print(binomialCoefficients(5))
 """
 
 
@@ -188,16 +243,21 @@ print("A*B:", Kartesisches_Produkt(A, B))
 print("\n\nAufgabe 3.1.5: (Äquivalenz-)Relationen\n")
 
 A = Set([1, 2, 3, 4])
+AA = Set([1, 2, 3])
 B = Set(["a", "b", "c", "d"])
 
 N = Set(range(101))
-print("N:", N)
+print("N:",N)
+KP=Kartesisches_Produkt(A,A)
+print("try:",KP.second)
+R = Relation(KP)
+#print("try 2nd:",R.first)
 
-G = Kartesisches_Produkt(A, A)
-R = Relation(G)
-
-#R.Reflexivitaet()
-
-print(G)
+print(A)
+print(B)
 print(R)
+print("reflexiv") if R.Reflexivitaet()==True else print("nicht reflexiv")
+print("symmetrisch") if R.Symmetrie()==True else print("nicht symmetrisch")
+print("transitiv") if R.Transitivitaet()==True else print("nicht transitiv")
 
+print("äquivalent") if R.Aquivalenz()==True else print("nicht äquivalent")

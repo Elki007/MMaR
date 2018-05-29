@@ -38,14 +38,12 @@ class PlotWindow(qw.QDialog):
         self.setLayout(layout)
 
 
-
-
     def compute_mandelbrot(self,N_max, some_threshold, nx, ny):
         # A grid of c-values
-        x = np.linspace(self.xmin, self.xmax, nx)#(-0.55,-0.4,nx)#(-2, 1, nx)
-        y = np.linspace(self.ymin, self.ymax, ny)#(0.4,0.6,ny)#(-1.5, 1.5, ny)
+        x = np.linspace(self.xmin, self.xmax, nx) #(-0.55,-0.4,nx)#(-2, 1, nx)
+        y = np.linspace(self.ymin, self.ymax, ny) #(0.4,0.6,ny)#(-1.5, 1.5, ny)
 
-        c = x[:,np.newaxis] + 1j*y[np.newaxis,:]
+        c = x[:, np.newaxis] + 1j*y[np.newaxis, :]
 
         # Mandelbrot iteration
 
@@ -53,14 +51,16 @@ class PlotWindow(qw.QDialog):
         for j in range(N_max):
             z = z**2 + c
 
-        mandelbrot_set = (abs(z) < some_threshold)
+        #mandelbrot_set = (abs(z) < some_threshold)
+        mandelbrot_set = (abs(z))
+        print("ms:", mandelbrot_set[90])
         return mandelbrot_set
 
     def plotdef(self):
-        self.xmin =-2
-        self.xmax =1
-        self.ymin =-1.5
-        self.ymax =1.5
+        self.xmin = -2
+        self.xmax = 1
+        self.ymin = -1.5
+        self.ymax = 1.5
         plt.cla()
         plt.clf()
         self.resize(720, 601)
@@ -69,7 +69,6 @@ class PlotWindow(qw.QDialog):
 
     def plot(self):
         self.mandelbrot_set = self.compute_mandelbrot(100, 50., 601, 401)
-
 
         self.im = plt.imshow(self.mandelbrot_set.T, extent=[self.xmin, self.xmax, self.ymin, self.ymax])
         self.resize(720, 600)
@@ -84,15 +83,15 @@ class PlotWindow(qw.QDialog):
 
     def onclick(self, event):
         #print(self.xmin)
-        xscale = (self.xmax - self.xmin) / 4
-        yscale = (self.ymax - self.ymin) / 4
-        print("old:",self.xmin, self.xmax, self.ymin, self.ymax)
+        xscale = (abs(self.xmax - self.xmin)) / 4
+        yscale = (abs(self.ymax - self.ymin)) / 4
+        #print("old:",self.xmin, self.xmax, self.ymin, self.ymax)
         self.xmin = event.xdata - xscale
         self.xmax = event.xdata + xscale
-        self.ymin = event.ydata - yscale
-        self.ymax = event.ydata + yscale
+        self.ymax = event.ydata - yscale
+        self.ymin = event.ydata + yscale
         #print(event.xdata, event.ydata)
-        print("new:",self.xmin, self.xmax, self.ymin, self.ymax)
+        #print("new:",self.xmin, self.xmax, self.ymin, self.ymax)
         #print(self.xmin)
         plt.cla()
         plt.clf()

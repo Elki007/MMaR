@@ -116,11 +116,14 @@ class Relation(Kartesisches_Produkt):
 
     def Reflexivitaet(self):
         y = []
-        for i in range(len(self.a)):
+        for x in self.a:
+            if x[0]==x[1]:
+                y.append(x)
+        '''for i in range(len(self.a)):
             for j in range(len(self.a)):
                 if i!=j:
                     if self.a[i]==self.a[j]:
-                        y.append(self.a[i])
+                        y.append(self.a[i])'''
         if len(y)!=0:
             return True
         return False
@@ -213,10 +216,10 @@ print("\n\nAufgabe 3.1.5: (Äquivalenz-)Relationen\n")
 N = Set(range(101))
 print("N:",N)
 
-R = Relation(Kartesisches_Produkt(A,B))
+R = Relation(Kartesisches_Produkt(A,A))
 print(A)
 print(B)
-print(R)
+print("Hier:", R)
 print("reflexiv") if R.Reflexivitaet()==True else print("nicht reflexiv")
 print("symmetrisch") if R.Symmetrie()==True else print("nicht symmetrisch")
 print("transitiv") if R.Transitivitaet()==True else print("nicht transitiv")
