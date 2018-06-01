@@ -143,7 +143,7 @@ class Relation(Kartesisches_Produkt):
         for i in range(len(self.a)):
             for j in range(len(self.a)):
                 if i==j:
-                    continue                         #i(a,b)
+                    continue                        #i(a,b)
                 if self.a[i][1]==self.a[j][0]:      #j(b,c)
                     a = self.a[i][0]
                     b = self.a[j][0]
@@ -215,7 +215,7 @@ def binomialCoefficients(num):
 
     return coefficients
 
-"""
+
 print("\n\nAufgabe 3.1.2: Arbeiten mit der Mengenklasse\n")
 print("Definition der Natürlichen Zahlen allein aus Mengen, n=4: ", Menge(4))
 
@@ -224,19 +224,19 @@ A = Set(["hund","katze","maus"])
 print(A.powerset())
 
 print(binomialCoefficients(5))
-"""
+
 
 
 ####################################  Aufgabe 3.1.3  ####################################
 
-"""
+
 print("\n\nAufgabe 3.1.3: Kartesisches Produkt\n")
 
 A = Set([1, 2, 3, 4])
 B = Set(["a", "b", "c", "d"])
 
 print("A*B:", Kartesisches_Produkt(A, B))
-"""
+
 
 ####################################  Aufgabe 3.1.5  ####################################
 
@@ -248,7 +248,7 @@ B = Set(["a", "b", "c", "d"])
 
 N = Set(range(101))
 print("N:",N)
-KP=Kartesisches_Produkt(A,A)
+KP=Kartesisches_Produkt(A,AA)
 print("try:",KP.second)
 R = Relation(KP)
 #print("try 2nd:",R.first)

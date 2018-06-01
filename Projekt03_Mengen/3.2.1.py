@@ -52,7 +52,7 @@ class PlotWindow(qw.QDialog):
             z = z**2 + c
 
         #mandelbrot_set = (abs(z) < some_threshold)
-        mandelbrot_set = (abs(z))
+        mandelbrot_set = (abs(z)<some_threshold)
         print("ms:", mandelbrot_set[90])
         return mandelbrot_set
 
