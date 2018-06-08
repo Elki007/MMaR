@@ -102,6 +102,7 @@ class PlotWindow(qw.QDialog):
         self.axis.plot(self.x, self.y_ann, label="ann")
         self.axis.plot(self.x, self.y_abl, label="abl")
         self.axis.plot(self.x, self.y_abl2, label="abl2")
+        self.axis.plot(10,5,"o", label="punkt")
         #self.axis.plot(self.x,y_mw, label="MLS")
 
 
