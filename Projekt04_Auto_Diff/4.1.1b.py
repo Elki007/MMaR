@@ -20,6 +20,9 @@ class PlotWindow(qw.QDialog):
         self.interval_end = 5
         self.interval_steps = 1000
 
+        self.bereich = 3
+        self.grad = 9
+
         # Berechnung der Extremwerte
         self.extremwerte_runden_auf = 3
 
@@ -35,9 +38,15 @@ class PlotWindow(qw.QDialog):
         #Eingabe
         self.hbox = qw.QHBoxLayout()
         defh = qw.QLabel("h: ")
+        defg = qw.QLabel("grad: ")
         self.field = qw.QLineEdit(self)
+        self.fieldg=qw.QLineEdit(self)
+        self.field.setText("0.000001")
+        self.fieldg.setText("9")
         self.hbox.addWidget(defh)
         self.hbox.addWidget(self.field)
+        self.hbox.addWidget(defg)
+        self.hbox.addWidget(self.fieldg)
 
 
         #self.selectionList = ['0.000000001', '0.1', '0.5', '1', '3', '10', '100']
@@ -55,30 +64,42 @@ class PlotWindow(qw.QDialog):
     def plot(self):
         plt.cla()
         self.h = float(self.field.text())
+        self.grad = float(self.fieldg.text())
+        tabelle = np.loadtxt("wetterdaten_neu.txt", delimiter=';', skiprows=1, usecols=np.arange(15))
+
         #Funktion
-        self.x = np.linspace(self.interval_start, self.interval_end, 1000)
-        self.y = self.f_x(self.x)
+        self.y = tabelle[:, 13]
+        n= len(self.y)
+        print(n)
+        self.x = np.arange(n)
+
 
         ################################
-        #Ableitung
 
-        self.y_cos = np.cos(self.x)
+        #Annäherung
+        poly = np.polyfit(self.x, self.y, self.grad)
+        self.poly_f = np.poly1d(poly)
+        self.y_ann= self.poly_f(self.x)
+        #print(self.y_abl)
+
+        #Ableitung
         self.y_abl = self.num_Ableitung()
-        self.y_abl2=self.num_Ableitung2()
+        self.y_abl2 = self.num_Ableitung2()
 
         # Parameter: Funktion, Ableitung der Funktion
-        self.extremstellen_berechnung_durch_ableitung(self.y, self.y_abl2)
+        #self.extremstellen_berechnung_durch_ableitung(self.y, self.y_abl2)
         ################################
 
 
         # Zeichnen und Anzeige
-        self.axis.plot(self.x, self.y,label="Polynom")
-        self.axis.plot(self.x, self.y_cos,'o',label="cos(x)")
+        self.axis.plot(self.x, self.y,label="Daten")
+        stri="Newtonsche Differenzenquotient der Daten, h="+str(self.h)
+        stri2="Ableitung der Daten(2h im Nenner), h="+str(self.h)
 
-        stri="Newtonsche Differenzenquotient des Polynoms, h="+str(self.h)
-        stri2="Ableitung des Polynoms(2h im Nenner), h="+str(self.h)
-        self.axis.plot(self.x, self.y_abl, label=stri)
-        self.axis.plot(self.x, self.y_abl2, label=stri2)
+        self.axis.plot(self.x, self.y_ann, label="ann")
+        self.axis.plot(self.x, self.y_abl, label="abl")
+        self.axis.plot(self.x, self.y_abl2, label="abl2")
+        #self.axis.plot(self.x,y_mw, label="MLS")
 
 
         #Legende
@@ -141,12 +162,13 @@ class PlotWindow(qw.QDialog):
 
     def f_x(self, x):
         # Angezeigtes Polynom:
-        polynom = np.sin(1/x)
+        # polynom = np.sin(1/x)
         # polynom = np.sin(x)
         # polynom = np.array(x*x)
         # polynom = np.array(x**4)
         # polynom = np.cos(x)
         # polynom = np.cos(0.5 * x + 4)
+        polynom = self.poly_f(x)
 
         return polynom
 
