@@ -44,7 +44,7 @@ class PlotWindow(qw.QDialog):
             self.grad = int(sel[0])
 
     def plot(self):
-        tabelle = np.loadtxt("wetterdaten2.txt", delimiter=';', skiprows=1, usecols=np.arange(15))
+        tabelle = np.loadtxt("wetterdaten_neu.txt", delimiter=';', skiprows=1, usecols=np.arange(15))
 
         yAchse = tabelle[:, 6]
         n = len(yAchse)

@@ -77,6 +77,9 @@ class PlotWindow(qw.QDialog):
         ################################
 
         #Annäherung
+
+        #fenster definieren, mittelwert berechnen, dann polyfit
+
         poly = np.polyfit(self.x, self.y, self.grad)
         self.poly_f = np.poly1d(poly)
         self.y_ann= self.poly_f(self.x)
