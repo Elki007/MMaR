@@ -392,8 +392,14 @@ class PlotWindow(qw.QDialog):
         self.field = qw.QLineEdit(self)
         ### on change
         self.field.editingFinished.connect(self.enterPress)
+        deff = qw.QLabel("Funktion: ")
+        self.fieldfunk=qw.QLineEdit(self)
+        ### on change
+        self.fieldfunk.editingFinished.connect(self.parse)
 
         self.field.setText("0.5")
+        self.hbox.addWidget(deff)
+        self.hbox.addWidget(self.fieldfunk)
         self.hbox.addWidget(defh)
         self.hbox.addWidget(self.field)
 
@@ -426,6 +432,8 @@ class PlotWindow(qw.QDialog):
         #layout.addWidget(self.button)
         self.setLayout(layout)
 
+        self.f_x = Sin()
+
         self.plot()
 
     def enterPress(self):
@@ -438,6 +446,11 @@ class PlotWindow(qw.QDialog):
         self.xx=event.xdata
         print(self.xx)
 
+    def parse(self):
+        text = self.fieldfunk.text()
+
+        print(text)
+
     # Die Plot-Funktion kann nun wie vorher definiert werden:
     def plot(self):
         plt.cla()
@@ -449,7 +462,7 @@ class PlotWindow(qw.QDialog):
         self.x = np.linspace(self.interval_start, self.interval_end, 1000)
 
         ####### Funktion ########
-        self.f_x = Sin()
+        #self.f_x = Sin()
         #h = Sin()
         #x = DualNumber(5, 1)
         #print(h.name, h(DualNumber(1, 0) / x))
