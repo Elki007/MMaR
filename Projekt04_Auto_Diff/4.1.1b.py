@@ -15,10 +15,10 @@ class PlotWindow(qw.QDialog):
         # das Diagramm auf dem wir zeichnen
         self.figure, self.axis = plt.subplots()
         self.setWindowTitle('Aufgabe4_1_1')
-        self.h=0.0000001
-        self.interval_start = -5
-        self.interval_end = 5
-        self.interval_steps = 1000
+        self.h = 0.01
+        self.interval_start = 0
+        self.interval_end = 365
+        self.interval_steps = 365
 
         self.bereich = 3
         self.grad = 9
@@ -49,7 +49,7 @@ class PlotWindow(qw.QDialog):
         self.hbox.addWidget(self.fieldg)
 
 
-        #self.selectionList = ['0.000000001', '0.1', '0.5', '1', '3', '10', '100']
+        #self.selectionList = ['0.000001', '0.1', '0.5', '1', '3', '10', '100']
         #self.button.clicked.connect(self.getSelection)
 
         self.button.clicked.connect(self.plot)
@@ -69,7 +69,7 @@ class PlotWindow(qw.QDialog):
 
         #Funktion
         self.y = tabelle[:, 13]
-        n= len(self.y)
+        n = len(self.y)
         print(n)
         self.x = np.arange(n)
 
@@ -90,19 +90,36 @@ class PlotWindow(qw.QDialog):
         self.y_abl2 = self.num_Ableitung2()
 
         # Parameter: Funktion, Ableitung der Funktion
-        #self.extremstellen_berechnung_durch_ableitung(self.y, self.y_abl2)
+        minima_abl, maxima_abl = self.extremstellen_berechnung_durch_ableitung(self.y_ann, self.y_abl)
         ################################
 
 
         # Zeichnen und Anzeige
-        self.axis.plot(self.x, self.y,label="Daten")
+        self.axis.plot(self.x, self.y, label="Daten")
         stri="Newtonsche Differenzenquotient der Daten, h="+str(self.h)
         stri2="Ableitung der Daten(2h im Nenner), h="+str(self.h)
 
         self.axis.plot(self.x, self.y_ann, label="ann")
         self.axis.plot(self.x, self.y_abl, label="abl")
         self.axis.plot(self.x, self.y_abl2, label="abl2")
-        self.axis.plot(10,5,"o", label="punkt")
+
+        first_min_occurs = True
+        first_max_occurs = True
+
+        for extremwert in minima_abl:
+            if first_min_occurs:
+                self.axis.plot(extremwert[0], extremwert[1], "bo", label="Minima")
+                first_min_occurs = False
+            else:
+                self.axis.plot(extremwert[0], extremwert[1], "bo")
+
+        for extremwert in maxima_abl:
+            if first_max_occurs:
+                self.axis.plot(extremwert[0], extremwert[1], "ro", label="Maxima")
+                first_max_occurs = False
+            else:
+                self.axis.plot(extremwert[0], extremwert[1], "ro")
+
         #self.axis.plot(self.x,y_mw, label="MLS")
 
 
@@ -114,15 +131,15 @@ class PlotWindow(qw.QDialog):
 
 
     def num_Ableitung(self):
-        y=[]
+        y = []
         for x in self.x:
             #(f(x+h)-f(x))/h
             y.append((self.f_x(x+self.h)-self.f_x(x))/self.h)
-        y_abl=np.array(y)
+        y_abl = np.array(y)
         return y_abl
 
     def num_Ableitung2(self):
-        y=[]
+        y = []
         for x in self.x:
             #(f(x+h)-f(x-h))/2h
             y.append((self.f_x(x+self.h)-self.f_x(x-self.h))/2*self.h)
@@ -163,6 +180,8 @@ class PlotWindow(qw.QDialog):
         print("\nMinima:", minima, "\nMaxima:", maxima)
 
         # print("HAAALLLOOOO\n\n\n", polynom)
+
+        return minima, maxima
 
     def f_x(self, x):
         # Angezeigtes Polynom:

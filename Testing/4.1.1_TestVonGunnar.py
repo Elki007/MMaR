@@ -76,15 +76,15 @@ class PlotWindow(qw.QDialog):
 
 
     def num_Ableitung(self):
-        y=[]
+        y = []
         for x in self.x:
             #(f(x+h)-f(x))/h
             y.append((self.f_x(x+self.h)-self.f_x(x))/self.h)
-        y_abl=np.array(y)
+        y_abl = np.array(y)
         return y_abl
 
     def num_Ableitung2(self):
-        y=[]
+        y = []
         for x in self.x:
             #(f(x+h)-f(x-h))/2h
             y.append((self.f_x(x+self.h)-self.f_x(x-self.h))/2*self.h)
