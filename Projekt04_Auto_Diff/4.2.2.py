@@ -365,7 +365,7 @@ class PlotWindow(qw.QDialog):
 
         # das Diagramm auf dem wir zeichnen
         self.figure, self.axis = plt.subplots()
-        self.setWindowTitle('Aufgabe4_1_1')
+        self.setWindowTitle('Aufgabe4_2_2')
         self.h=0.0000001
         self.interval_start = -5
         self.interval_end = 5
@@ -373,6 +373,9 @@ class PlotWindow(qw.QDialog):
 
         self.bereich = 3
         self.grad = 9
+        self.xx = 1 # für tangent
+        self.ymin=-1
+        self.ymax=1
 
         # Berechnung der Extremwerte
         self.extremwerte_runden_auf = 3
@@ -403,8 +406,20 @@ class PlotWindow(qw.QDialog):
         self.hbox.addWidget(defh)
         self.hbox.addWidget(self.field)
 
-
         self.hbox2 = qw.QHBoxLayout()
+        ymin = qw.QLabel("y min: ")
+        self.fieldymin = qw.QLineEdit(self)
+        self.fieldymin.setText("-2")
+        self.hbox2.addWidget(ymin)
+        self.hbox2.addWidget(self.fieldymin)
+        ymax = qw.QLabel("y max: ")
+        self.fieldymax = qw.QLineEdit(self)
+        self.fieldymax.setText("2")
+        self.hbox2.addWidget(ymax)
+        self.hbox2.addWidget(self.fieldymax)
+
+
+        self.hbox3 = qw.QHBoxLayout()
         self.ADt = qw.QCheckBox("Show AD tangent")
         self.ADd = qw.QCheckBox("Show AD derivative")
         self.ADnt = qw.QCheckBox("Show AD numeric tangent")
@@ -415,10 +430,10 @@ class PlotWindow(qw.QDialog):
         self.ADnt.stateChanged.connect(self.plot)
         self.ADnd.stateChanged.connect(self.plot)
 
-        self.hbox2.addWidget(self.ADt)
-        self.hbox2.addWidget(self.ADd)
-        self.hbox2.addWidget(self.ADnt)
-        self.hbox2.addWidget(self.ADnd)
+        self.hbox3.addWidget(self.ADt)
+        self.hbox3.addWidget(self.ADd)
+        self.hbox3.addWidget(self.ADnt)
+        self.hbox3.addWidget(self.ADnd)
 
         #self.selectionList = ['0.000000001', '0.1', '0.5', '1', '3', '10', '100']
         #self.button.clicked.connect(self.getSelection)
@@ -429,6 +444,7 @@ class PlotWindow(qw.QDialog):
         layout.addWidget(self.canvas)
         layout.addLayout(self.hbox)
         layout.addLayout(self.hbox2)
+        layout.addLayout(self.hbox3)
         #layout.addWidget(self.button)
         self.setLayout(layout)
 
@@ -442,22 +458,51 @@ class PlotWindow(qw.QDialog):
         else:
             print("Wrong input")
 
+
     def onclick(self, event):
         self.xx=event.xdata
-        print(self.xx)
+        #print(self.xx)
+        self.plot()
+        #self.tangent()
+
 
     def parse(self):
         text = self.fieldfunk.text()
-
         print(text)
+
+    def num_Ableitung2(self):
+        y=[]
+        for x in self.x:
+            #(f(x+h)-f(x-h))/2h
+            y.append((self.f_x(DualNumber(1/(x+self.h),-1/((x+self.h)** 2))).wert-
+                      self.f_x(DualNumber(1/(x-self.h),-1/((x-self.h)** 2))).wert)/2*self.h)
+
+        y_abl=np.array(y)
+        return y_abl
+
+    def num_Ableitung2_x(self,x):
+        #(f(x+h)-f(x-h))/2h
+        y=((self.f_x(DualNumber(1/(x+self.h),-1/((x+self.h)** 2))).wert-
+                  self.f_x(DualNumber(1/(x-self.h),-1/((x-self.h)** 2))).wert)/2*self.h)
+        return y
 
     # Die Plot-Funktion kann nun wie vorher definiert werden:
     def plot(self):
         plt.cla()
         cid = self.canvas.mpl_connect('button_press_event', self.onclick)
-        self.h = float(self.field.text())
 
-        #Funktion
+        ################################
+        ######## Get settings ##########
+        ################################
+
+        self.h = float(self.field.text())
+        #new y min and max
+        self.ymin = float(self.fieldymin.text())
+        self.ymax = float(self.fieldymax.text())
+
+        ################################
+        ######## Funktion ##############
+        ################################
 
         self.x = np.linspace(self.interval_start, self.interval_end, 1000)
 
@@ -470,25 +515,70 @@ class PlotWindow(qw.QDialog):
 
         self.y = []
         for x in self.x:
-            self.y.append(self.f_x(DualNumber(1/x,1)).wert)
+            self.y.append(self.f_x(DualNumber(1/x,-1/(x**2))).wert)
 
         ################################
-        # Ableitung
+        ######## Ableitung #############
+        ################################
+
         self.y_abl3 = []
         for x in self.x:
-            self.y_abl3.append(self.f_x(DualNumber(1 / x, 1)).ableitung)
+            self.y_abl3.append(self.f_x(DualNumber(1 / x, -1/(x**2))).ableitung)
+
+        # Num Ableitung
+        self.y_abl2 = self.num_Ableitung2()
+
+        ################################
+        ########### Tangente ###########
+        ################################
+
+        x0 = self.xx  # - aktual x value
+        y0 = self.f_x(DualNumber(1 / self.xx, -1 / (self.xx ** 2))).wert  # - aktual y value
+        koef = self.f_x(DualNumber(1 / self.xx, -1 / (self.xx ** 2))).ableitung  # - aktual y_abl
+        #
+        b = y0 - koef * x0
+        # y=koef*x+b
+        self.y_t = []
+        for x in self.x:
+            self.y_t.append(koef * x + b)
+
+        # Num Tangente
+
+        x1 = self.xx  # - aktual x value
+        y1 = self.f_x(DualNumber(1 / self.xx, -1 / (self.xx ** 2))).wert  # - aktual y value
+        koef = self.num_Ableitung2_x(self.xx)  # - aktual y_abl
+        #
+        b = y1 - koef * x1
+        # y=koef*x+b
+        self.y_nt = []
+        for x in self.x:
+            self.y_nt.append(koef * x + b)
 
 
+        ################################
+        ##### Zeichnen und Anzeige #####
+        ################################
 
-        # Zeichnen und Anzeige
         self.axis.plot(self.x, self.y,label="Funktion")
-        self.axis.plot(self.x, self.y_abl3, label="Ableitung")
+        if self.ADd.checkState() != 0:
+            self.axis.plot(self.x, self.y_abl3, label="Ableitung")
+
+        if self.ADnd.checkState() != 0:
+            self.axis.plot(self.x, self.y_abl2, label="Num Ableitung")
+
+        if self.ADt.checkState() != 0:
+            self.axis.plot(self.x, self.y_t, label="Tangente")
+            self.axis.plot(self.xx, y0, 'o')
+
+        if self.ADnt.checkState() != 0:
+            self.axis.plot(self.x, self.y_nt, label="Num Tangente")
 
 
         #Legende
         plt.legend()
 
         # (Neu-)Zeichnen des Canvas
+        plt.ylim(self.ymin, self.ymax)
         self.canvas.draw()
 
 if __name__ == '__main__':
