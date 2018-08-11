@@ -6,7 +6,7 @@ from PyQt5 import QtWidgets as qw
 from PyQt5 import QtCore as qc
 from PyQt5 import QtGui as qg
 
-
+#test
 class MainWindow(qw.QMainWindow):
     def __init__(self):
         super().__init__()

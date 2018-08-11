@@ -313,7 +313,7 @@ class PlotWindow(qw.QDialog):
         # Parameter: Funktion, Ableitung der Funktion
         #self.extremstellen_berechnung_durch_ableitung(self.y, self.y_abl2)
         ################################
-
+        #test
 
         # Zeichnen und Anzeige
         self.axis.plot(self.x, self.y,label="Funktion")
