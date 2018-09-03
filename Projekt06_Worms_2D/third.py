@@ -127,11 +127,6 @@ class GameWindow(qw.QLabel):
         self.setMouseTracking(True)
         self.grabKeyboard() #OMG 2 hours later!
 
-
-
-        self.point = []
-        self.point.append(Point(self))
-
         self.players=[]
         self.bullets = []
 
@@ -143,7 +138,6 @@ class GameWindow(qw.QLabel):
 
         #flag to stop the Game
         self.victory=False
-        self.extra_Frame=False
 
         #timer settings
         self.current_player = 0
@@ -158,8 +152,8 @@ class GameWindow(qw.QLabel):
 
     def Run(self):
         try:
-            if self.extra_Frame ==True:
-                self.victory = True
+            #if self.extra_Frame == True:
+            #    self.victory = True
             #print("a")
             self.painter.setBrush(qg.QBrush(qg.QColor(33, 191, 243)))  # '#5DBCD2'
             self.painter.drawRect(-1, -1, self.parent.width() + 1, self.parent.height() + 1)
@@ -176,12 +170,12 @@ class GameWindow(qw.QLabel):
                         self.painter.setPen(qc.Qt.black)
                         self.painter.setFont(qg.QFont('Helvetica', 12))
                         self.painter.drawText(200, 50, i.name +" won!")
-                        self.extra_Frame=True
+                        self.victory=True
             elif alive == 0:
                 self.painter.setPen(qc.Qt.black)
                 self.painter.setFont(qg.QFont('Helvetica', 12))
                 self.painter.drawText(200, 50, "Well played! Nobody alive!")
-                self.extra_Frame = True
+                self.victory = True
             else:
                 self.time()
 
@@ -204,12 +198,12 @@ class GameWindow(qw.QLabel):
                 buttonReply = qw.QMessageBox.question(self, 'Worms 2D', "Would you like to play again?",
                                                    qw.QMessageBox.Yes | qw.QMessageBox.No, qw.QMessageBox.No)
                 if buttonReply == qw.QMessageBox.Yes:
-                    print('Yes clicked.')
+                    #print('Yes clicked.')
                     self.parent.setCentralWidget(MainMenu(self.parent))
                     self.parent.setCentralWidget(GameWindow(self.parent))
 
                 else:
-                    print('No clicked.')
+                    #print('No clicked.')
                     self.parent.setCentralWidget(MainMenu(self.parent))
 
     def update_const(self):
@@ -325,10 +319,11 @@ class Bullet:
             ####first implement - we are looking only at ground
             for i in self.parent.players:
                 if abs(i.x-x) < i.w/2 + self.explosion/2:
-                    #abs(i.x - x) - i.w # distance to body
-                    koeff = 1-(abs(i.x - x) - i.w/2)/(self.explosion/2) #dmg.koeff
-                    if koeff > 1: koeff=1
-                    i.hp -= self.damage*koeff
+                    if abs(i.y-y) < i.h/2+self.explosion/2:
+                        #abs(i.x - x) - i.w # distance to body
+                        koeff = 1-(abs(i.x - x) - i.w/2)/(self.explosion/2) #dmg.koeff
+                        if koeff > 1: koeff=1
+                        i.hp -= self.damage*koeff
 
 
 
@@ -391,63 +386,6 @@ class Player:
         # if we will move a player and it hits the ground
         elif self.parent.a.pixel(self.x, self.y-1) != 0:
             self.y -=1
-
-
-
-class Point:
-    def __init__(self, parent):
-        self.parent=parent
-        self.diagonal=(parent.parent.width()**2+ parent.parent.height()**2)**(1/2)
-        self.x=parent.m_x
-        self.y=parent.m_y
-        self.start_x=self.x
-        self.start_y=self.y
-        rng=random.uniform(0,2*math.pi)
-        self.r_x=math.sin(rng)
-        self.r_y=math.cos(rng)
-        self.v_max = random.randint(2,25)
-        self.v=1
-        self.x+=self.r_x
-        self.y+=self.r_y
-
-    def initialize(self):
-        self.x = self.parent.m_x
-        self.y = self.parent.m_y
-        self.start_x = self.x
-        self.start_y = self.y
-        rng = random.uniform(0, 2 * math.pi)
-        self.r_x = math.sin(rng)
-        self.r_y = math.cos(rng)
-        self.v=1
-        self.x += self.r_x
-        self.y += self.r_y
-
-    def velocity_upd(self):
-        #abstand_x = self.x - self.parent.m_x
-        #abstand_y = self.y - self.parent.m_y
-        abstand_x = self.x - self.start_x
-        abstand_y = self.y - self.start_y
-        abstand=(abstand_x**2+abstand_y**2)**(1/2)
-        koeff=2*abstand/self.diagonal
-        self.v = self.v_max*koeff
-
-    def show(self):
-
-
-        self.velocity_upd()
-        self.x += self.r_x * self.v
-        self.y += self.r_y * self.v
-        self.parent.painter.drawPoint(self.x, self.y)
-        self.collide()
-
-    def collide(self):
-        # check alpha chanel
-        if self.parent.a.pixel(self.x,self.y) != 0:
-            x=round(self.x-self.r_x)
-            y=round(self.y-self.r_y)
-            self.parent.collisions.append([x,y])
-            self.initialize()
-            #print("collide!")
 
 if __name__ == '__main__':
     app = qw.QApplication(sys.argv)
