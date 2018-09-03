@@ -275,7 +275,7 @@ class Main_menu(qw.QFrame):
 
     #def open_settings(self):
     #    self.close()
-    #    MainWindow.showSettings(self)
+    #    MainWindow.showSettings(self),
 
 if __name__ == '__main__':
     app = qw.QApplication(sys.argv)
