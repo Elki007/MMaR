@@ -24,8 +24,15 @@ class MainWindow(qw.QMainWindow):
 
         self.setCentralWidget(MainMenu(self))
 
+        self.center()
+
         self.show()
 
+    def center(self):   ##### screen center
+        qr = self.frameGeometry()
+        cp = qw.QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
 
 
 class MainMenu(qw.QWidget):
@@ -73,38 +80,40 @@ class MainMenu(qw.QWidget):
         self.parent.statusBar().hide()
         #self.parent.setCentralWidget(Test(self.parent))
 
-    def keyPressEvent(self, e):
-        if e.key() == qc.Qt.Key_D:
-            print("d")
-        elif e.key() == qc.Qt.Key_A:
-            print("a")
-
 
 class GameWindow(qw.QLabel):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
+        self.time_for_round=10
+
+        #mouse coordinates
         self.m_x=0
         self.m_y=0
-        self.anz_max=10
-        self.anz_start=1
+
         self.alpha=0
         self.map = np.zeros([self.parent.width(),self.parent.height()], dtype=np.bool)
-        self.collisions=[]
-        #print(self.collisions[1][1])
 
+        #an array of changes to original surface
+        self.collisions=[]
+
+        #first layer
         self.canvas = qg.QPixmap(self.parent.width() * self.parent.z,
                                  self.parent.height() * self.parent.z)  # oder QImage
+        #second layer only surface
         self.ebene2 = qg.QPixmap(self.parent.width() * self.parent.z,
                                  self.parent.height() * self.parent.z)  # oder QImage
-        # make 'em transparent (alpha channel = 0)
+
+        # make 'em transparent (alpha channel = 0) 4th number in parameters
         self.canvas.fill(qg.QColor(0, 0, 0, 0))
         self.ebene2.fill(qg.QColor(0, 0, 0, 0))
 
+        #it is possible to check an alpha channel only if QPixmap is converted toImage
         self.a = self.ebene2.toImage()
 
         self.canvas.fill(qg.QColor(0, 0, 0, 0))
 
+        #Qt5 tools to paint
         self.painter = qg.QPainter(self.canvas)
         self.painter2 = qg.QPainter(self.ebene2)
 
@@ -118,7 +127,7 @@ class GameWindow(qw.QLabel):
         self.setMouseTracking(True)
         self.grabKeyboard() #OMG 2 hours later!
 
-        #self.player = Player(self,qc.Qt.darkGreen, qc.Qt.red, "Max")
+
 
         self.point = []
         self.point.append(Point(self))
@@ -132,14 +141,14 @@ class GameWindow(qw.QLabel):
         self.players.append(Player(self,qc.Qt.darkCyan, qc.Qt.red, "Misha",len(self.players)))
         self.bullets.append(None)
 
+        #flag to stop the Game
         self.victory=False
+        self.extra_Frame=False
+
+        #timer settings
         self.current_player = 0
         self.timer_begin = True
         self.r_start=datetime.now().time()
-
-
-        self.time_for_round=10
-        self.left = self.time_for_round
 
         self.initUI()
 
@@ -149,9 +158,13 @@ class GameWindow(qw.QLabel):
 
     def Run(self):
         try:
+            if self.extra_Frame ==True:
+                self.victory = True
             #print("a")
             self.painter.setBrush(qg.QBrush(qg.QColor(33, 191, 243)))  # '#5DBCD2'
             self.painter.drawRect(-1, -1, self.parent.width() + 1, self.parent.height() + 1)
+
+
 
             alive=0
             for i in self.players:
@@ -163,7 +176,12 @@ class GameWindow(qw.QLabel):
                         self.painter.setPen(qc.Qt.black)
                         self.painter.setFont(qg.QFont('Helvetica', 12))
                         self.painter.drawText(200, 50, i.name +" won!")
-                        self.victory=True
+                        self.extra_Frame=True
+            elif alive == 0:
+                self.painter.setPen(qc.Qt.black)
+                self.painter.setFont(qg.QFont('Helvetica', 12))
+                self.painter.drawText(200, 50, "Well played! Nobody alive!")
+                self.extra_Frame = True
             else:
                 self.time()
 
@@ -182,6 +200,17 @@ class GameWindow(qw.QLabel):
         finally:
             if self.victory ==False:
                 qc.QTimer.singleShot(16, self.Run)
+            else:
+                buttonReply = qw.QMessageBox.question(self, 'Worms 2D', "Would you like to play again?",
+                                                   qw.QMessageBox.Yes | qw.QMessageBox.No, qw.QMessageBox.No)
+                if buttonReply == qw.QMessageBox.Yes:
+                    print('Yes clicked.')
+                    self.parent.setCentralWidget(MainMenu(self.parent))
+                    self.parent.setCentralWidget(GameWindow(self.parent))
+
+                else:
+                    print('No clicked.')
+                    self.parent.setCentralWidget(MainMenu(self.parent))
 
     def update_const(self):
 
@@ -256,28 +285,6 @@ class GameWindow(qw.QLabel):
         self.painter.setFont(qg.QFont('Helvetica', 12))
         self.painter.drawText(50, 50, str(self.players[self.current_player].name) + ", it's your turn! Time left: " + str(show))
 
-class vector_2d:
-    def __init__(self,x,y):
-        self.x=x
-        self.y=y
-
-    def __repr__(self):
-        return str(self.x) + " " + str(self.y)
-
-    def normalize(self):
-        self.x = self.x / (math.sqrt(self.x*self.x + self.y*self.y))
-        self.y = self.y / (math.sqrt(self.x*self.x + self.y*self.y))
-
-    def __add__(self, other):
-        return vector_2d(self.x+other.x,self.y+other.y)
-
-    def __sub__(self, other):
-        return vector_2d(self.x - other.x, self.y - other.y)
-
-    def __mul__(self, other):
-        if other is vector_2d:
-            return self.x * other.x + self.y * other.y
-        return vector_2d(self.x * other, self.y * other)
 
 class Bullet:
     def __init__(self, parent,player_i):
@@ -322,11 +329,7 @@ class Bullet:
                     koeff = 1-(abs(i.x - x) - i.w/2)/(self.explosion/2) #dmg.koeff
                     if koeff > 1: koeff=1
                     i.hp -= self.damage*koeff
-                    #if i.hp<0:
-                        #print("dead!")
-                        #del self.parent.players[i.i]
 
-                    #print(koeff)
 
 
 class Player:
@@ -347,7 +350,7 @@ class Player:
 
     def paint(self):
         ##body
-        if self.hp<0:
+        if self.hp<=0:
             self.color = qc.Qt.gray
             self.g_color = qc.Qt.gray
         self.parent.painter.setPen(qg.QPen(self.color, 2, qc.Qt.SolidLine))
