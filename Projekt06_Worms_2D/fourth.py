@@ -136,6 +136,9 @@ class GameWindow(qw.QLabel):
         #interface
         self.ebene4 = qg.QPixmap(self.parent.width() * self.parent.z,
                                  self.parent.height() * self.parent.z)  # oder QImage
+        # smoke
+        self.ebene5 = qg.QPixmap(self.parent.width() * self.parent.z,
+                                 self.parent.height() * self.parent.z)  # oder QImage
 
         # make 'em transparent (alpha channel = 0) 4th number in parameters
         self.ebene0.fill(qg.QColor(0, 0, 0, 0))
@@ -143,6 +146,7 @@ class GameWindow(qw.QLabel):
         self.ebene2.fill(qg.QColor(0, 0, 0, 0))
         self.ebene3.fill(qg.QColor(0, 0, 0, 0))
         self.ebene4.fill(qg.QColor(0, 0, 0, 0))
+        self.ebene5.fill(qg.QColor(0, 0, 0, 0))
 
         #it is possible to check an alpha channel only if QPixmap is converted toImage
         self.a = self.ebene2.toImage()
@@ -187,6 +191,7 @@ class GameWindow(qw.QLabel):
         self.painter2 = qg.QPainter(self.ebene2)
         self.painter3 = qg.QPainter(self.ebene3)
         self.painter4 = qg.QPainter(self.ebene4)
+        self.painter5 = qg.QPainter(self.ebene5)
 
 
         #draw dynamic surfase
@@ -209,6 +214,7 @@ class GameWindow(qw.QLabel):
         self.players=[]
         self.bullets = []
         self.hits = []
+        self.explosions = []
 
         self.players.append(Player(self,qc.Qt.darkGreen, qc.Qt.red, "Max",len(self.players)))
         self.bullets.append(None)
@@ -220,7 +226,7 @@ class GameWindow(qw.QLabel):
         self.victory=False
         # game settings
         self.time_for_round = 10
-        self.game_speed = 16
+        self.game_speed = 10
         self.gravity = 0.01
 
         #timer settings
@@ -239,6 +245,13 @@ class GameWindow(qw.QLabel):
             #renew layer 3,4
             self.ebene3.fill(qg.QColor(0, 0, 0, 0))
             self.ebene4.fill(qg.QColor(0, 0, 0, 0))
+
+            #we do not fill this layer because we want to show last particles with less effort
+            self.painter5.setBrush(qg.QBrush(qg.QColor(150, 150, 150, 0)))
+            #self.painter5.setPen(qc.Qt.black)
+            #self.painter5.setBrush(qc.Qt.black)
+            self.painter5.setCompositionMode(qg.QPainter.CompositionMode_Clear)
+            self.painter5.drawRect(0,0,self.parent.width(),self.parent.height())
 
 
             #sky
@@ -284,6 +297,11 @@ class GameWindow(qw.QLabel):
                 if self.hits[i].destruct == True:
                     del self.hits[i]
 
+            for i in range(len(self.explosions)-1,-1,-1):
+                self.explosions[i].paint()
+                if self.explosions[i].destruct == True:
+                    del self.explosions[i]
+
             #test why does the frame sets to pen color?
             self.painter.setPen(qc.Qt.black)
             self.painter2.setPen(qc.Qt.black)
@@ -294,6 +312,7 @@ class GameWindow(qw.QLabel):
             self.painter.drawPixmap(0, 0, self.ebene2)
             self.painter.drawPixmap(0, 0, self.ebene3)
             self.painter.drawPixmap(0, 0, self.ebene4)
+            self.painter.drawPixmap(0, 0, self.ebene5)
             self.setPixmap(self.ebene1)
 
         finally:
@@ -335,8 +354,6 @@ class GameWindow(qw.QLabel):
             #drawEllipse uses x,y as a top left coordintes, that's why we need to perform some calc.
             self.painter2.drawEllipse(i[0]-i[2]/2, i[1]-i[2]/2, i[2], i[2])
 
-
-
     def mouseMoveEvent(self, e):
         self.m_x = e.x()
         self.m_y = e.y()
@@ -356,15 +373,15 @@ class GameWindow(qw.QLabel):
             #if not an end of a screen
             if self.players[self.current_player].x+self.players[self.current_player].w != self.parent.width():
                 # if a slope is not vertical
-                if self.a.pixel(self.players[self.current_player].x + 4, self.players[self.current_player].y - 5) == 0:
+                if self.a.pixel(self.players[self.current_player].x + 5, self.players[self.current_player].y - 7) == 0:
                     self.players[self.current_player].x += 1
-                    print(self.players[self.current_player].rotation, " ", self.players[self.current_player].left_point)
+                    #print(self.players[self.current_player].rotation, " ", self.players[self.current_player].left_point)
                 #print("d")
         elif e.key() == qc.Qt.Key_A:
             # if not an end of a screen
             if self.players[self.current_player].x - self.players[self.current_player].w != 0:
                 # if a slope is not vertical
-                if self.a.pixel(self.players[self.current_player].x - 4, self.players[self.current_player].y - 5) == 0:
+                if self.a.pixel(self.players[self.current_player].x - 5, self.players[self.current_player].y - 7) == 0:
                     self.players[self.current_player].x -= 1
                 #print("a")
 
@@ -376,6 +393,11 @@ class GameWindow(qw.QLabel):
         time_pass= datetime.now()-self.r_start
         show =self.time_for_round - time_pass.seconds
 
+        #check garbage collect
+        '''if show%10==0:
+            print("hits: ",len(self.hits))
+            print("bullets: ",len(self.bullets))
+            print("explo: ", len(self.explosions))'''
         if show <0:
             self.timer_begin = True
             if self.current_player +1 >= len(self.players):
@@ -494,6 +516,10 @@ class Bullet:
             y=round(self.y)
             self.parent.collisions.append([x,y, self.explosion])
             self.parent.bullets[self.i] = None
+            #########right place to initialize smoke#####
+            self.parent.explosions.append(Explosion(self,1))
+
+
 
             ####first implement - we are looking only at ground
             for i in self.parent.players:
@@ -519,6 +545,8 @@ class Bullet:
             y=round(self.y)
             self.parent.collisions.append([x,y, self.explosion])
             self.parent.bullets[self.i] = None
+            #########right place to initialize smoke#####
+            self.parent.explosions.append(Explosion(self,0))
 
             for i in self.parent.players:
                 if abs(i.x-x) <= i.w/2 + self.explosion/2:
@@ -569,6 +597,9 @@ class Player:
         pixmap = self.parent.tank
         self.rotation = 0
 
+        #Rotation part
+
+        #define 2 reference points
         self.left_point=[self.x-self.w/4,self.y+self.corr]
         self.right_point=[self.x+self.w/4,self.y+self.corr]
 
@@ -586,43 +617,47 @@ class Player:
             while self.parent.a.pixel(self.right_point[0], self.right_point[1]) != 0:
                 self.right_point[1]-=1
 
+        #bild a vector
         self.vector=np.array([self.right_point[0]-self.left_point[0],self.right_point[1]-self.left_point[1]])
 
-
+        #normalize
         if np.linalg.norm(self.vector) != 0:
             self.vector = self.vector / np.linalg.norm(self.vector)
 
+        #degree
         self.rotation=round(90-math.acos(self.vector[1])/math.pi*180)
 
         #print(self.rotation)
         transform = qg.QTransform().rotate(self.rotation)
         pixmap = pixmap.transformed(transform, qc.Qt.SmoothTransformation)
-
+        #draw tank
         self.parent.painter3.drawPixmap(self.x - self.w / 2, self.y - self.h / 2+1, pixmap)
-        #self.parent.painter4.setBrush(qg.QBrush(qc.Qt.red))
+
+        #draw reference line
+        #self.parent.painter3.setPen(qg.QPen(qc.Qt.red, 2, qc.Qt.DashDotDotLine))
         #self.parent.painter3.drawLine(self.left_point[0],self.left_point[1],self.right_point[0],self.right_point[1])
 
 
         ##name
         self.parent.painter4.setPen(qg.QPen(qc.Qt.black, 2, qc.Qt.SolidLine))
         self.parent.painter4.setFont(qg.QFont('Helvetica', 12))
-        self.parent.painter4.drawText(self.x-self.w/2, self.y-self.h, self.name)
+        self.parent.painter4.drawText(self.x-self.w/2, self.y-2*self.h, self.name)
 
         ##hp bar
         percent=self.hp/self.hp_max
         color=qc.Qt.green
-        if percent<0.4:
+        if self.hp<40:
             color=qc.Qt.red
-        elif percent<0.80:
+        elif self.hp<80:
             color=qc.Qt.yellow
         if self.hp > 0:
             self.parent.painter4.setPen(qg.QPen(color, 2, qc.Qt.SolidLine))
             self.parent.painter4.setBrush(qg.QBrush(color))
-            self.parent.painter4.drawRect(self.x - self.w / 2, self.y - self.h + 2, self.w*percent, 2)
+            self.parent.painter4.drawRect(self.x - self.w / 2, self.y - 2*self.h + 2, self.w*percent, 2)
         else:
             self.parent.painter4.setPen(qg.QPen(qc.Qt.red, 2, qc.Qt.SolidLine))
             self.parent.painter4.setFont(qg.QFont('Helvetica', 12))
-            self.parent.painter4.drawText(self.x - self.w / 2, self.y + self.h + 12, "dead")
+            self.parent.painter4.drawText(self.x - self.w / 2, self.y + 2*self.h + 12, "dead")
 
         ##gun
         ###do not update self.v if it is not your turn!
@@ -639,7 +674,7 @@ class Player:
         self.on_ground()
 
     def on_ground(self):
-        if self.y+self.corr >= self.parent.height()-2:
+        if self.y+self.corr >= self.parent.height()-1:
             self.hp=0
             self.y += 4*self.h
         else:
@@ -649,6 +684,128 @@ class Player:
             # if we will move a player and it hits the ground
             elif self.parent.a.pixel(self.x, self.corr+self.y-1) != 0:
                 self.y -= 1
+
+class Explosion:
+    def __init__(self, parent,ground):
+        self.parent = parent
+        self.x = parent.x
+        self.y = parent.y
+        ###make smoke depend on current gun
+        self.amount = 0
+        if parent.weapon==0:
+            self.amount = random.randint(20,50)
+        elif parent.weapon==1:
+            self.amount = random.randint(2,5)
+        elif parent.weapon==2:
+            self.amount = random.randint(100,150)
+
+        self.opacity = 100
+        self.timer = 300
+        self.destruct = False
+        self.smoke=[]
+        self.parts=[]
+
+        for i in range(self.amount):
+            self.smoke.append(Part(self,1))
+        if ground==1:
+            for i in range(round(self.amount)):
+                self.parts.append(Part(self,0))
+
+
+    def paint(self):
+        delete = -1
+        if self.timer >0:
+            for i in range(self.amount):
+                self.smoke[i].paint()
+            for i in range(len(self.parts)-1,-1,-1):
+                self.parts[i].paint()
+                if self.parent.parent.b.pixel(self.parts[i].x, self.parts[i].y) != 0:
+                    for j in self.parent.parent.players:
+                        x = round(self.parts[i].x)
+                        y = round(self.parts[i].y)
+                        #print(x,y)
+
+                        if abs(j.x - x) <= j.w:
+                            if abs(j.y - y) <= j.h:
+                                critical = False
+                                if random.randint(1,10) ==1:
+                                    critical=True
+                                koeff=1
+                                if critical == True:
+                                    dmg = float(round(15 * 0.1 * koeff, 1))
+                                else:
+                                    dmg = float(round(0.1 * koeff, 1))
+                                j.hp -= dmg
+                                self.parent.parent.hits.append(Hit(self.parent.parent, j.x, j.y, dmg, koeff, critical))
+
+                    #self.parent.parent.collisions.append([x, y, self.parts[i].explosion])
+                    del self.parts[i]
+                elif self.parent.parent.a.pixel(self.parts[i].x, self.parts[i].y) != 0:
+                    if self.parent.parent.a.pixel(self.parts[i].x - self.parts[i].v[0], self.parts[i].y - self.parts[i].v[1]) == 0:
+                        while self.parent.parent.a.pixel(self.parts[i].x, self.parts[i].y) != 0:
+                            self.parts[i].x -= self.parts[i].v[0] / 100
+                            self.parts[i].y -= self.parts[i].v[1] / 100
+                    x = round(self.parts[i].x)
+                    y = round(self.parts[i].y)
+                    self.parent.parent.collisions.append([x, y, self.parts[i].explosion])
+                    del self.parts[i]
+            self.timer -= 1
+            self.opacity -=0.3
+
+        else:
+            self.destruct = True
+
+class Part:
+    def __init__(self,parent,smoke):
+        self.parent=parent
+        self.smoke=smoke
+        color =[qg.QColor(214, 143, 76),qg.QColor(175, 108, 40),qg.QColor(132, 72, 13),qg.QColor(81, 53, 25),qg.QColor(40, 28, 16)]
+        self.color = color[random.randint(0,len(color)-1)]
+
+        self.gravity=self.parent.parent.gravity
+        self.v=[0,0]
+        if self.smoke==1:
+            self.weight = random.uniform(-0.01, -0.001)
+            self.v = [0, random.uniform(-0.5, 0)]
+            self.x = random.randint(round(parent.x - self.parent.parent.explosion / 2),
+                                    round(parent.x + self.parent.parent.explosion / 2))
+            self.y = random.randint(round(parent.y), round(
+                parent.y + math.sqrt(abs((self.parent.parent.explosion / 2) ** 2 - (self.x - parent.x) ** 2))))
+
+        else:
+            self.x=parent.x
+            self.y=parent.y
+            self.weight = random.uniform(0.1, 0.3)
+            self.v=[random.uniform(-1,1),-1]
+        self.d=4 # for smoke
+        self.explosion=2 # for particles
+
+    def paint(self):
+        if self.parent.opacity >0:
+            opacity=self.parent.opacity
+        else:
+            opacity=0
+        if self.smoke==1:
+            self.color = qg.QColor(150,150,150,opacity)
+            self.x += self.v[0]
+            self.y += self.v[1]
+            self.v[1] += self.weight * self.gravity
+            self.v[0] += self.weight *2* random.uniform(-1,1)
+
+            self.parent.parent.parent.painter5.setCompositionMode(qg.QPainter.CompositionMode_DestinationOver)
+            self.parent.parent.parent.painter5.setPen(self.color)
+            self.parent.parent.parent.painter5.setBrush(self.color)
+            self.parent.parent.parent.painter5.drawEllipse(self.x - self.d / 2, self.y - self.d / 2, self.d, self.d)
+        else:
+            self.x += self.v[0]
+            self.y += self.v[1]
+            self.v[1] += self.weight * self.gravity
+            #print(self.weight)
+
+            self.parent.parent.parent.painter.setPen(qg.QPen(self.color, self.explosion, qc.Qt.SolidLine))
+            self.parent.parent.parent.painter.drawPoint(self.x,self.y)
+            #self.parent.parent.parent.painter.setBrush(self.color)
+            #self.parent.parent.parent.painter.drawEllipse(self.x - self.d / 4, self.y - self.d / 4, self.d/2, self.d/2)
 
 
 
