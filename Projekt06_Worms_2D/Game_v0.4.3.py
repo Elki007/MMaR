@@ -1,139 +1,194 @@
+'''
+To use "import skfmm" you have to install the plugin "scikit-fmm"
+
+If you get the error: "Microsoft Visual C++ 14.0 is required" you have to install the Build-Tools
+https://visualstudio.microsoft.com/de/thank-you-downloading-visual-studio/?sku=BuildTools&rel=15
+
+At "Workloads" -> Buildtools (4,81 GB)
+'''
+
 import sys
 import random
 import math
-from datetime import datetime, timedelta
 import numpy as np
+from datetime import datetime, timedelta
 from PyQt5 import QtWidgets as qw
 from PyQt5 import QtCore as qc
 from PyQt5 import QtGui as qg
 
+# Benötigt für Abstand zur Oberfläche (as advised), tbd
+#import skfmm
+#import matplotlib as plt
+#from PyQt5.QtGui import QImage
+#from matplotlib import cm
 
+
+# Settings for the window in general
 class MainWindow(qw.QMainWindow):
     def __init__(self):
         super().__init__()
         self.setMinimumHeight(480)
         self.setMinimumWidth(600)
-        self.z=1
-        self.initUI()
+        self.zoom = 1
+        self.init_ui()
 
-    def initUI(self):
+    def init_ui(self):
         self.statusBar().showMessage('online')
-        self.setGeometry(300, 300, 250, 150)
+        #self.setGeometry(300, 300, 250, 150)  # Wozu ist das?
         self.setWindowTitle('Worms 2D')
-
         self.setCentralWidget(MainMenu(self))
 
-        self.center()
+        #self.center()  # Wozu ist das?
 
         self.show()
 
-    def center(self):   ##### screen center
+    def center(self):   ##### screen center  # Wozu ist das?
         qr = self.frameGeometry()
         cp = qw.QDesktopWidget().availableGeometry().center()
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
 
+# Settings for main menu - first displayed menu
 class MainMenu(qw.QWidget):
     def __init__(self, parent):
         qw.QWidget.__init__(self)
         self.parent = parent
-        self.initUI()
+        self.init_ui()
 
-    def initUI(self):
-        b_ng = qw.QPushButton("New Game")
-        b_ng.clicked.connect(self.on_click_b_ng)
-        #b_ng.connect = parent.setCentralWidget(qw.QPushButton("inside Game"))
-        b_hs = qw.QPushButton("High score")
-        #b_hs.clicked.connect(self.on_click_b_hs)
-        b_st = qw.QPushButton("Settings")
-        b_cr = qw.QPushButton("Credits")
-        b_ex = qw.QPushButton("Exit")
+    def init_ui(self):
+        # Menu items
+        b_newgame = qw.QPushButton("New Game")
+        b_highscore = qw.QPushButton("High score")  #tbd
+        b_settings = qw.QPushButton("Settings")  #tbd
+        b_credits = qw.QPushButton("Credits")  #tbd
+        b_exit = qw.QPushButton("Exit")
+
+        # Menu actions
+        b_newgame.clicked.connect(self.on_click_b_newgame)
+        # b_newgame.connect = parent.setCentralWidget(qw.QPushButton("inside Game"))
+        b_highscore.clicked.connect(self.on_click_b_highscore)
+        b_settings.clicked.connect(self.on_click_b_settings)
+        b_credits.clicked.connect(self.on_click_b_credits)
+        b_exit.clicked.connect(self.on_click_b_exit)
+
+        # Layout of menu
         hbox = qw.QHBoxLayout()
         vbox = qw.QVBoxLayout()
-
-        vbox.addStretch(1)
-        vbox.addWidget(b_ng)
-        vbox.addWidget(b_hs)
-        vbox.addWidget(b_st)
-        vbox.addWidget(b_cr)
-        vbox.addWidget(b_ex)
-        vbox.addStretch(1)
 
         hbox.addStretch(1)
         hbox.addLayout(vbox)
         hbox.addStretch(1)
 
+        vbox.addStretch(1)
+        vbox.addWidget(b_newgame)
+        #vbox.addWidget(b_highscore)
+        #vbox.addWidget(b_settings)
+        #vbox.addWidget(b_credits)
+        vbox.addWidget(b_exit)
+        vbox.addStretch(1)
+
         self.setLayout(hbox)
 
-
-
-
-    def on_click_b_ng(self):
+    # Functions for clicked menu item
+    def on_click_b_newgame(self):
         #print('PyQt5 button click')
         self.parent.setCentralWidget(qw.QPushButton("inside Game"))
         self.parent.setCentralWidget(GameWindow(self.parent))
         self.parent.statusBar().clearMessage()
         self.parent.statusBar().hide()
 
-    def on_click_b_hs(self):
+    def on_click_b_highscore(self):
         self.parent.statusBar().clearMessage()
-        self.parent.statusBar().hide()
+        #self.parent.statusBar().hide()
         #self.parent.setCentralWidget(Test(self.parent))
 
+    def on_click_b_settings(self):
+        pass
 
+    def on_click_b_credits(self):
+        pass
+
+    def on_click_b_exit(selfs):
+        sys.exit(app.exec_())
+
+
+# Settings for the window with the actual game
 class GameWindow(qw.QLabel):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
         self.grabKeyboard()
 
-        tank = qg.QImage("tankwithout01.png")
-        tank.scaled(50, 50)
-        qtank = qg.QPixmap.fromImage(tank)
-        self.tank = qtank.scaledToWidth(30)
+        self.tank = qg.QPixmap.fromImage(qg.QImage("tankwithout01.png"))
+        #tank.scaled(50, 50)  # Wozu ist das?
+        self.tank = self.tank.scaledToWidth(30)
 
-        self.items = qw.QDockWidget("Weapon", self)
+        # Ingame menu for weapon choice - direct images to click
+        w_menu = qw.QPushButton("Weapons")
+        w_menu.setDisabled(True)
+        w_menu.setStyleSheet("color: black")
+        self.w_weapon01 = qw.QPushButton()
+        self.w_weapon01.setIcon(qg.QIcon('w_cannon01.png'))
+        self.w_weapon01.setStyleSheet("background-color: blue")
+        self.w_weapon02 = qw.QPushButton()
+        self.w_weapon02.setIcon(qg.QIcon('w_rifle01.png'))
+        self.w_weapon02.setStyleSheet("background-color: lightgrey")
+        self.w_weapon03 = qw.QPushButton()
+        self.w_weapon03.setIcon(qg.QIcon('w_bomb01.png'))
+        self.w_weapon03.setStyleSheet("background-color: lightgrey")
 
-        self.weapon = qw.QComboBox()
-        self.weapon.addItem("Cannon")
-        self.weapon.addItem("Rifle gun")
-        self.weapon.addItem("Bomb")
+        # Action for Button clicked for weapon choice
+        self.w_weapon01.clicked.connect(self.on_click_w_weapon01)
+        self.w_weapon02.clicked.connect(self.on_click_w_weapon02)
+        self.w_weapon03.clicked.connect(self.on_click_w_weapon03)
 
-        self.items.setWidget(self.weapon)
-        self.items.setFloating(False)
-        #move to the right top
-        self.items.setGeometry(520, 0, 0, 0)
-        # disable close, dock buttons
-        self.items.setFeatures(qw.QDockWidget.DockWidgetMovable)
+        # Layout for weapon choice
+        weapon_menu_layout = qw.QHBoxLayout()
+        weapon_menu = qw.QVBoxLayout()
+        weapon_items = qw.QHBoxLayout()
 
-        #mouse coordinates
-        self.m_x=0
-        self.m_y=0
+        weapon_menu.addWidget(w_menu)
+        weapon_menu.addLayout(weapon_items)
+        weapon_menu.addStretch(1)
 
-        self.alpha=0
-        self.map = np.zeros([self.parent.width(),self.parent.height()], dtype=np.bool)
+        weapon_items.addWidget(self.w_weapon01)
+        weapon_items.addWidget(self.w_weapon02)
+        weapon_items.addWidget(self.w_weapon03)
 
-        #an array of changes to original surface
-        self.collisions=[]
+        weapon_menu_layout.addStretch(1)
+        weapon_menu_layout.addLayout(weapon_menu)
+        weapon_menu_layout.setSpacing(0)
 
-        #generic surface
-        self.ebene0 = qg.QPixmap(self.parent.width() * self.parent.z,
-                                 self.parent.height() * self.parent.z)  # oder QImage
+        self.setLayout(weapon_menu_layout)
+
+        # refers to class Bullet with default "weapon01"
+        self.weapon_choice = "weapon01"
+
+        # mouse coordinates
+        self.m_x = 0
+        self.m_y = 0
+
+        # an array of changes to original surface
+        self.collisions = []
+
+        # generic surface
+        self.ebene0 = qg.QPixmap(self.parent.width() * self.parent.zoom,
+                                 self.parent.height() * self.parent.zoom)  # oder QImage
         # first layer background
-        self.ebene1 = qg.QPixmap(self.parent.width() * self.parent.z,
-                                 self.parent.height() * self.parent.z)  # oder QImage
-        #second layer only surface
-        self.ebene2 = qg.QPixmap(self.parent.width() * self.parent.z,
-                                 self.parent.height() * self.parent.z)  # oder QImage
+        self.ebene1 = qg.QPixmap(self.parent.width() * self.parent.zoom,
+                                 self.parent.height() * self.parent.zoom)  # oder QImage
+        # second layer only surface
+        self.ebene2 = qg.QPixmap(self.parent.width() * self.parent.zoom,
+                                 self.parent.height() * self.parent.zoom)  # oder QImage
 
-        #objects
-        self.ebene3 = qg.QPixmap(self.parent.width() * self.parent.z,
-                                 self.parent.height() * self.parent.z)  # oder QImage
+        # objects
+        self.ebene3 = qg.QPixmap(self.parent.width() * self.parent.zoom,
+                                 self.parent.height() * self.parent.zoom)  # oder QImage
 
-        #interface
-        self.ebene4 = qg.QPixmap(self.parent.width() * self.parent.z,
-                                 self.parent.height() * self.parent.z)  # oder QImage
+        # interface
+        self.ebene4 = qg.QPixmap(self.parent.width() * self.parent.zoom,
+                                 self.parent.height() * self.parent.zoom)  # oder QImage
 
         # make 'em transparent (alpha channel = 0) 4th number in parameters
         self.ebene0.fill(qg.QColor(0, 0, 0, 0))
@@ -146,38 +201,16 @@ class GameWindow(qw.QLabel):
         self.a = self.ebene2.toImage()
         self.b = self.ebene2.toImage()
 
-        #Generated Surface
-        self.w=np.linspace(0.001,0.05,20)
-        #self.x=np.linspace(0,self.width(),10)
-        self.x=range(0,self.parent.width(),1)
-        self.x_poly = range(self.parent.width())
-        self.f_x = []
-        self.rand_a = random.uniform(0,math.pi)
-        self.rand_b = np.float64(random.uniform(-1,1))
+        # Generate Surface
+        self.surface_sinus_count = 20  # how many functions will be overlayed
+        self.surface_factor = 3  # results of functions will be multiplied with
+        self.surface_distance_from_top = 0.5 * self.parent.height()  # how far from top is y=0 of the generated surface
+        self.surface_color = [255, 191, 102]  # color of top of surface (default: brownish [255, 191, 102])
 
-        for i in self.x:
-            #print(self.f(i))
-            self.f_x.append(2*self.f(i))
+        self.surface = self.surface_generator()
 
-        z = np.polyfit(self.x, self.f_x, 7)
-        f = np.poly1d(z)
-        self.ground2 = f(self.x_poly)
-
-        self.ground2 = self.f_x
-        #print(self.ground)
-        #print(self.ground2)
-
-        a=[]
-        for i in range(self.parent.height()):
-            b=[]
-            for j in range(self.parent.width()):
-                if i > self.ground2[j]+300:
-                    b.append(True)
-                else:
-                    b.append(False)
-            a.append(b)
-
-        #self.ebene1.fill(qg.QColor(0, 0, 0, 0))
+        # 2d-array: True for surface, False for no surface
+        self.surface_true_false = self.surface_true_false_generator()
 
         #Qt5 tools to paint
         self.painter0 = qg.QPainter(self.ebene0)
@@ -186,27 +219,51 @@ class GameWindow(qw.QLabel):
         self.painter3 = qg.QPainter(self.ebene3)
         self.painter4 = qg.QPainter(self.ebene4)
 
+        # draw dynamic surface - 2 Versions (Maxims and advised (with scikit-fmm and matplotlib)) (just one needed)
+        # advised version (tbd)
+        """
+        # begin of Maxims test?
+        #self.alpha = 0
+        #self.map = np.zeros([self.parent.width(), self.parent.height()], dtype=np.bool)
+        
+        map_dist = skfmm.distance(self.surface_true_false)  # Distanzen zur 0 (also False)
+        map_dist = map_dist / np.max(map_dist)  # Normieren auf 0,1
 
-        #draw dynamic surface
+        world = plt.cm.copper_r(map_dist)  # Mit Matplotlib in Farben Konvertieren
+
+        world[:, :, 3] = self.surface_true_false  # Nicht-Land auf Transparent setzen (True = 1, False = 0)
+        world = np.asarray(world * 255, np.uint8)  # Konvertierung in ein 8-Bit Array, das in ein QImage konvertiert werden kann
+
+        #mapmap = qg.QImage(world, self.parent.height(), self.parent.width(), qg.QImage.Format_Indexed8)
+        """
+        # version of Maxim
+
         for j in range(self.parent.width()):
-            self.surf_color_R = 255
-            self.surf_color_G = 191
-            self.surf_color_B = 102
+            self.surf_color_R, self.surf_color_G, self.surf_color_B = self.surface_color
             for i in range(self.parent.height()):
-                if a[i][j]==True:
+                if self.surface_true_false[i][j]:
                     self.painter0.setPen(qg.QColor(self.surf_color_R, self.surf_color_G, self.surf_color_B))
-                    self.painter0.drawPoint(j,i)
-                    if self.surf_color_R >= 4 : self.surf_color_R -= 4
-                    if self.surf_color_G >= 4 : self.surf_color_G -= 4
-                    if self.surf_color_B >= 4 : self.surf_color_B -= 4
+                    self.painter0.drawPoint(j, i)
+                    if self.surf_color_R >= 4: self.surf_color_R -= 4
+                    if self.surf_color_G >= 4: self.surf_color_G -= 4
+                    if self.surf_color_B >= 4: self.surf_color_B -= 4
+
 
         #default value is false - means track mouse only when at least one button is pressed
         self.setMouseTracking(True)
-        self.grabKeyboard() #OMG 2 hours later!
+        #self.grabKeyboard() #OMG 2 hours later!  # Wurde bereits weiter oben eingebunden
 
+        #self.players = ["Max", "Misha"]
         self.players = []
+        self.bullet_shot_allowed = False
         self.bullets = []
         self.hits = []
+
+        """
+        for i in self.players:
+            self.players.append(Player(self, qc.Qt.darkGreen, qg.QColor(104, 156, 56), i, len(self.players)))
+            self.bullets.append(None)
+        """
 
         self.players.append(Player(self, qc.Qt.darkGreen, qg.QColor(104, 156, 56), "Max", len(self.players)))
         self.bullets.append(None)
@@ -216,6 +273,7 @@ class GameWindow(qw.QLabel):
 
         #flag to stop the Game
         self.victory = False
+
         # game settings
         self.time_for_round = 10
         self.time_between_rounds = 4
@@ -229,10 +287,54 @@ class GameWindow(qw.QLabel):
         self.timer_between_rounds_begin = False
         self.time_between_start = 0
 
+        # movement flags
+        self.movement_right = False
+        self.movement_left = False
+
         self.initUI()
 
-    def initUI(self):
+    def surface_generator(self):
+        w = np.linspace(start=0.001, stop=0.05, num=self.surface_sinus_count)
+        x_coordinates = range(self.parent.width())
+        surface_random_one = np.random.uniform(0, 2 * math.pi, self.surface_sinus_count)
+        surface_random_two = np.random.uniform(-1, 1, self.surface_sinus_count)
 
+        surface = []
+        for i in x_coordinates:
+            res = 0
+            for j in range(self.surface_sinus_count):
+                res += (1 / math.sqrt(w[j])) * math.sin(w[j] * i + surface_random_one[j]) * surface_random_two[j]
+            surface.append((self.surface_factor * res) + self.surface_distance_from_top)
+        return surface
+
+    def surface_true_false_generator(self):
+        surface_true_false = []
+        for i in range(self.parent.height()):
+            tmp = []
+            for j in range(self.parent.width()):
+                tmp.append(True) if i > self.surface[j] else tmp.append(False)
+            surface_true_false.append(tmp)
+        return surface_true_false
+
+    def on_click_w_weapon01(self):
+        self.weapon_choice = "weapon01"
+        self.w_weapon01.setStyleSheet("background-color: blue")
+        self.w_weapon02.setStyleSheet("background-color: lightgrey")
+        self.w_weapon03.setStyleSheet("background-color: lightgrey")
+
+    def on_click_w_weapon02(self):
+        self.weapon_choice = "weapon02"
+        self.w_weapon01.setStyleSheet("background-color: lightgrey")
+        self.w_weapon02.setStyleSheet("background-color: blue")
+        self.w_weapon03.setStyleSheet("background-color: lightgrey")
+
+    def on_click_w_weapon03(self):
+        self.weapon_choice = "weapon03"
+        self.w_weapon01.setStyleSheet("background-color: lightgrey")
+        self.w_weapon02.setStyleSheet("background-color: lightgrey")
+        self.w_weapon03.setStyleSheet("background-color: blue")
+
+    def initUI(self):
         self.Run()
 
     def Run(self):
@@ -251,10 +353,10 @@ class GameWindow(qw.QLabel):
             self.update_surface()
             self.a = self.ebene2.toImage()
 
-            alive=0
+            alive = 0
             for i in self.players:
-                if i.hp>0:
-                    alive+=1
+                if i.hp > 0:
+                    alive += 1
             if alive == 1:
                 for i in self.players:
                     if i.hp > 0:
@@ -269,6 +371,13 @@ class GameWindow(qw.QLabel):
                 self.victory = True
             else:
                 self.time()
+
+            # movement and shooting allowed if not between rounds
+            if not self.timer_between_rounds_begin:
+                self.movement()
+                if self.bullet_shot_allowed:
+                    self.bullets[self.current_player] = Bullet(self, self.current_player)
+            self.bullet_shot_allowed = False
 
             for i in range(len(self.players)):
                 self.players[i].paint()
@@ -306,7 +415,6 @@ class GameWindow(qw.QLabel):
                     #print('Yes clicked.')
                     self.parent.setCentralWidget(MainMenu(self.parent))
                     self.parent.setCentralWidget(GameWindow(self.parent))
-
                 else:
                     #print('No clicked.')
                     self.parent.setCentralWidget(MainMenu(self.parent))
@@ -335,12 +443,10 @@ class GameWindow(qw.QLabel):
             #drawEllipse uses x,y as a top left coordintes, that's why we need to perform some calc.
             self.painter2.drawEllipse(i[0]-i[2]/2, i[1]-i[2]/2, i[2], i[2])
 
-
-
-    def mouseMoveEvent(self, e):
-        self.m_x = e.x()
-        self.m_y = e.y()
-        alpha = self.a.pixel(self.m_x, self.m_y)#.alpha()
+    def mouseMoveEvent(self, event):
+        self.m_x = event.x()
+        self.m_y = event.y()
+        alpha = self.a.pixel(self.m_x, self.m_y)  #.alpha()
         alpha2 = self.b.pixel(self.m_x, self.m_y)  # .alpha()
         #self.parent.statusBar().showMessage(str(self.f(self.m_x)))
         #self.parent.statusBar().showMessage("a: "+str(alpha)+" b: "+str(alpha2))
@@ -349,24 +455,36 @@ class GameWindow(qw.QLabel):
         #print("lclick", self.gun.v/10)
         if self.bullets[self.current_player] == None:
             #print(self.weapon.currentIndex())
-            self.bullets[self.current_player] = Bullet(self,self.current_player)
+            self.bullet_shot_allowed = True
 
-    def keyPressEvent(self, e):
-        if e.key() == qc.Qt.Key_D:
-            #if not an end of a screen
-            if self.players[self.current_player].x+self.players[self.current_player].w != self.parent.width():
+    # Pressing A, D, Left or Right switches the status of self.movement_left or *_right to True
+    def keyPressEvent(self, event):
+        if (event.key() == qc.Qt.Key_D or event.key() == qc.Qt.Key_Right) and not event.isAutoRepeat():
+            self.movement_right = True
+        elif (event.key() == qc.Qt.Key_A or event.key() == qc.Qt.Key_Left) and not event.isAutoRepeat():
+            self.movement_left = True
+
+    # Releasing any Key switches both movement values to False
+    def keyReleaseEvent(self, event):
+        if not event.isAutoRepeat():
+            self.movement_right = False
+            self.movement_left = False
+
+    # Dependent on status from self.movement_left and *_right the tank is moving
+    def movement(self):
+        if self.movement_right:
+            # if not an end of a screen
+            if self.players[self.current_player].x + self.players[self.current_player].w != self.parent.width():
                 # if a slope is not vertical
                 if self.a.pixel(self.players[self.current_player].x + 4, self.players[self.current_player].y - 5) == 0:
-                    self.players[self.current_player].x += 1
-                    print(self.players[self.current_player].rotation, " ", self.players[self.current_player].left_point)
-                #print("d")
-        elif e.key() == qc.Qt.Key_A:
+                    self.players[self.current_player].x += 0.5
+                    #print(self.players[self.current_player].rotation, " ", self.players[self.current_player].left_point)
+        if self.movement_left:
             # if not an end of a screen
             if self.players[self.current_player].x - self.players[self.current_player].w != 0:
                 # if a slope is not vertical
                 if self.a.pixel(self.players[self.current_player].x - 4, self.players[self.current_player].y - 5) == 0:
-                    self.players[self.current_player].x -= 1
-                #print("a")
+                    self.players[self.current_player].x -= 0.5
 
     def time(self):
         if self.timer_between_rounds_begin:
@@ -412,17 +530,9 @@ class GameWindow(qw.QLabel):
             self.painter4.drawText(50, 50, str(self.players[self.current_player].name) +
                                    ", it's your turn! Time left: " + str(show))
 
-    def f(self, x):
-        res=np.float64(0)
-        for i in range(len(self.w)):
-            w=np.float64(self.w[i])
-            res += 1 / (math.sqrt(w)) * math.sin(w * x + self.rand_a) * self.rand_b
-            #res += 1/(math.sqrt(w))* math.sin(w*x+random.uniform(0,math.pi))*np.float64(random.uniform(-1,1))
-        return 2*res
-
 
 class Hit:
-    def __init__(self, parent,x,y,dmg,koeff,crit):
+    def __init__(self, parent, x, y, dmg, koeff, crit):
         self.parent = parent
         self.x = x
         self.y = y - 30 # not in a Tank, but slightly above
@@ -439,18 +549,18 @@ class Hit:
         if (self.y_start-self.y)/self.y_end > 0.9: # 90% of self.y_end is covered - next is too slow.
             self.destruct=True
 
-        if self.crit==True:
-            test="Critical! "
+        if self.crit:
+            test = "Critical! "
             self.parent.painter4.setFont(qg.QFont('CorpoS', 14, weight=qg.QFont.Bold, italic=qg.QFont.StyleItalic))
         else:
-            test=""
+            test = ""
             self.parent.painter4.setFont(qg.QFont('Helvetica', 12))
 
-        if self.koeff==1:
+        if self.koeff == 1:
             self.parent.painter4.setPen(qg.QPen(qc.Qt.red, 2, qc.Qt.SolidLine))
 
             self.parent.painter4.drawText(self.x,self.y, test+str(self.dmg))
-        elif self.koeff >0.5:
+        elif self.koeff > 0.5:
             self.parent.painter4.setPen(qg.QPen(qc.Qt.yellow, 2, qc.Qt.SolidLine))
             self.parent.painter4.drawText(self.x, self.y, test+str(self.dmg))
         else:
@@ -461,18 +571,19 @@ class Hit:
 
 
 class Bullet:
-    def __init__(self, parent,player_i):
+    def __init__(self, parent, player_i):
         self.parent = parent
         self.criticat = False
-        if random.randint(0,10)==1: self.criticat = True
-        self.i=player_i
-        self.weapon= parent.weapon.currentIndex()
+        if random.randint(0, 10) == 1: self.criticat = True
+        self.i = player_i
+
+        self.weapon = parent.weapon_choice
         self.x = parent.players[self.i].x+parent.players[self.i].v[0]
         self.y = parent.players[self.i].y+parent.players[self.i].v[1]
         # self.v is gun direction
 
         # Cannon
-        if self.weapon == 0:
+        if self.weapon == "weapon01":
             self.weight = 10
             self.power = 0.25
 
@@ -480,15 +591,15 @@ class Bullet:
             self.explosion = 10
 
         # Rifle
-        elif self.weapon == 1:
-            self.weight = 1
+        elif self.weapon == "weapon02":
+            self.weight = 2
             self.power = 0.4
 
             self.damage = 1
             self.explosion = 1
 
-        # Grenede
-        elif self.weapon == 2:
+        # Grenade
+        elif self.weapon == "weapon03":
             self.weight = 10
             self.power = 0.15
 
