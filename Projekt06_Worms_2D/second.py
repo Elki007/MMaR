@@ -20,7 +20,7 @@ class MainWindow(qw.QMainWindow):
         self.setGeometry(300, 300, 250, 150)
         self.setWindowTitle('Worms 2D')
 
-        self.setCentralWidget(MainMenu(self))
+        self.setCentralWidget(GameWindow(self))
 
         self.show()
 
@@ -94,7 +94,7 @@ class GameWindow(qw.QLabel):
 
         self.a = self.ebene2.toImage()
 
-        self.canvas.fill(qg.QColor(0, 0, 0, 0))
+        #self.canvas.fill(qg.QColor(0, 0, 0, 0))
 
         self.painter = qg.QPainter(self.canvas)
         self.painter2 = qg.QPainter(self.ebene2)

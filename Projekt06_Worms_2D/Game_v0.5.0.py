@@ -6,6 +6,7 @@ Demnächst:
 - Rauch soll nicht durch die Wand
 - Rauch soll Spuren hinter sich herziehen, die dann verblassen
 - Kanonenrohr soll sich natürlich verhalten (mit Grafik)
+- Code-Strukturierung (Verminderung von Wiederholungen
 
 """
 
@@ -783,6 +784,9 @@ class Player:
         self.right_point = [0, 0]
         self.tank_rotation = 0
 
+        self.debug_one = 0
+        self.debug_two = 0
+
     # calculation of x-coordinate fpr start position, each player has a distance
     # of self.start_position_distance between each other if it needs more than
     # 50 tries to get an x_coordinate, self.start_position_distance will be ignored
@@ -825,7 +829,10 @@ class Player:
         self.parent.painter3_object.setPen(qg.QPen(self.color, 2, qc.Qt.SolidLine))
         self.parent.painter3_object.setBrush(qg.QBrush(self.color))
         # debugger view - hitbox (allerdings auf gleicher Ebene -> dient nur zur Fehlerbeseitigung)
-        # self.parent.painter3_object.drawRect(self.x_player - self.tank_length / 2, self.y_player - self.tank_height / 2,self.tank_length,self.tank_height)
+        # inzwischen nicht mehr Hitbox (yeah!), aber im Moment ist noch das Panzerrohr davon abhängig anstatt von der Transformation abhängig zu sein
+        # Ziel: Box von Transformation abhängig machen -> Vorteil: Auch Hitbox kann darüber reguliert werden -> bessere Lösung
+        # aktuelles
+        #self.parent.painter3_object.drawRect(self.x_player - self.tank_width / 2, self.y_player - self.tank_height / 2, self.tank_width,self.tank_height)
 
         tank_pixmap = self.tank_pixmap
 
@@ -854,8 +861,10 @@ class Player:
         self.tank_rotation = round(90 - math.acos(self.vector[1]) / math.pi * 180)
 
         # print(self.rotation)
+        # Die Transformation verstehe ich nicht wirklich
         tank_transform = qg.QTransform().rotate(self.tank_rotation)
-        tank_pixmap = tank_pixmap.transformed(tank_transform, qc.Qt.SmoothTransformation)
+        tank_pixmap = tank_pixmap.transformed(tank_transform)
+        # Werte für die Hitboxberechnung - Aushilfsweise wird damit die derzeit nicht transformierte Hitbox der Höhe und Weite nach der Transformation angenähert
         self.tank_height_rotated = tank_pixmap.height()
         self.tank_width_rotated = tank_pixmap.width()
 
@@ -866,8 +875,15 @@ class Player:
         # print("tank_pixmap.width():", tank_pixmap.width())
         # print("tank_pixmap.height():", tank_pixmap.height())
 
-        self.parent.painter3_object.drawPixmap(self.x_player - self.tank_width / 2,
-                                               self.y_player - self.tank_height / 2 + 1, tank_pixmap)
+        self.parent.painter3_object.drawRect(self.x_player - self.tank_width / 2, self.y_player - self.tank_height / 2,
+                                             self.tank_width, self.tank_height)
+
+
+        #self.parent.painter3_object.drawRect(tank_transform.dx() - self.tank_width / 2, tank_transform.dy() - self.tank_height / 2,
+        #                                     self.tank_width, self.tank_height)
+
+       # self.parent.painter3_object.drawPixmap(self.x_player - self.tank_width / 2,
+         #                                      self.y_player - self.tank_height / 2 + 1, tank_pixmap)
         # self.parent.painter4.setBrush(qg.QBrush(qc.Qt.red))
         # self.parent.painter3.drawLine(self.left_point[0],self.left_point[1],self.right_point[0],self.right_point[1])
 
@@ -906,6 +922,14 @@ class Player:
         self.parent.painter3_object.setPen(qg.QPen(self.gun_color, 2, qc.Qt.SolidLine))
         self.parent.painter3_object.drawLine(self.x_player, self.y_player, self.x_player + self.gun_vector[0],
                                              self.y_player + self.gun_vector[1])
+
+        # aktuelles
+        if self.parent.current_player == self.number and self.debug_one != self.x_player and self.debug_two != self.y_player:
+            self.debug_one = self.x_player
+            self.debug_two = self.y_player
+            print("self.x_player: ", self.x_player)
+            print("self.y_player: ", self.y_player)
+            print("\n\n")
 
         ###check if on ground
         self.on_ground()
@@ -1037,7 +1061,7 @@ class Part:
             self.part_vector[0] += self.weight * 2 * 0  # effect of "wind" on smoke appears here
 
             if 0 < int(self.y_part) < self.parent.parent.parent.height() and 0 < int(self.x_part) < self.parent.parent.parent.width():
-                print(self.parent.parent.parent.wind_map[int(self.y_part)][int(self.x_part)])
+                #print(self.parent.parent.parent.wind_map[int(self.y_part)][int(self.x_part)])
                 #print(int(self.y_part), ",", int(self.x_part))
                 self.part_vector[0] += self.weight * self.parent.parent.parent.wind_map[int(self.y_part)][int(self.x_part)]
             else:

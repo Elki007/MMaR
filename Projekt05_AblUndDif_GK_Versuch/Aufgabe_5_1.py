@@ -15,6 +15,8 @@ image = Image.open("Katze.png").convert("L")
 # konvertieren in ein numpy-array
 img = np.asarray(image)
 
+print(img)
+
 img.flags.writeable = True
 
 width = len(img[0])
