@@ -272,7 +272,7 @@ class GameWindow(qw.QLabel):
 
         # TODO: Bei mehr als 2 Spielern: Tote können weiterspielen und bspw. unten aus dem Bildschirm fallen
         # Array mit allen Spielernamen
-        self.player_names = ["Max", "Misha", "Gunnar"]
+        self.player_names = ["Max", "Misha"]
 
         self.bullet_shot_allowed = False
         self.players = []
