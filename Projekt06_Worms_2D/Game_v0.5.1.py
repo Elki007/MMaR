@@ -7,6 +7,8 @@ https://visualstudio.microsoft.com/de/thank-you-downloading-visual-studio/?sku=B
 At "Workloads" -> Buildtools (4,81 GB)
 '''
 
+# TODO: Distribution of files to separate e.g. logic and graphic
+
 import sys
 import random
 import math
@@ -188,9 +190,11 @@ class GameWindow(qw.QLabel):
         self.ebene4_interface = qg.QPixmap(self.parent.width() * self.parent.zoom,
                                            self.parent.height() * self.parent.zoom)  # oder QImage
         # smoke
+        # TODO: smoke can go through surface - it's "power smoke" at the moment
         self.ebene5_smoke = qg.QPixmap(self.parent.width() * self.parent.zoom,
                                        self.parent.height() * self.parent.zoom)  # oder QImage
-
+        # wind
+        # TODO: wind only effects smoke atm, right factor for bullets needs to be found and implemented
         self.ebene6_wind = qg.QPixmap(self.parent.width() * self.parent.zoom,
                                       self.parent.height() * self.parent.zoom)  # oder QImage
 
@@ -266,7 +270,7 @@ class GameWindow(qw.QLabel):
         self.ebene2_surface_image = self.ebene2_surface.toImage()
         self.ebene3_object_image = self.ebene3_object.toImage()
 
-        # Aktuelle Probleme bei mehr als 2 Spielern: Tote können weiterspielen und bspw. unten aus dem Bildschirm fallen
+        # TODO: Bei mehr als 2 Spielern: Tote können weiterspielen und bspw. unten aus dem Bildschirm fallen
         # Array mit allen Spielernamen
         self.player_names = ["Max", "Misha", "Gunnar"]
 
@@ -319,6 +323,7 @@ class GameWindow(qw.QLabel):
             surface.append((res * self.surface_factor) + self.surface_distance_from_top)
         return surface
 
+    # creates array with x- and y-coordinates, based on overlayed functions
     def wind_generator(self):
         x_coordinates = range(self.parent.width())
         y_coordinates = range(self.parent.height())
@@ -340,6 +345,7 @@ class GameWindow(qw.QLabel):
 
         return wind
 
+    # creates array with true/false to show surface
     def surface_true_false_generator(self):
         surface_true_false = []
         for i in range(self.parent.height()):
@@ -901,10 +907,15 @@ class Player:
         self.parent.painter3_object.drawLine(self.x_player, self.y_player, self.x_player + self.gun_vector[0],
                                              self.y_player + self.gun_vector[1])
 
+        # DEBUG-Ausgabe der Position des aktuellen Spielers
+        # TODO: Hitbox/Transformation ist noch nicht optimal (nicht abhängig von der Transformation)
+        # TODO: Panzerkanone wird noch immer gezeichnet, statt durch die Grafik angezeigt zu werden
+        """
         if self.parent.current_player == self.number:
             print("self.x_player: ", self.x_player)
             print("self.y_player: ", self.y_player)
             print("\n\n")
+        """
 
         ###check if on ground
         self.on_ground()
