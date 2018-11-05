@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from PyQt5 import QtWidgets as qw
 from PyQt5 import QtCore as qc
 from PyQt5 import QtGui as qg
-import SceneWindow from Scene.py
+from Scene import SceneWindow
 
 
 
