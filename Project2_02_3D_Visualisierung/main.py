@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from PyQt5 import QtWidgets as qw
 from PyQt5 import QtCore as qc
 from PyQt5 import QtGui as qg
-from Scene import SceneWindow
+from Scene2 import SceneWindow
 
 
 
@@ -19,9 +19,9 @@ class MainWindow(qw.QMainWindow):
         self.zoom = 1
         self.init_ui()
 
+
     def init_ui(self):
-        self.statusBar().showMessage('online')
-        # self.setGeometry(300, 300, 250, 150)  # none - default window position?
+        #self.statusBar().showMessage('online')
         self.setWindowTitle('3D Engine')
         self.setCentralWidget(MainMenu(self))
 
@@ -82,8 +82,8 @@ class MainMenu(qw.QWidget):
         # print('PyQt5 button click')
         # self.parent.setCentralWidget(qw.QPushButton("inside Game"))
         self.parent.setCentralWidget(SceneWindow(self.parent))
-        self.parent.statusBar().clearMessage()
-        self.parent.statusBar().hide()
+        #self.parent.statusBar().clearMessage()
+        #self.parent.statusBar().hide()
 
     def on_click_b_highscore(self):
         self.parent.statusBar().clearMessage()

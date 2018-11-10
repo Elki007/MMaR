@@ -5,6 +5,7 @@ import numpy as np
 from datetime import datetime, timedelta
 from Polygon import Polygon
 from Object3D import Object3D
+from Point3D import Point3D
 from PyQt5 import QtWidgets as qw
 from PyQt5 import QtCore as qc
 from PyQt5 import QtGui as qg
@@ -14,6 +15,7 @@ class SceneWindow(qw.QLabel):
         super().__init__()
 
         self.parent = parent
+        self.status_bar = self.parent.statusBar()
 
         # default value is false - means track mouse only when at least one button is pressed
         self.setMouseTracking(True)
@@ -39,49 +41,35 @@ class SceneWindow(qw.QLabel):
 
         # objects
         self.cube = Object3D  # declare
-        self.fov = 1    # field of view
+        self.fov = 90    # field of view
         self.distance = 4
+        self.angleX, self.angleY, self.angleZ = 0, 0, 0
         self.direction_forward = True
+
         self.init_ui()
 
     def init_ui(self):
-        # center of a cube
-        cubeX = self.parent.width() / 2
-        cubeY = self.parent.height() / 2
-        cubeZ = 300  # distance from screen*
-
-        width = 200
-        height = 200
-        depth = 200
-
-        # front/rear top/bottom left/right
-        ftl =(-width/2,+height/2,-depth/2,1)
-        ftr =(+width/2,+height/2,-depth/2,1)
-        fbl =(-width/2,-height/2,-depth/2,1)
-        fbr =(+width/2,-height/2,-depth/2,1)
-        rtl =(-width/2,+height/2,depth/2,1)
-        rtr =(+width/2,+height/2,depth/2,1)
-        rbl =(-width/2,-height/2,depth/2,1)
-        rbr =(+width/2,-height/2,depth/2,1)
+        ftl = Point3D(-1, 1, -1)
+        ftr = Point3D(1, 1, -1)
+        fbl = Point3D(-1, -1, -1)
+        fbr = Point3D(1, -1, -1)
+        rtl = Point3D(-1, 1, 1)
+        rtr = Point3D(1, 1, 1)
+        rbl = Point3D(-1, -1, 1)
+        rbr = Point3D(1, -1, 1)
 
         side_front = Polygon([ftl,ftr,fbr,fbl], qc.Qt.blue)
         side_back = Polygon([rtl,rtr,rbr,rbl], qc.Qt.red)
         side_left = Polygon([ftl,rtl,rbl,fbl], qc.Qt.green)
-        side_right = Polygon([ftr,rtr,rbr,fbr], qc.Qt.darkGreen)
-        side_top = Polygon([ftl,ftr,rtr,rtl], qc.Qt.darkBlue)
-        side_down = Polygon([rbl,rbr,fbr,fbl], qc.Qt.darkBlue)
+        side_right = Polygon([ftr,rtr,rbr,fbr], qc.Qt.cyan)
+        side_top = Polygon([ftl,ftr,rtr,rtl], qc.Qt.black)
+        side_down = Polygon([rbl,rbr,fbr,fbl], qc.Qt.lightGray)
 
         print(f"side_front = Polygon([{ftl},{ftr},{fbl},{fbr}]")
-        '''side_front = Polygon([(-100, -100, -100), (100, -100, -100), (100, 100, -100), (-100, 100, -100)], qc.Qt.blue)
-        side_back = Polygon([(-100, -100, 100), (100, -100, 100), (100, 100, 100), (-100, 100, 100)], qc.Qt.red)
-        side_left = Polygon([(-100, -100, -100), (-100, -100, 100), (-100, 100, 100), (-100, 100, -100)], qc.Qt.green)
-        side_right = Polygon([(100, -100, -100), (100, -100, 100), (100, 100, 100), (100, 100, -100)], qc.Qt.darkGreen)
-        side_top = Polygon([(-100, -100, -100), (-100, -100, 100), (100, -100, 100), (100, -100, -100)], qc.Qt.darkBlue)
-        side_down = Polygon([(-100, 100, -100), (-100, 100, 100), (100, 100, 100), (100, 100, -100)], qc.Qt.darkBlue)'''
 
 
-        # self.cube = Object3D(self, [side_front, side_back,side_left,side_right,side_top,side_down],cubeX,cubeY,cubeZ)
-        self.cube = Object3D(self, [side_left], cubeX, cubeY, cubeZ)
+        self.cube = Object3D(self, [side_front, side_back,side_left,side_right,side_top,side_down])
+        # self.cube = Object3D(self, [side_left])
 
         #self.update()
         self.timer()
@@ -97,20 +85,31 @@ class SceneWindow(qw.QLabel):
 
         self.draw_test_object()
         self.update_layers()
-        print(self.fov)
+        #print(self.fov)
+        self.status_bar.showMessage(str(self.fov) + '°, distance: ' + str(round(self.distance,2)) + ' rotation(x,y,z):(' +
+                                    str(self.angleX) + '°,' + str(self.angleY) + '°,' + str(self.angleZ) + '°)')
 
 
-        if self.fov == 90:
+        if self.fov == 110:
             self.direction_forward = False
-        elif self.fov == 1:
+        elif self.fov == 90:
             self.direction_forward = True
 
         if self.direction_forward:
             self.fov += 1
-            #self.distance += 1
+            self.distance -= 0.1
         else:
             self.fov -= 1
-            #self.distance -= 1
+            self.distance += 0.1
+
+        # rotate
+        self.angleX += 3
+        self.angleY += 1
+        self.angleZ += 2
+
+        self.angleX = self.angleX % 360
+        self.angleY = self.angleY % 360
+        self.angleZ = self.angleZ % 360
 
         self.timer()
 
@@ -118,11 +117,11 @@ class SceneWindow(qw.QLabel):
         # self.cube.draw_parallelprojektion(self.objects_painter)
         # self.cube.draw_schraegprojektion(self.objects_painter)
         # self.cube.draw_homogen(self.objects_painter)
-        self.cube.draw_perspective(self.objects_painter, self.fov, self.distance)
+        self.cube.draw_perspective(self.objects_painter, self.fov, self.distance,self.angleX, self.angleY, self.angleZ)
 
 
     def timer(self):
-        qc.QTimer.singleShot(100, self.update)
+        qc.QTimer.singleShot(50, self.update)
 
 
 
