@@ -45,7 +45,7 @@ class MainMenu(qw.QWidget):
 
     def init_ui(self):
         # Menu items
-        b_newgame = qw.QPushButton("2D -> 3D")
+        b_newgame = qw.QPushButton("3D -> 2D")
         # b_highscore = qw.QPushButton("High score")  # tbd
         # b_settings = qw.QPushButton("Settings")  # tbd
         # b_credits = qw.QPushButton("Credits")  # tbd
