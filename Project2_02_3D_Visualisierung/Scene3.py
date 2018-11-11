@@ -87,7 +87,7 @@ class SceneWindow(qw.QLabel):
             p1 = bunny_vert[a]
             p2 = bunny_vert[b]
             p3 = bunny_vert[c]
-            bunny_surf.append(Polygon([p1,p2,p3], qc.Qt.lightGray))#qg.QColor(140+random.randint(0,10), 140+random.randint(0,10), 140+random.randint(0,10))))
+            bunny_surf.append(Polygon([p1,p2,p3], qg.QColor(200,200,200))) #qc.Qt.lightGray #qg.QColor(140+random.randint(0,10), 140+random.randint(0,10), 140+random.randint(0,10))))
 
         #print(plydata.elements[0].data[0])
         #print(bunny_vert[0])
@@ -143,9 +143,10 @@ class SceneWindow(qw.QLabel):
         # self.cube.draw_parallelprojektion(self.objects_painter)
         # self.cube.draw_schraegprojektion(self.objects_painter)
         # self.cube.draw_homogen(self.objects_painter)
-        #self.cube.draw_perspective(self.objects_painter, self.fov, self.distance,self.angleX, self.angleY, self.angleZ)
-        self.bunny.draw_perspective(self.objects_painter, 300, 0.2, 0, 0, 0)
 
+        #self.cube.draw_perspective(self.objects_painter, self.fov, self.distance,self.angleX, self.angleY, self.angleZ)
+        self.bunny.draw_perspective(self.objects_painter, 250, 1, 0, 0, 0)
+        #self.bunny.draw_perspective(self.objects_painter, 300, 0.18, self.angleX, self.angleY, self.angleZ)
 
     def timer(self):
         qc.QTimer.singleShot(50, self.update)

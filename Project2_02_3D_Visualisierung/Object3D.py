@@ -1,6 +1,7 @@
 import math, operator
 from PyQt5 import QtCore as qc
 from PyQt5 import QtGui as qg
+from Point3D import Point3D
 
 class Object3D:
     def __init__(self, parent, polygons, x='not set', y='not set'):
@@ -8,6 +9,7 @@ class Object3D:
         self.hh = parent.parent.height()
         self.x = x
         self.y = y
+        self.zoom = 7
         if x == 'not set':
             self.x = self.hw/2
         if y == 'not set':
@@ -66,8 +68,9 @@ class Object3D:
                                      self.y + each.points[0][1] / each.points[0][2])
 
     def draw_perspective(self, painter, fov, dist, angleX, angleY, angleZ):
-        pathlist = []
-        maxpolygon = []
+        pathlist = []  # remember all paths to draw
+        maxpolygon = []  # to arrange polygons
+        delta = []  # change color for each polygon
         for p in range(len(self.polygons)):
             painter.setPen(self.polygons[p].color)
             painter.setBrush(self.polygons[p].color)
@@ -81,7 +84,7 @@ class Object3D:
 
             for i in range(len(self.polygons[p].points)):
                 start_t = self.polygons[p].points[i].rotateX(angleX).rotateY(angleY).rotateZ(angleZ)
-                start = start_t.project(self.x, self.y, fov, dist)
+                start = start_t.project(self.x, self.y, self.zoom,fov, dist)
 
                 #  collect all point to calculate normal vector for surface
                 abc.append(start)
@@ -91,16 +94,19 @@ class Object3D:
 
                 if i != len(self.polygons[p].points) - 1:
                     end_t = self.polygons[p].points[i+1].rotateX(angleX).rotateY(angleY).rotateZ(angleZ)
-                    end = end_t.project(self.x, self.y, fov, dist)
+                    end = end_t.project(self.x, self.y, self.zoom, fov, dist)
                 else:
                     end_t = self.polygons[p].points[0].rotateX(angleX).rotateY(angleY).rotateZ(angleZ)
-                    end = end_t.project(self.x, self.y, fov, dist)
+                    end = end_t.project(self.x, self.y, self.zoom,fov, dist)
 
                 #painter.drawLine(start.x, start.y, end.x, end.y)
 
                 if i == 0:
                     pathlist[p].moveTo(start.x, start.y)
                 pathlist[p].lineTo(end.x, end.y)
+
+            delta.append(self.change_color(abc))
+            #print(self.change_color(abc))
 
             # function call to change color
 
@@ -110,10 +116,18 @@ class Object3D:
         maxpolygon.sort(key=operator.itemgetter(1),reverse=True)
 
         for i in range(len(pathlist)):
-            painter.setPen(self.polygons[maxpolygon[i][0]].color)
-            painter.setBrush(self.polygons[maxpolygon[i][0]].color)
+            r = self.polygons[maxpolygon[i][0]].color.red() + delta[i]
+            g = self.polygons[maxpolygon[i][0]].color.green() + delta[i]
+            b = self.polygons[maxpolygon[i][0]].color.blue() + delta[i]
+            #painter.setPen(self.polygons[maxpolygon[i][0]].color)
+            #painter.setBrush(self.polygons[maxpolygon[i][0]].color)
+            painter.setBrush(qg.QColor(r,g,b))
             painter.drawPath(pathlist[maxpolygon[i][0]])
 
     def change_color(self,abc):
         ab = abc[0].make_vector(abc[1])
         ac = abc[0].make_vector(abc[2])
+        normal = ab*ac
+        comp_vector = Point3D(0, 0, 1)
+        return comp_vector.angle(normal)
+
