@@ -10,6 +10,17 @@ class Point3D:
     def __str__(self):
         return "(" + str(self.x) + "," + str(self.y)+ "," + str(self.z)+")"
 
+    def make_vector(self, another_Point3D):
+        return Point3D(another_Point3D.x-self.x,another_Point3D.y-self.y,another_Point3D.z-self.z)
+
+    def __mul__(self, another_Point3D):
+        # calculate determinant
+        i = self.y*another_Point3D.z - (self.z*another_Point3D.y)
+        j = self.x*another_Point3D.z - (self.z*another_Point3D.x)
+        k = self.x*another_Point3D.y - (self.y*another_Point3D.x)
+        return Point3D(i,j,k)
+
+
     def rotateX(self, angle):
         """ Rotates the point around the X axis by the given angle in degrees. """
         rad = angle * math.pi / 180
@@ -42,6 +53,6 @@ class Point3D:
         #if viewer_distance + self.z == 0:
             #return Point3D(self.x, -self.y, self.z)
         factor = fov / (viewer_distance + self.z)
-        x = self.x * factor + win_width / 2
-        y = -self.y * factor + win_height / 2
+        x = self.x * factor + win_width# / 2
+        y = -self.y * factor + win_height# / 2
         return Point3D(x, y, self.z)

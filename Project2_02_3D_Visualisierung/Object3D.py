@@ -3,9 +3,16 @@ from PyQt5 import QtCore as qc
 from PyQt5 import QtGui as qg
 
 class Object3D:
-    def __init__(self, parent, polygons):
+    def __init__(self, parent, polygons, x='not set', y='not set'):
         self.hw = parent.parent.width()
         self.hh = parent.parent.height()
+        self.x = x
+        self.y = y
+        if x == 'not set':
+            self.x = self.hw/2
+        if y == 'not set':
+            self.y = self.hh/2
+
         self.polygons = []
         for each in polygons:
             self.polygons.append(each)
@@ -70,25 +77,33 @@ class Object3D:
             start = self.polygons[p].points[0].rotateX(angleX).rotateY(angleY).rotateZ(angleZ)
             local_max_z = start.z # deepest point
 
+            abc =[] # array of points
+
             for i in range(len(self.polygons[p].points)):
                 start_t = self.polygons[p].points[i].rotateX(angleX).rotateY(angleY).rotateZ(angleZ)
-                start = start_t.project(self.hw, self.hh, fov, dist)
+                start = start_t.project(self.x, self.y, fov, dist)
+
+                #  collect all point to calculate normal vector for surface
+                abc.append(start)
 
                 if start.z > local_max_z:
                     local_max_z = start.z
 
                 if i != len(self.polygons[p].points) - 1:
                     end_t = self.polygons[p].points[i+1].rotateX(angleX).rotateY(angleY).rotateZ(angleZ)
-                    end = end_t.project(self.hw, self.hh, fov, dist)
+                    end = end_t.project(self.x, self.y, fov, dist)
                 else:
                     end_t = self.polygons[p].points[0].rotateX(angleX).rotateY(angleY).rotateZ(angleZ)
-                    end = end_t.project(self.hw, self.hh, fov, dist)
+                    end = end_t.project(self.x, self.y, fov, dist)
 
                 #painter.drawLine(start.x, start.y, end.x, end.y)
 
                 if i == 0:
                     pathlist[p].moveTo(start.x, start.y)
                 pathlist[p].lineTo(end.x, end.y)
+
+            # function call to change color
+
             maxpolygon.append([p, local_max_z])
 
         # sort surfaces asc to solve filling troubles
@@ -98,3 +113,7 @@ class Object3D:
             painter.setPen(self.polygons[maxpolygon[i][0]].color)
             painter.setBrush(self.polygons[maxpolygon[i][0]].color)
             painter.drawPath(pathlist[maxpolygon[i][0]])
+
+    def change_color(self,abc):
+        ab = abc[0].make_vector(abc[1])
+        ac = abc[0].make_vector(abc[2])
