@@ -2,11 +2,13 @@ import math, operator
 from PyQt5 import QtCore as qc
 from PyQt5 import QtGui as qg
 from Point3D import Point3D
+import numpy as np
 
 class Object3D:
     def __init__(self, parent, polygons, x='not set', y='not set'):
         self.hw = parent.parent.width()
         self.hh = parent.parent.height()
+        self.parent = parent
         self.x = x
         self.y = y
         self.zoom = 7
@@ -67,7 +69,14 @@ class Object3D:
                                      self.x + each.points[0][0] / each.points[0][2],
                                      self.y + each.points[0][1] / each.points[0][2])
 
-    def draw_perspective(self, painter, fov, dist, angleX, angleY, angleZ):
+    def draw_perspective(self, painter, fov, dist, *args, **kwargs):
+        shader = kwargs.get('shader', False)
+        wareframe = kwargs.get('wareframe', False)
+        angleX = kwargs.get('angleX', 0)
+        angleY = kwargs.get('angleY', 0)
+        angleZ = kwargs.get('angleZ', 0)
+
+        #print(shader)
         pathlist = []  # remember all paths to draw
         maxpolygon = []  # to arrange polygons
         delta = []  # change color for each polygon
@@ -84,7 +93,7 @@ class Object3D:
 
             for i in range(len(self.polygons[p].points)):
                 start_t = self.polygons[p].points[i].rotateX(angleX).rotateY(angleY).rotateZ(angleZ)
-                start = start_t.project(self.x, self.y, self.zoom,fov, dist)
+                start = start_t.project(self.x, self.y, self.zoom, fov, dist)
 
                 #  collect all point to calculate normal vector for surface
                 abc.append(start)
@@ -99,35 +108,47 @@ class Object3D:
                     end_t = self.polygons[p].points[0].rotateX(angleX).rotateY(angleY).rotateZ(angleZ)
                     end = end_t.project(self.x, self.y, self.zoom,fov, dist)
 
-                #painter.drawLine(start.x, start.y, end.x, end.y)
+                if wareframe:
+                    painter.drawLine(start.x, start.y, end.x, end.y)
 
                 if i == 0:
                     pathlist[p].moveTo(start.x, start.y)
                 pathlist[p].lineTo(end.x, end.y)
 
-            delta.append(self.change_color(abc))
+            if shader:
+                delta.append(self.change_color(abc))
+            else:
+                delta.append(0)
             #print(self.change_color(abc))
 
             # function call to change color
 
             maxpolygon.append([p, local_max_z])
 
-        # sort surfaces asc to solve filling troubles
-        maxpolygon.sort(key=operator.itemgetter(1),reverse=True)
+        if not wareframe:
+            # sort surfaces asc to solve filling troubles
+            maxpolygon.sort(key=operator.itemgetter(1),reverse=True)
 
-        for i in range(len(pathlist)):
-            r = self.polygons[maxpolygon[i][0]].color.red() + delta[i]
-            g = self.polygons[maxpolygon[i][0]].color.green() + delta[i]
-            b = self.polygons[maxpolygon[i][0]].color.blue() + delta[i]
-            #painter.setPen(self.polygons[maxpolygon[i][0]].color)
-            #painter.setBrush(self.polygons[maxpolygon[i][0]].color)
-            painter.setBrush(qg.QColor(r,g,b))
-            painter.drawPath(pathlist[maxpolygon[i][0]])
+            for i in range(len(pathlist)):
+                #print(delta[i])
+                painter.setBrush(self.polygons[maxpolygon[i][0]].color)
+                # check if color is in rgb format
+                if type(self.polygons[maxpolygon[i][0]].color) is not qc.Qt.GlobalColor:
+                    self.polygons[maxpolygon[i][0]].color.red()
+                    r = self.polygons[maxpolygon[i][0]].color.red() * (90-delta[i])/90
+                    g = self.polygons[maxpolygon[i][0]].color.green() * (90-delta[i])/90
+                    b = self.polygons[maxpolygon[i][0]].color.blue() * (90-delta[i])/90
+                    #if r > 255:
+                        #r,g,b =255,255,255
+                        #print(r,g,b)
+                    #painter.setPen(self.polygons[maxpolygon[i][0]].color)
+                    #painter.setBrush(self.polygons[maxpolygon[i][0]].color)
+                    painter.setBrush(qg.QColor(r,g,b))
+                painter.drawPath(pathlist[maxpolygon[i][0]])
 
     def change_color(self,abc):
         ab = abc[0].make_vector(abc[1])
         ac = abc[0].make_vector(abc[2])
         normal = ab*ac
-        comp_vector = Point3D(0, 0, 1)
-        return comp_vector.angle(normal)
+        return self.parent.light_vector.angle(normal)
 

@@ -44,6 +44,7 @@ class SceneWindow(qw.QLabel):
         self.fov = 90    # field of view
         self.distance = 4
         self.angleX, self.angleY, self.angleZ = 0, 0, 0
+        self.light_vector = Point3D(0,0,10)
         self.direction_forward = True
 
         self.init_ui()

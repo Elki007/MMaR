@@ -25,13 +25,14 @@ class Point3D:
         deg = math.degrees(ang)
         if deg > 90:
             deg = 180 - deg
+        #print(deg)
         return deg
 
-    def __mul__(self, another_Point3D):
+    def __mul__(self, other):
         # calculate determinant
-        i = self.y*another_Point3D.z - (self.z*another_Point3D.y)
-        j = -self.x*another_Point3D.z + (self.z*another_Point3D.x)
-        k = self.x*another_Point3D.y - (self.y*another_Point3D.x)
+        i = self.y*other.z - (self.z*other.y)
+        j = -self.x*other.z + (self.z*other.x)
+        k = self.x*other.y - (self.y*other.x)
         return Point3D(i,j,k)
 
 
@@ -69,4 +70,4 @@ class Point3D:
         factor = fov / (viewer_distance + self.z)
         x = self.x * factor*zoom + win_width # / 2
         y = -self.y * factor*zoom + win_height # / 2
-        return Point3D(x, y, self.z*zoom)
+        return Point3D(x, y, self.z)

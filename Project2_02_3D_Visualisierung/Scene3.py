@@ -43,9 +43,11 @@ class SceneWindow(qw.QLabel):
         # objects
         self.cube = Object3D  # declare
         self.bunny = Object3D  # declare
+        self.light = Object3D  # declare
         self.fov = 90    # field of view
-        self.distance = 4
+        self.distance = 5
         self.angleX, self.angleY, self.angleZ = 0, 0, 0
+        self.light_vector = Point3D(-1,0,0)
         self.direction_forward = True
 
         self.init_ui()
@@ -77,7 +79,7 @@ class SceneWindow(qw.QLabel):
         bunny_surf = []
 
         for each in plydata.elements[0].data:
-            bunny_vert.append(Point3D(each[0], each[1], each[2]))
+            bunny_vert.append(Point3D(each[0], each[1], -each[2]))
 
         for each in plydata['face']:
             # each[0][] is an index of a point
@@ -96,6 +98,8 @@ class SceneWindow(qw.QLabel):
         self.cube = Object3D(self, [side_front, side_back,side_left,side_right,side_top,side_down])
         # self.cube = Object3D(self, [side_left])
         self.bunny = Object3D(self, bunny_surf,'not set', 550)
+
+        self.light = Object3D(self, [Polygon([Point3D(0,0,0,), self.light_vector], qg.QColor(255,0,0))], 'not set', 550)
 
         #self.update()
         self.timer()
@@ -144,9 +148,17 @@ class SceneWindow(qw.QLabel):
         # self.cube.draw_schraegprojektion(self.objects_painter)
         # self.cube.draw_homogen(self.objects_painter)
 
-        #self.cube.draw_perspective(self.objects_painter, self.fov, self.distance,self.angleX, self.angleY, self.angleZ)
-        self.bunny.draw_perspective(self.objects_painter, 250, 1, 0, 0, 0)
-        #self.bunny.draw_perspective(self.objects_painter, 300, 0.18, self.angleX, self.angleY, self.angleZ)
+        # only wareframe
+        #self.cube.draw_perspective(self.objects_painter, self.fov,self.distance, angleX=self.angleX, angleY=self.angleY, angleZ=self.angleZ, wareframe=True)
+        # with surfaces
+        #self.cube.draw_perspective(self.objects_painter, self.fov, self.distance, angleX=self.angleX, angleY=self.angleY, angleZ=self.angleZ)
+
+        #self.light_vector = self.light_vector.rotateX(self.angleX/10).rotateY(0).rotateZ(0)
+        #self.light_vector = self.light_vector.rotateX(self.angleX/10).rotateY(self.angleY/10).rotateZ(self.angleZ/10)
+        self.bunny.draw_perspective(self.objects_painter, 300, 1,angleX=-10, shader=True)
+        #self.bunny.draw_perspective(self.objects_painter, self.fov, self.distance/6)
+        #self.bunny.draw_perspective(self.objects_painter, 250, 1, angleX=self.angleX, angleY=self.angleY, angleZ=self.angleZ)
+        self.light.draw_perspective(self.objects_painter, 100, 1, angleX=-10)
 
     def timer(self):
         qc.QTimer.singleShot(50, self.update)
