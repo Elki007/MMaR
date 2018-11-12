@@ -153,14 +153,20 @@ class Object3D:
                 painter.drawPath(pathlist[maxpolygon[i][0]])
 
     def change_color(self, abc, abc_p, painter, surface_index):
-
+        light = self.parent.light_vector
+        #print(self.parent.mouse_x)
+        light_source = Point3D(self.parent.mouse_x,self.parent.mouse_y, -100)
+        light = light_source.make_vector(abc_p[0])
+        light.y = -light.y
+        #light = screen_center.make_vector(abc_p[0])
+        #light.z = 1
         ab = abc[0].make_vector(abc[1])
         ac = abc[0].make_vector(abc[2])
         normal = ab*ac
 
         ### test
 
-        cosz = normal.x / normal.abs()
+        cosz = normal.scalar(light) / (normal.abs()*light.abs())
         degr = math.acos(cosz) * 180 / math.pi
         if cosz <0:
             cosz =0

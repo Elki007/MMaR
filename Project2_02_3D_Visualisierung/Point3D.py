@@ -72,5 +72,5 @@ class Point3D:
             #return Point3D(self.x, -self.y, self.z)
         factor = fov / (viewer_distance + self.z)
         x = self.x * factor*zoom + win_width # / 2
-        y = -self.y * factor*zoom + win_height # / 2
+        y = -self.y * factor*zoom + win_height # /
         return Point3D(x, y, self.z)

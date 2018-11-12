@@ -21,6 +21,8 @@ class SceneWindow(qw.QLabel):
         # default value is false - means track mouse only when at least one button is pressed
         self.setMouseTracking(True)
         self.grabKeyboard()
+        self.mouse_x = 0
+        self.mouse_y = 0
 
         # -- layers -- #
         # main layer (to collect other layers)
@@ -72,7 +74,7 @@ class SceneWindow(qw.QLabel):
         print(f"side_front = Polygon([{ftl},{ftr},{fbl},{fbr}]")
 
         # connect to ply
-        plydata = PlyData.read('bun_zipper_res3.ply')
+        plydata = PlyData.read('bun_zipper_res4.ply')
         # array of all vertexes
         bunny_vert = []
         # array of all surfaces
@@ -158,7 +160,7 @@ class SceneWindow(qw.QLabel):
         #self.light_vector = self.light_vector.rotateX(self.angleX/10).rotateY(0).rotateZ(0)
         #self.light_vector = self.light_vector.rotateX(self.angleX/10).rotateY(self.angleY/10).rotateZ(self.angleZ/10)
         #self.bunny.draw_perspective(self.objects_painter, 300, 1, angleX=-10, shader=True)
-        self.bunny.draw_perspective(self.objects_painter, 300, 1, angleX=-10,shader=True)
+        self.bunny.draw_perspective(self.objects_painter, 300, 1, angleX=-10,angleY=self.angleY,shader=True)
         #self.bunny.draw_perspective(self.objects_painter, self.fov, self.distance/6)
         #self.bunny.draw_perspective(self.objects_painter, 250, 1, angleX=self.angleX, angleY=self.angleY, angleZ=self.angleZ)
         #self.light.draw_perspective(self.objects_painter, 100, 1, angleX=-10)
@@ -166,5 +168,8 @@ class SceneWindow(qw.QLabel):
     def timer(self):
         qc.QTimer.singleShot(50, self.update)
 
+    def mouseMoveEvent(self, event):
+        self.mouse_x = event.x()
+        self.mouse_y = event.y()
 
 
