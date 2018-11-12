@@ -47,7 +47,7 @@ class SceneWindow(qw.QLabel):
         self.fov = 90    # field of view
         self.distance = 5
         self.angleX, self.angleY, self.angleZ = 0, 0, 0
-        self.light_vector = Point3D(-1,0,0)
+        self.light_vector = Point3D(1,0,0)
         self.direction_forward = True
 
         self.init_ui()
@@ -72,7 +72,7 @@ class SceneWindow(qw.QLabel):
         print(f"side_front = Polygon([{ftl},{ftr},{fbl},{fbr}]")
 
         # connect to ply
-        plydata = PlyData.read('bun_zipper_res4.ply')
+        plydata = PlyData.read('bun_zipper_res3.ply')
         # array of all vertexes
         bunny_vert = []
         # array of all surfaces
@@ -97,9 +97,9 @@ class SceneWindow(qw.QLabel):
 
         self.cube = Object3D(self, [side_front, side_back,side_left,side_right,side_top,side_down])
         # self.cube = Object3D(self, [side_left])
-        self.bunny = Object3D(self, bunny_surf,'not set', 550)
+        self.bunny = Object3D(self, bunny_surf[:], 'not set', 550)
 
-        self.light = Object3D(self, [Polygon([Point3D(0,0,0,), self.light_vector], qg.QColor(255,0,0))], 'not set', 550)
+        self.light = Object3D(self, [Polygon([Point3D(0,0,0), self.light_vector], qg.QColor(255,0,0))], 'not set', 550)
 
         #self.update()
         self.timer()
@@ -117,7 +117,7 @@ class SceneWindow(qw.QLabel):
         self.update_layers()
         #print(self.fov)
         self.status_bar.showMessage(str(self.fov) + '°, distance: ' + str(round(self.distance,2)) + ' rotation(x,y,z):(' +
-                                    str(self.angleX) + '°,' + str(self.angleY) + '°,' + str(self.angleZ) + '°)')
+                                    str(round(self.angleX,2)) + '°,' + str(round(self.angleY,2)) + '°,' + str(round(self.angleZ,2)) + '°)')
 
 
         if self.fov == 110:
@@ -141,6 +141,8 @@ class SceneWindow(qw.QLabel):
         self.angleY = self.angleY % 360
         self.angleZ = self.angleZ % 360
 
+
+
         self.timer()
 
     def draw_test_object(self):
@@ -149,16 +151,17 @@ class SceneWindow(qw.QLabel):
         # self.cube.draw_homogen(self.objects_painter)
 
         # only wareframe
-        #self.cube.draw_perspective(self.objects_painter, self.fov,self.distance, angleX=self.angleX, angleY=self.angleY, angleZ=self.angleZ, wareframe=True)
+        # self.cube.draw_perspective(self.objects_painter, self.fov,self.distance, angleX=self.angleX, angleY=self.angleY, angleZ=self.angleZ, wareframe=True)
         # with surfaces
-        #self.cube.draw_perspective(self.objects_painter, self.fov, self.distance, angleX=self.angleX, angleY=self.angleY, angleZ=self.angleZ)
+        # self.cube.draw_perspective(self.objects_painter, self.fov, self.distance, angleX=self.angleX, angleY=self.angleY, angleZ=self.angleZ)
 
         #self.light_vector = self.light_vector.rotateX(self.angleX/10).rotateY(0).rotateZ(0)
         #self.light_vector = self.light_vector.rotateX(self.angleX/10).rotateY(self.angleY/10).rotateZ(self.angleZ/10)
-        self.bunny.draw_perspective(self.objects_painter, 300, 1,angleX=-10, shader=True)
+        #self.bunny.draw_perspective(self.objects_painter, 300, 1, angleX=-10, shader=True)
+        self.bunny.draw_perspective(self.objects_painter, 300, 1, angleX=-10,shader=True)
         #self.bunny.draw_perspective(self.objects_painter, self.fov, self.distance/6)
         #self.bunny.draw_perspective(self.objects_painter, 250, 1, angleX=self.angleX, angleY=self.angleY, angleZ=self.angleZ)
-        self.light.draw_perspective(self.objects_painter, 100, 1, angleX=-10)
+        #self.light.draw_perspective(self.objects_painter, 100, 1, angleX=-10)
 
     def timer(self):
         qc.QTimer.singleShot(50, self.update)

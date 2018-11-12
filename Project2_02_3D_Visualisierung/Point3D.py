@@ -13,6 +13,9 @@ class Point3D:
     def make_vector(self, another_Point3D):
         return Point3D(another_Point3D.x-self.x,another_Point3D.y-self.y,another_Point3D.z-self.z)
 
+    def norm(self):
+        return Point3D(self.x/self.abs(),self.y/self.abs(),self.z/self.abs())
+
     def abs(self):
         return math.sqrt(self.x ** 2 + self.y ** 2 + self.z ** 2)
 

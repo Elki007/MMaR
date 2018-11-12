@@ -89,15 +89,15 @@ class Object3D:
             start = self.polygons[p].points[0].rotateX(angleX).rotateY(angleY).rotateZ(angleZ)
             local_max_z = start.z # deepest point
 
-            abc =[] # array of points
-
+            abc_source = [] # array of points
+            abc_projected =[]
             for i in range(len(self.polygons[p].points)):
                 start_t = self.polygons[p].points[i].rotateX(angleX).rotateY(angleY).rotateZ(angleZ)
                 start = start_t.project(self.x, self.y, self.zoom, fov, dist)
 
                 #  collect all point to calculate normal vector for surface
-                abc.append(start)
-
+                abc_source.append(start_t)
+                abc_projected.append(start)
                 if start.z > local_max_z:
                     local_max_z = start.z
 
@@ -116,7 +116,8 @@ class Object3D:
                 pathlist[p].lineTo(end.x, end.y)
 
             if shader:
-                delta.append(self.change_color(abc))
+                delta.append(self.change_color(abc_source,abc_projected, painter, p))
+                self.polygons[p].cosz = self.change_color(abc_source,abc_projected, painter, p)
             else:
                 delta.append(0)
             #print(self.change_color(abc))
@@ -135,20 +136,83 @@ class Object3D:
                 # check if color is in rgb format
                 if type(self.polygons[maxpolygon[i][0]].color) is not qc.Qt.GlobalColor:
                     self.polygons[maxpolygon[i][0]].color.red()
-                    r = self.polygons[maxpolygon[i][0]].color.red() * (90-delta[i])/90
-                    g = self.polygons[maxpolygon[i][0]].color.green() * (90-delta[i])/90
-                    b = self.polygons[maxpolygon[i][0]].color.blue() * (90-delta[i])/90
+                    r = int(self.polygons[maxpolygon[i][0]].color.red()*self.polygons[maxpolygon[i][0]].cosz)
+                    g = int(self.polygons[maxpolygon[i][0]].color.green()*self.polygons[maxpolygon[i][0]].cosz)
+                    b = int(self.polygons[maxpolygon[i][0]].color.blue()*self.polygons[maxpolygon[i][0]].cosz)
+                    #if i ==40:
+                        #print(self.polygons[maxpolygon[i][0]].cosz)
                     #if r > 255:
                         #r,g,b =255,255,255
                         #print(r,g,b)
                     #painter.setPen(self.polygons[maxpolygon[i][0]].color)
                     #painter.setBrush(self.polygons[maxpolygon[i][0]].color)
                     painter.setBrush(qg.QColor(r,g,b))
+                    painter.setPen(qg.QColor(r,g,b))
+
+                #if i==40:
                 painter.drawPath(pathlist[maxpolygon[i][0]])
 
-    def change_color(self,abc):
+    def change_color(self, abc, abc_p, painter, surface_index):
+
         ab = abc[0].make_vector(abc[1])
         ac = abc[0].make_vector(abc[2])
         normal = ab*ac
-        return self.parent.light_vector.angle(normal)
+
+        ### test
+
+        cosz = normal.x / normal.abs()
+        degr = math.acos(cosz) * 180 / math.pi
+        if cosz <0:
+            cosz =0
+
+        ###
+
+        ab_p = abc_p[0].make_vector(abc_p[1])
+        ac_p = abc_p[0].make_vector(abc_p[2])
+        normal_p = ab_p * ac_p
+
+        # move normal to surface
+        normal2 = Point3D((abc[0].x + normal.x)*100, (abc[0].y + normal.y)*100, (abc[0].z + normal.z)*100)
+
+
+        #if surface_index == 40:
+            #print(cosz)
+            #print(normal2)
+            #print(f"normal:{normal},normal_p:{normal_p}, normal2{normal2}")
+            #painter.setPen(qg.QPen(qc.Qt.darkRed,4))
+            #painter.drawLine(abc_p[0].x, abc_p[0].y, abc_p[0].x+normal2.x, abc_p[0].y+normal2.y)
+            #painter.setPen(qg.QPen(qc.Qt.lightGray,1))
+            #print(round(cosz,2))
+        return round(cosz,2)
+        '''
+        #print(normal)
+        normal2 = Point3D(abc[0].x+normal.x*100,abc[0].y+normal.y*100,abc[0].z+normal.z*100)
+        #painter.drawLine(abc[0].x,abc[0].y,(abc[0].x+normal.x*100),abc[0].y+normal.y*100)
+        light = Point3D(abc[0].x + self.parent.light_vector.x * 10, abc[0].y + self.parent.light_vector.y * 10,
+                        abc[0].z + +self.parent.light_vector.z * 10)
+
+        test_norm = abc[0].make_vector(normal2)
+        test_light = abc[0].make_vector(light)
+
+        ###
+        cosz = normal.z / normal.abs()
+        degr = math.acos(cosz) * 180 / math.pi
+
+        cosz2 = normal2.z / normal2.abs()
+        degr2 = math.acos(cosz2) * 180 / math.pi
+        if degr2>90:
+            degr2=180-degr2
+        degr2=round(degr2,1)
+
+        if surface_index != 40:
+            painter.setPen(qc.Qt.green)
+            painter.drawLine(abc[0].x,abc[0].y,normal2.x,normal2.y)
+            painter.setPen(qc.Qt.lightGray)
+            #print(self.parent.light_vector.angle(normal2), light.angle(normal2))
+            #print(f"dergee:{test_light.angle(test_norm)}")
+        #print(f"light:{self.parent.light_vector}, normal:{normal}, normiert:{normal.norm()}")
+        return degr2
+        #return test_light.angle(test_norm)
+        #return light.angle(normal2)
+        #return self.parent.light_vector.angle(normal.norm())'''
 
