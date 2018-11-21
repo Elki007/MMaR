@@ -10,6 +10,12 @@ class Polygon:
         for each in list_3d:
             self.points.append(each)
 
+    def scale(self, scale_factor):
+        scaled_points = []
+        for i in range(len(self.points)):
+            scaled_points.append(self.points[i].scale(scale_factor))
+        return Polygon(scaled_points, self.color)
+
 """
 Test area
 """
