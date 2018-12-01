@@ -31,6 +31,9 @@ class Point3D:
         #print(deg)
         return deg
 
+    def __add__(self, other):
+        return Point3D(other.x+self.x, other.y+self.y, other.z+self.z)
+
     def __mul__(self, other):
         # calculate determinant
         i = self.y*other.z - (self.z*other.y)
@@ -62,8 +65,8 @@ class Point3D:
         rad = angle * math.pi / 180
         cosa = math.cos(rad)
         sina = math.sin(rad)
-        x = self.x * cosa - self.y * sina
-        y = self.x * sina + self.y * cosa
+        x = self.x * cosa + self.y * sina
+        y = -self.x * sina + self.y * cosa
         return Point3D(x, y, self.z)
 
     def project(self, win_width, win_height, zoom, fov, viewer_distance):

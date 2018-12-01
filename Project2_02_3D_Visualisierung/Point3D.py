@@ -31,6 +31,9 @@ class Point3D:
         #print(deg)
         return deg
 
+    def __add__(self, other):
+        return Point3D(other.x+self.x, other.y+self.y, other.z+self.z)
+
     def __mul__(self, other):
         # calculate determinant
         i = self.y*other.z - (self.z*other.y)

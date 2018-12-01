@@ -9,7 +9,7 @@ class Pane(qw.QLabel):
         super().__init__()
         self.parent = parent
         self.thickness = 3
-        self.k = 1
+        self.k = 18
         # default value is false - means track mouse only when at least one button is pressed
         print(parent.parent)
         print(self)
@@ -32,9 +32,10 @@ class Pane(qw.QLabel):
 
         self.dimensions = []
         self.paths = []
+        self.paths2 = []
         self.path = qg.QPainterPath()
 
-        self.create_bg()
+        #self.create_bg()
         self.update()
 
     def __repr__(self):
@@ -47,9 +48,30 @@ class Pane(qw.QLabel):
         #print(center_x,center_y)
 
 
-        self.painter_bg.setPen(qg.QPen(qc.Qt.white, 2, qc.Qt.SolidLine))
-        self.painter_bg.drawLine(0, 0, 100, 100)
+        self.painter_bg.setPen(qg.QPen(qc.Qt.white, 0.5, qc.Qt.SolidLine))
+        #self.painter_bg.drawLine(0, 0, 100, 100)
+        center = Point3D(center_x, center_y, 0)
+        a = Point3D(center_x, center_y - 2000, 0)
+        for k in range(1,self.k+1):
+            degree = k*360/self.k
+            point = a.make_vector(center)
+            b = point.rotateZ(degree) + center
+            self.painter_bg.drawLine(center.x, center.y, b.x, b.y)
+
         self.painter_bg.drawPoint(center_x,center_y)
+
+    def transpose(self,x,y,k):
+        center_x = self.parent.width() // 2
+        center_y = (self.parent.height() - 30) // 2
+        self.painter_bg.setPen(qg.QPen(qc.Qt.white, 0.5, qc.Qt.SolidLine))
+
+        center = Point3D(center_x, center_y, 0)
+        a = Point3D(x, y, 0)
+        degree = k * 360 / (self.k-1)
+        point = a.make_vector(center)
+        b = point.rotateZ(degree) + center
+        c = Point3D(b.x,b.y,b.z)
+        return c
 
     def update(self):
         if len(self.paths) !=0:
@@ -57,6 +79,13 @@ class Pane(qw.QLabel):
             thickness = self.paths[-1][1]
             self.painter_pane.setPen(qg.QPen(qc.Qt.gray, thickness, qc.Qt.SolidLine))
             self.painter_pane.drawPath(path)
+
+        if len(self.paths2) != 0:
+            path = self.paths2[-1][0]
+            thickness = self.paths2[-1][1]
+            self.painter_pane.setPen(qg.QPen(qc.Qt.gray, thickness, qc.Qt.SolidLine))
+            self.painter_pane.drawPath(path)
+
         '''for i in range(len(self.paths)):
             path = self.paths[i][0]
             thickness = self.paths[i][1]
@@ -71,14 +100,27 @@ class Pane(qw.QLabel):
         x = event.pos().x()
         y = event.pos().y() + 30
         self.path = qg.QPainterPath()
+        self.path2 = qg.QPainterPath()
+
         self.paths.append([self.path, self.thickness])
-        self.path.moveTo(x,y)
+        self.paths2.append([self.path2, self.thickness])
+
+        self.path.moveTo(x, y)
+        print("original: ",x,y)
+        b = self.transpose(x,y,1)
+        print("b: ", b.x, b.y)
+
+        self.path2.moveTo(b.x, b.y)
+
         self.update()
 
     def mouseMoveEvent(self, event):
         x = event.pos().x()
         y = event.pos().y() + 30
         self.path.lineTo(x,y)
+
+        b = self.transpose(x, y, 1)
+        self.path2.lineTo(b.x, b.y)
         #self.newPoint.emit(event.pos())
         self.update()
 
@@ -127,8 +169,13 @@ class DrawWidget(qw.QWidget):
 
     def on_click_b_newgame(self):
         self.draw.ebene_pane.fill(qg.QColor(0, 0, 0, 0))
+        self.draw.ebene_background.fill(qg.QColor(0, 0, 0))
+
         self.draw.paths = []
+        self.draw.paths2 = []
+
         self.draw.path = qg.QPainterPath()
+        self.draw.path2 = qg.QPainterPath()
 
         self.draw.create_bg()
         self.draw.update()
