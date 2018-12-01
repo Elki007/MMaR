@@ -1,6 +1,6 @@
 import sys
 from PyQt5 import QtWidgets as qw
-from Draw import DrawWidget
+from Draw2 import DrawWidget
 
 
 class MainWindow(qw.QMainWindow):

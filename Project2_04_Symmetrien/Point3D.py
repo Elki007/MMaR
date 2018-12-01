@@ -10,6 +10,10 @@ class Point3D:
     def __str__(self):
         return "(" + str(self.x) + "," + str(self.y)+ "," + str(self.z)+")"
 
+    def __neg__(self):
+        return Point3D(-self.x,-self.y,-self.z)
+
+
     def make_vector(self, another_Point3D):
         return Point3D(another_Point3D.x-self.x,another_Point3D.y-self.y,another_Point3D.z-self.z)
 
@@ -65,8 +69,8 @@ class Point3D:
         rad = angle * math.pi / 180
         cosa = math.cos(rad)
         sina = math.sin(rad)
-        x = self.x * cosa + self.y * sina
-        y = -self.x * sina + self.y * cosa
+        x = self.x * cosa - self.y * sina
+        y = self.x * sina + self.y * cosa
         return Point3D(x, y, self.z)
 
     def project(self, win_width, win_height, zoom, fov, viewer_distance):

@@ -8,8 +8,10 @@ class Pane(qw.QLabel):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
+        self.color = qc.Qt.white
         self.thickness = 3
-        self.k = 4
+        self.grid = False
+        self.k = 24
         # default value is false - means track mouse only when at least one button is pressed
         print(parent.parent)
         print(self)
@@ -30,12 +32,14 @@ class Pane(qw.QLabel):
         self.painter_pane = qg.QPainter(self.ebene_pane)
         self.painter_total = qg.QPainter(self.ebene_total)
 
-        self.dimensions = []
         self.paths = []
-        self.paths2 = []
-        self.path = qg.QPainterPath()
+        self.path = []
+        for i in range(self.k):
+            self.paths.append([])
+            self.path.append([])
 
         #self.create_bg()
+
         self.update()
 
     def __repr__(self):
@@ -56,9 +60,11 @@ class Pane(qw.QLabel):
             degree = k*360/self.k
             point = a.make_vector(center)
             b = point.rotateZ(degree) + center
-            self.painter_bg.drawLine(center.x, center.y, b.x, b.y)
+            if self.grid:
+                self.painter_bg.drawLine(center.x, center.y, b.x, b.y)
 
-        self.painter_bg.drawPoint(center_x,center_y)
+        if self.grid:
+            self.painter_bg.drawPoint(center_x,center_y)
 
     def transpose(self,x,y,k):
         center_x = self.parent.width() // 2
@@ -69,22 +75,28 @@ class Pane(qw.QLabel):
         a = Point3D(x, y, 0)
         degree = k * 360 / self.k
         point = a.make_vector(center)
-        b = point.rotateZ(degree) + center
+        if self.k%2 == 0:
+            b = point.rotateZ(degree) + center
+        else:
+            b = - point.rotateZ(degree) + center
         c = Point3D(b.x,b.y,b.z)
         return c
 
     def update(self):
-        if len(self.paths) !=0:
-            path = self.paths[-1][0]
-            thickness = self.paths[-1][1]
-            self.painter_pane.setPen(qg.QPen(qc.Qt.gray, thickness, qc.Qt.SolidLine))
-            self.painter_pane.drawPath(path)
+        for i in range(self.k):
+            if len(self.paths) == 0:
+                return
+            if len(self.paths[i]) != 0:
+                path = self.paths[i][-1][0]
+                thickness = self.paths[i][-1][1]
+                self.painter_pane.setPen(qg.QPen(self.color, thickness, qc.Qt.SolidLine))
+                self.painter_pane.drawPath(path)
 
-        if len(self.paths2) != 0:
+        """if len(self.paths2) != 0:
             path = self.paths2[-1][0]
             thickness = self.paths2[-1][1]
             self.painter_pane.setPen(qg.QPen(qc.Qt.gray, thickness, qc.Qt.SolidLine))
-            self.painter_pane.drawPath(path)
+            self.painter_pane.drawPath(path)"""
 
         '''for i in range(len(self.paths)):
             path = self.paths[i][0]
@@ -99,29 +111,30 @@ class Pane(qw.QLabel):
     def mousePressEvent(self, event):
         x = event.pos().x()
         y = event.pos().y() + 30
-        self.path = qg.QPainterPath()
-        self.path2 = qg.QPainterPath()
+        for i in range(self.k):
+            self.path[i] = qg.QPainterPath()
+            #self.path2 = qg.QPainterPath()
 
-        self.paths.append([self.path, self.thickness])
-        self.paths2.append([self.path2, self.thickness])
+            self.paths[i].append([self.path[i], self.thickness])
+            #self.paths2.append([self.path2, self.thickness])
 
-        self.path.moveTo(x, y)
-        print("original: ",x,y)
-        b = self.transpose(x,y,1)
-        print("b: ", b.x, b.y)
+            #self.path[i].moveTo(x, y)
+            #print("original: ",x,y)
+            b = self.transpose(x,y,i)
+            #print("b: ", b.x, b.y)
 
-        self.path2.moveTo(b.x, b.y)
+            self.path[i].moveTo(b.x, b.y)
 
         self.update()
 
     def mouseMoveEvent(self, event):
         x = event.pos().x()
         y = event.pos().y() + 30
-        self.path.lineTo(x,y)
-
-        b = self.transpose(x, y, 1)
-        self.path2.lineTo(b.x, b.y)
-        #self.newPoint.emit(event.pos())
+        for i in range(self.k):
+            #self.path[i].lineTo(x,y)
+            b = self.transpose(x, y, i)
+            self.path[i].lineTo(b.x, b.y)
+            #self.newPoint.emit(event.pos())
         self.update()
 
 
@@ -129,9 +142,10 @@ class DrawWidget(qw.QWidget):
     def __init__(self,parent):
         qw.QWidget.__init__(self, parent)
         self.parent = parent
-        self.draw = Pane(self)
         self.setLayout(qw.QVBoxLayout())
         self.layout().setSpacing(0)
+
+        self.draw = Pane(self)
         #label = qw.QLabel(self)
         #label.setFixedHeight(25)
 
@@ -145,6 +159,8 @@ class DrawWidget(qw.QWidget):
         b_thickness3 = qw.QRadioButton("5")
         b_thickness3.toggled.connect(lambda: self.btnstate(b_thickness3))
         b_newgame = qw.QPushButton("Erase")
+        b_newgame.setFixedSize(qc.QSize(60,27))
+        #b_newgame.setStyleSheet("size: 15 x 2")
         b_newgame.clicked.connect(self.on_click_b_newgame)
         gr1.addButton(b_thickness1)
         gr1.addButton(b_thickness2)
@@ -153,10 +169,39 @@ class DrawWidget(qw.QWidget):
         hbox.addWidget(b_thickness1)
         hbox.addWidget(b_thickness2)
         hbox.addWidget(b_thickness3)
+
+        self.grid = qw.QCheckBox("Grid")
+        self.grid.clicked.connect(self.on_click_grid)
+        print(self.grid.isChecked())
+
+        hbox.addWidget(self.grid)
         hbox.addWidget(b_newgame)
-        hbox.addStretch(1)
+
 
         b_thickness2.setChecked(True)
+
+        colorBox = qw.QComboBox(self)
+        colorBox.addItem("white")
+        colorBox.addItem("red")
+        colorBox.addItem("green")
+        colorBox.addItem("blue")
+        colorBox.addItem("cyan")
+        colorBox.addItem("yellow")
+        colorBox.activated[str].connect(self.style_choise)
+
+        kBox = qw.QComboBox(self)
+        kBox.addItem("1")
+        kBox.addItem("7")
+        kBox.addItem("8")
+        kBox.addItem("17")
+        kBox.addItem("18")
+        kBox.addItem("24")
+        kBox.activated[str].connect(self.k_choise)
+        kBox.setCurrentText("24")
+
+        hbox.addWidget(colorBox)
+        hbox.addWidget(kBox)
+        hbox.addStretch(1)
 
         self.layout().addLayout(hbox)
 
@@ -164,19 +209,56 @@ class DrawWidget(qw.QWidget):
         #draw.newPoint.connect(lambda p: label.setText('Coordinates (%d, %d)' %(p.x(),p.y())))
         self.layout().addWidget(self.draw)
 
-
     def __repr__(self):
         return str("DrawWidget")
+
+    def style_choise(self,text):
+        if text == "red":
+            self.draw.color = qc.Qt.red
+        elif text == "white":
+            self.draw.color = qc.Qt.white
+        elif text == "green":
+            self.draw.color = qc.Qt.green
+        elif text == "blue":
+            self.draw.color = qc.Qt.blue
+        elif text == "cyan":
+            self.draw.color = qc.Qt.cyan
+        elif text == "yellow":
+            self.draw.color = qc.Qt.yellow
+
+    def k_choise(self, text):
+        if text == "1":
+            self.draw.k = 1
+        elif text == "7":
+            self.draw.k = 7
+        elif text == "8":
+            self.draw.k = 8
+        elif text == "17":
+            self.draw.k = 17
+        elif text == "18":
+            self.draw.k = 18
+        elif text == "24":
+            self.draw.k = 24
+
+    def on_click_grid(self):
+        self.draw.grid = self.grid.isChecked()
+        self.draw.ebene_background.fill(qg.QColor(0, 0, 0))
+        self.draw.create_bg()
+        self.draw.update()
+
 
     def on_click_b_newgame(self):
         self.draw.ebene_pane.fill(qg.QColor(0, 0, 0, 0))
         self.draw.ebene_background.fill(qg.QColor(0, 0, 0))
 
         self.draw.paths = []
-        self.draw.paths2 = []
+        #self.draw.paths2 = []
 
-        self.draw.path = qg.QPainterPath()
-        self.draw.path2 = qg.QPainterPath()
+        self.draw.path = []
+        #self.draw.path2 = qg.QPainterPath()
+        for i in range(self.draw.k):
+            self.draw.paths.append([])
+            self.draw.path.append([])
 
         self.draw.create_bg()
         self.draw.update()
