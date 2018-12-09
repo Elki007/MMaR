@@ -1,0 +1,30 @@
+/*
+    Colors: https://www.materialui.co/colors
+    400 in general
+    600 for darker
+*/
+
+QMainWindow {background: #78909C;}
+
+
+/* Main Menu */
+
+#Title {
+    font: bold 44px;
+}
+
+#StartButton, #ExitButton{
+    background-color: #42A5F5;
+    border-style: outset;
+    border-width: 2px;
+    border-radius: 10px;
+    border-color: #1E88E5;
+    font: bold 24px;
+    min-width: 5em;
+    padding: 6px;
+}
+
+#StartButton:pressed, #ExitButton:pressed {
+    background-color: #1E88E5;
+    border-style: inset;
+}

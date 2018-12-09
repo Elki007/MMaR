@@ -38,6 +38,10 @@ class Pane(qw.QLabel):
             self.paths.append([])
             self.path.append([])
 
+        self.setObjectName("Pane")
+        with open("stylesheet.css", "r") as style:  # reads stylesheets
+            self.setStyleSheet(style.read())
+
         #self.create_bg()
 
         self.update()
@@ -230,6 +234,10 @@ class DrawWidget(qw.QWidget):
             if thickness == 3:
                 thick_button.setChecked(True)
         """
+
+        self.setObjectName("DrawWidget")
+        with open("stylesheet.css", "r") as style:  # reads stylesheets
+            self.setStyleSheet(style.read())
 
         b_thickness1 = qw.QRadioButton("1")
         b_thickness1.toggled.connect(lambda: self.btnstate(b_thickness1))
