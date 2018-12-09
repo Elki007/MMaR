@@ -1,5 +1,6 @@
 import math
 
+
 class Point3D:
     def __init__(self, x=0, y=0, z=0):
         self.x, self.y, self.z = float(x), float(y), float(z)
@@ -11,14 +12,24 @@ class Point3D:
         return "(" + str(self.x) + "," + str(self.y)+ "," + str(self.z)+")"
 
     def __neg__(self):
-        return Point3D(-self.x,-self.y,-self.z)
+        return Point3D(-self.x, -self.y, -self.z)
 
+    '''
+    def __mul__(self, other):
+        """ multiplicates every coordinate with a factor """
+        return Point3D(self.x * other.x, self.y * other.y, self.z * other.z)
+    '''
 
-    def make_vector(self, another_Point3D):
-        return Point3D(another_Point3D.x-self.x,another_Point3D.y-self.y,another_Point3D.z-self.z)
+    def __mul__(self, factor):
+        """ multiplicates every coordinate with a factor """
+        return Point3D(self.x * factor, self.y * factor, self.z * factor)
+
+    def make_vector(self, other):
+        """ creates vector of 2 Point3Ds """
+        return Point3D(other.x-self.x, other.y-self.y, other.z-self.z)
 
     def norm(self):
-        return Point3D(self.x/self.abs(),self.y/self.abs(),self.z/self.abs())
+        return Point3D(self.x/self.abs(), self.y/self.abs(), self.z/self.abs())
 
     def abs(self):
         return math.sqrt(self.x ** 2 + self.y ** 2 + self.z ** 2)
@@ -38,13 +49,15 @@ class Point3D:
     def __add__(self, other):
         return Point3D(other.x+self.x, other.y+self.y, other.z+self.z)
 
+    """
+    # was commentized because of other __mul__()-function -> to multiply with a factor
     def __mul__(self, other):
         # calculate determinant
         i = self.y*other.z - (self.z*other.y)
         j = -self.x*other.z + (self.z*other.x)
         k = self.x*other.y - (self.y*other.x)
         return Point3D(i,j,k)
-
+    """
 
     def rotateX(self, angle):
         """ Rotates the point around the X axis by the given angle in degrees. """
@@ -76,7 +89,7 @@ class Point3D:
     def project(self, win_width, win_height, zoom, fov, viewer_distance):
         """ Transforms this 3D point to 2D using a perspective projection. """
         #if viewer_distance + self.z == 0:
-            #return Point3D(self.x, -self.y, self.z)
+        #return Point3D(self.x, -self.y, self.z)
         factor = fov / (viewer_distance + self.z)
         x = self.x * factor*zoom + win_width # / 2
         y = -self.y * factor*zoom + win_height # /
