@@ -167,6 +167,7 @@ class Pane(qw.QLabel):
     def mousePressEvent(self, event):
         x = event.pos().x()
         y = event.pos().y() + 30
+
         for i in range(self.k):
             self.path[i] = qg.QPainterPath()
             #self.path2 = qg.QPainterPath()
@@ -212,7 +213,7 @@ class DrawWidget(qw.QWidget):
         qw.QWidget.__init__(self, parent)
         self.parent = parent  # MainMenu
         self.setLayout(qw.QVBoxLayout())
-        self.layout().setSpacing(0)  # Zweck?
+        #self.layout().setSpacing(0)  # Zweck?
 
         self.draw = Pane(self)
         #label = qw.QLabel(self)
@@ -281,7 +282,7 @@ class DrawWidget(qw.QWidget):
         transpose_box.activated[str].connect(self.transpose_choice)
 
         kBox = qw.QComboBox(self)
-        item_list = [1, 7, 8, 17, 18, 24]
+        item_list = [1, 7, 8, 17, 18, 24] # 120]
         for number in item_list:
             kBox.addItem(f"{number}")
 
