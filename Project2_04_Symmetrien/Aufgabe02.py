@@ -4,8 +4,12 @@ from math import factorial as fac
 
 class TolleListe:
     def __init__(self, list_input, normalized=False):
-        """ Initialize a TolleListe with an representative or with the normalization form"""
-        if normalized is False:
+        """
+        Initialize a TolleListe with a representative or with the normalization form
+        not normalized e.g.: [23,5,0,1337,-1,42,3,0]
+        normalization form e.g.: [23,42,1337, 8] -> [value_1, ... , value_n, length]
+        """
+        if not normalized:
             self.created_as_norm = normalized
             self.list_original = list_input
             self.list_organized = self.transform_list_organized()
@@ -32,9 +36,11 @@ class TolleListe:
             self.all_representatives = self.calculate_all_representations()
 
     def __repr__(self):
+        """ Return normalisation """
         return str(self.list_norm)
 
     def __eq__(self, other):
+        """ Compares each normalisation """
         return self.list_norm == other.list_norm
 
     def get_list_norm(self):
@@ -88,7 +94,7 @@ class TolleListe:
     def calculate_all_representations(self):
         """
         Get all possible representations:
-        1) Creates a list with elements and placeholder (for pointer) and zeros if given
+        1) Creates a list with values[1:] and placeholder (for pointer) and zeros if given, as basis for permutation
         2) Create the permutation
         3) Add first element of self.list_values and its pointer '0' and flatten the list so there is no list in a list
         4) Replace placeholder for pointer (or -1 at the end)
@@ -113,7 +119,7 @@ class TolleListe:
         solution_step_one = list(multiset_permutations(permutation_elements))
 
         # 3) Add first element of self.list_values and its pointer '0'
-        #    Flatten the list so there is no list in a list
+        #    Flatten the list so there is no list in a list: [1,[2,3],2] -> [1,2,3,2]
         flatten = lambda *n: (e for a in n for e in (flatten(*a) if isinstance(a, (tuple, list)) else (a,)))
 
         first_value = [self.list_values[0]] + ['0']
@@ -122,7 +128,6 @@ class TolleListe:
             solution_step_two.append(tmp)
 
         # 4) Replace the placeholder with the correct pointer to the next element (or -1 at the end)
-
         for combination in solution_step_two:
             solution_step_three = list(combination)
             for i, each in enumerate(combination):
@@ -137,47 +142,128 @@ class TolleListe:
 
 
 def multiply_table(value_amount=5, list_size=10, short=False):
-    """ Shows a multiply table depending on list size and values """
+    """
+    Shows a multiply table depending on list size and values
+    short=False --> Calculate every representation with the algorithm
+    short=True  --> Calculate the amount of representations in a combinatoric way
+    """
 
-    # TODO: n! / (n - k)!
+    def show_table(table):
+        """ Show the table with its values """
 
-    # Aktuell: Es wird nur eine Variante gezählt
+        # calculate space between rows -> largest number in row + 2 spaces
+        space_between_row = [0]*(len(table[0])+1)
 
-    def show_table():
-        pass
+        for row in table:
+            for i, column in enumerate(row):
+                if len(str(column))+2 > space_between_row[i]:
+                    space_between_row[i] = len(str(column))+2
 
+        # create table head
+        table_head = "x_ |"
+        for column_index in range(len(table[0])):
+            abstand = (space_between_row[column_index] - (len(str(column_index+2))+2)) // 2
+            ungerade = 0 if (space_between_row[column_index] - (len(str(column_index+2))+2)) % 2 == 0 else 1
+            table_head += " "*abstand + "_" + str(column_index+2) + "_" + " "*abstand + " "*ungerade + "|"
+        table_head += "  <- size of list"
+
+        print(table_head)
+
+        # create table row
+        for i, column in enumerate(table):
+            table_row = str(i + 1) + "  |" if i+1 < 10 else str(i+1) + " |"
+
+            for j, row in enumerate(column):
+                abstand = (space_between_row[j] - len(str(row))) // 2
+                ungerade = 0 if (space_between_row[j] - len(str(row))) % 2 == 0 else 1
+                table_row += " "*abstand + str(row) + " "*abstand + " "*ungerade + "|"
+            print(table_row)
+        print("^\nAmount of values")
+
+    # Calculation of the table
     table = []
 
     for i in range(1, value_amount + 1):
         table.append([])
-        for j in range(2, list_size):
-            if j < i * 2:
-                table[-1].append(0)
-            else:
-                if not short:
+        # calculate with creating new TolleListe objects
+        if not short:
+            for j in range(2, list_size + 1):
+                if j < i * 2:
+                    table[-1].append(0)
+                else:
                     tmp_norm = [0] * i + [j]
                     tmp_tolleliste = TolleListe(tmp_norm, normalized=True)
                     table[-1].append(len(tmp_tolleliste.get_all_representations()))
+        # calculate with combinatoric: n! / (n-k)!
+        else:
+            for j in range(1, list_size):
+                if j+1 < i * 2:
+                    table[-1].append(0)
                 else:
-                    tmp_calculation = fac(j) // fac(j-i)
+                    n, k = j-i, i-1
+                    tmp_calculation = fac(n) // fac(n-k)
                     table[-1].append(tmp_calculation)
 
-    for each in table:
+    show_table(table)
+
+
+def aufgabe2_1(beispiel):
+    """
+    Example for exercise 2_1:
+        Betrachten Sie das obige Beispiel mit 3 Listenelementen und 8 Speicherplätzen. Schreiben Sie ein Programm,
+        das alle äquivalenten Repräsentation der gleichen Liste erzeugt. Ihr Programm sollte auch für längere Listen
+        funktionieren, man muss aber aufpassen, da der Aufwand sehr schnell steigt.
+    """
+
+    if beispiel == 1:
+        list_example = [23, 5, 0, 1337, -1, 42, 3, 0]
+    elif beispiel == 2:
+        list_example = [23, 5, 0, 1337, -1, 42, 3, 0, 0, 0, 0, 0, 0, 0]
+    else:
+        list_example = [0, 5, 0, 0, -1, 0, 3, 0, 0]
+
+    symmetry_list = TolleListe(list_example)
+
+    print(f"Number of representatives: {len(symmetry_list.get_all_representations())}\n")
+
+    for each in symmetry_list.get_all_representations():
         print(each)
 
 
+def aufgabe2_2():
+    """
+    Example for exercise 2_2:
+        Zunächst eine Theorieaufgabe: Bestimmen Sie die Struktur der Symmetriegruppe. Welche Transformationen sind
+        möglich, und was machen diese (prinzipiell)?
+        Visualisieren Sie die Gruppenstruktur, indem Sie eine Multiplikationstabelle berechnen.
+    """
+    # Transformationen?
+    # - Verschiebungen der Einträge
+
+    list_example = [23, 5, 0, 1337, -1, 42, 3, 0]
+    symmetry_list = TolleListe(list_example)
+
+    print(f"Struktur der Symmetriegruppe von {list_example} is --> {symmetry_list.get_list_norm()}\n")
+
+    multiply_table(14, 43, short=True)
+
+
+def aufgabe2_3():
+    """
+    Example for exercise 2_3:
+        1) Gegeben seien zwei beliebige Repräsentanten von Listen. Wie bestimmt man, ob diese die
+           gleiche Liste darstellen?
+        2) Kann man einen schnelleren Algorithmus finden, wenn man davon ausgeht, dass man sehr viele
+           Listenrepräsentanten in ihre zugehörigen Gruppen gleicher Darstellungen einordnen möchte?
+           (Tipp: Normalisierung)
+    """
+    # 1) Wir vergleichen beide Normalformen miteinander (möglich mit '==' durch __eq__())
+    # 2) Schneller als? Wir nutzen Dictionaries und als key bspw. ein Tupel der Normalform.
+    pass
+
 if __name__ == '__main__':
-    # tmp_1 = [23,42,1337,8]
-    # tmp_1 = [23, 2, 45, 4, 7, -1, 0, 0, 0, 0]
-    # tmp_2 = [23, 6, 0, 1337, -1, 0, 42, 3]
+    #aufgabe2_1(1)
+    #aufgabe2_2()
+    #aufgabe2_3()  # just comments
 
-    # test_1 = TolleListe(tmp_1)
-    # test_2 = TolleListe(tmp_2)
 
-    # alll = test_1.get_all_representations()
-
-    # print(len(alll))
-    # for each in alll:
-    #    print(each)
-
-    multiply_table(10, 20, short=True)
