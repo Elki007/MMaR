@@ -1,4 +1,5 @@
 from sympy.utilities.iterables import multiset_permutations
+from math import factorial as fac
 
 
 class TolleListe:
@@ -135,8 +136,10 @@ class TolleListe:
         return solution_final
 
 
-def multiply_table(value_amount=5, list_size=10):
+def multiply_table(value_amount=5, list_size=10, short=False):
     """ Shows a multiply table depending on list size and values """
+
+    # TODO: n! / (n - k)!
 
     # Aktuell: Es wird nur eine Variante gezählt
 
@@ -151,9 +154,13 @@ def multiply_table(value_amount=5, list_size=10):
             if j < i * 2:
                 table[-1].append(0)
             else:
-                tmp_norm = [0] * i + [j]
-                tmp_tolleliste = TolleListe(tmp_norm, normalized=True)
-                table[-1].append(len(tmp_tolleliste.get_all_representations()))
+                if not short:
+                    tmp_norm = [0] * i + [j]
+                    tmp_tolleliste = TolleListe(tmp_norm, normalized=True)
+                    table[-1].append(len(tmp_tolleliste.get_all_representations()))
+                else:
+                    tmp_calculation = fac(j) // fac(j-i)
+                    table[-1].append(tmp_calculation)
 
     for each in table:
         print(each)
@@ -161,16 +168,16 @@ def multiply_table(value_amount=5, list_size=10):
 
 if __name__ == '__main__':
     # tmp_1 = [23,42,1337,8]
-    tmp_1 = [23, 2, 45, 4, 7, -1, 0, 0, 0, 0]
+    # tmp_1 = [23, 2, 45, 4, 7, -1, 0, 0, 0, 0]
     # tmp_2 = [23, 6, 0, 1337, -1, 0, 42, 3]
 
-    test_1 = TolleListe(tmp_1)
+    # test_1 = TolleListe(tmp_1)
     # test_2 = TolleListe(tmp_2)
 
-    alll = test_1.get_all_representations()
+    # alll = test_1.get_all_representations()
 
-    print(len(alll))
+    # print(len(alll))
     # for each in alll:
     #    print(each)
 
-    # multiply_table(5, 20)
+    multiply_table(10, 20, short=True)
