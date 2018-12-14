@@ -14,13 +14,13 @@ class TolleListe:
             self.list_values_amount = len(self.list_values)
 
             self.list_norm = self.list_values + [self.list_length]
-
+            
             self.all_representatives = self.calculate_all_representations()
 
         else:
             self.created_as_norm = normalized
             self.list_original = []  # no original representative if object was created in normalization form
-            self.list_organized = []  # no organized form if object was created in normalization form
+            self.list_organized = []   # no organized form if object was created in normalization form
 
             self.list_length = list_input[-1]
             self.list_values = list_input[:-1]
@@ -77,8 +77,7 @@ class TolleListe:
                 index = self.list_original[index + 1]
 
                 counter += 1
-                if counter > len(
-                        self.list_original):  # len(list_input)//2 sollte reichen TODO: einmal darüber nachdenken
+                if counter > len(self.list_original):  # len(list_input)//2 sollte reichen TODO: einmal darüber nachdenken
                     raise ValueError("This list is not a TolleListe!")
             return tmp_list
         else:
@@ -100,8 +99,8 @@ class TolleListe:
         solution_final = []
 
         # 1) [element of list_values (except first), placeholder] + [free zeroes]
-        permutation_elements = [[j, str(i + 1)] for i, j in enumerate(self.list_values[1:])]
-        permutation_elements += [0] * (self.list_length - self.list_values_amount * 2)
+        permutation_elements = [[j, str(i+1)] for i, j in enumerate(self.list_values[1:])]
+        permutation_elements += [0] * (self.list_length - self.list_values_amount*2)
 
         # In case there is just one element with a list size of 2
         if permutation_elements == []:
@@ -127,7 +126,7 @@ class TolleListe:
             for i, each in enumerate(combination):
                 if type(each) == str:
                     if int(each) + 1 < self.list_values_amount:
-                        solution_step_three[i] = combination.index(str(int(each) + 1)) - 1
+                        solution_step_three[i] = combination.index(str(int(each)+1))-1
                     else:
                         solution_step_three[i] = -1
             solution_final.append(solution_step_three)
@@ -137,7 +136,6 @@ class TolleListe:
 
 def multiply_table(value_amount=5, list_size=10):
     """ Shows a multiply table depending on list size and values """
-
     # Aktuell: Es wird nur eine Variante gezählt
 
     def show_table():
@@ -145,13 +143,13 @@ def multiply_table(value_amount=5, list_size=10):
 
     table = []
 
-    for i in range(1, value_amount + 1):
+    for i in range(1, value_amount+1):
         table.append([])
         for j in range(2, list_size):
-            if j < i * 2:
+            if j < i*2:
                 table[-1].append(0)
             else:
-                tmp_norm = [0] * i + [j]
+                tmp_norm = [0]*i + [j]
                 tmp_tolleliste = TolleListe(tmp_norm, normalized=True)
                 table[-1].append(len(tmp_tolleliste.get_all_representations()))
 
@@ -160,17 +158,17 @@ def multiply_table(value_amount=5, list_size=10):
 
 
 if __name__ == '__main__':
-    # tmp_1 = [23,42,1337,8]
+    #tmp_1 = [23,42,1337,8]
     tmp_1 = [23, 2, 45, 4, 7, -1, 0, 0, 0, 0]
-    # tmp_2 = [23, 6, 0, 1337, -1, 0, 42, 3]
+    #tmp_2 = [23, 6, 0, 1337, -1, 0, 42, 3]
 
     test_1 = TolleListe(tmp_1)
-    # test_2 = TolleListe(tmp_2)
+    #test_2 = TolleListe(tmp_2)
 
     alll = test_1.get_all_representations()
 
     print(len(alll))
-    # for each in alll:
+    #for each in alll:
     #    print(each)
 
-    # multiply_table(5, 20)
+    #multiply_table(5, 20)
