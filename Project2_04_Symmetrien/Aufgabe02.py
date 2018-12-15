@@ -265,5 +265,6 @@ if __name__ == '__main__':
     #aufgabe2_1(1)
     #aufgabe2_2()
     #aufgabe2_3()  # just comments
+    pass
 
 
