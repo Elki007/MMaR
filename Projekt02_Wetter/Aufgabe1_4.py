@@ -51,10 +51,10 @@ class PlotWindow(qw.QDialog):
         xAchse = np.arange(n)
 
         #####laut der Aufgabe müssen wir nur zwei Punkte nehmen####
-        xAchseL = np.linspace(0,18,2, endpoint=True)
+        xAchseL = np.linspace(0,365,2, endpoint=True)
 
         print(xAchseL)
-        xAchseP = np.linspace(0, 18, 250)
+        xAchseP = np.linspace(0, 365, 250)
 
         mit_x = np.sum(xAchse)/n
         mit_y = np.sum(yAchse)/n

@@ -72,7 +72,7 @@ class SceneWindow(qw.QLabel):
         print(f"side_front = Polygon([{ftl},{ftr},{fbl},{fbr}]")
 
         # connect to ply
-        plydata = PlyData.read('bun_zipper_res4.ply')
+        plydata = PlyData.read('bun_zipper.ply')
         # array of all vertexes
         bunny_vert = []
         # array of all surfaces
