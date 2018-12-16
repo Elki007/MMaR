@@ -1,4 +1,3 @@
-import numpy as np
 import random, operator
 import matplotlib.pylab as plt
 import numpy as np
@@ -11,6 +10,19 @@ mittel = plt.imread('CurvyWindows.png')
 def plti(img):
     plt.imshow(img)
     plt.axis('off')
+
+
+def plot_patches(patches, best, amount):
+    fig = plt.figure(num='Symmetrieerkennung auf Bildern. Teil 1', figsize=(8, 2))  # Title and layout
+    fig.subplots_adjust(wspace=0.3)     # adjust distance between subplots
+    columns = amount
+    rows = 1
+    for i in range(1, columns * rows + 1):
+        img = patches[best[i-1][1]].img
+        #plt.axis('off')    # without axises it looks weird
+        ax = fig.add_subplot(rows, columns, i)
+        ax.title.set_text(str("Symm #: ") + str(patches[best[i][1]].count_symm))    # Title for subplot
+        plt.imshow(img)
     plt.show()
 
 
@@ -54,11 +66,12 @@ class Patch:
     def add_symmetry(self):
         self.count_symm += 1
 
+
 ########
 ##main##
 ########
 time = 10   # second for algorithm
-k = 20      # (size of a Patch)
+k = 8       # (size of a Patch)
 
 patches = []
 start = datetime.now()
@@ -76,7 +89,4 @@ print(best)
 best.sort(key=operator.itemgetter(0), reverse=True)
 print(best)
 
-# show top 5 best patches
-for i in range(5):
-    #print(best[i][1])
-    plti(patches[best[i][1]].img)
+plot_patches(patches, best, 5)
