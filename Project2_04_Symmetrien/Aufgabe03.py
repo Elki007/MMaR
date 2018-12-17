@@ -40,6 +40,7 @@ def crop_random(img,k=8):
     x = img.shape[1]
     x = random.randint(0, x - k)
     y = random.randint(0, y - k)
+    print(f"x: {x} to {x+k}, y: {y} to {y+k}")
     return img[y:y + k, x:x + k]
 
 
@@ -53,6 +54,23 @@ def find_symmetry(source, patch):
             A = crop(source, x, y, img)
             if np.array_equal(A, img):
                 patch.add_symmetry()
+
+
+def find_symmetry_2(source, patch):
+    img = patch.img
+    len = img.shape[0]
+    ymax = source.shape[0]
+    xmax = source.shape[1]
+
+    tmp_im = np.zeros(img.shape, dtype="uint8")
+    plti(tmp_im)
+    print(tmp_im)
+
+    for y in range(0, ymax-len):
+        for x in range(0, xmax-len):
+            A = crop(source, x, y, img)
+            print(A)
+            return
 
 
 class Patch:
@@ -70,7 +88,7 @@ class Patch:
 ########
 ##main##
 ########
-time = 10   # second for algorithm
+time = -1   # second for algorithm
 k = 8       # (size of a Patch)
 
 patches = []
@@ -89,4 +107,8 @@ print(best)
 best.sort(key=operator.itemgetter(0), reverse=True)
 print(best)
 
-plot_patches(patches, best, 5)
+#plot_patches(patches, best, 5)
+
+find_symmetry_2(einfach, Patch(crop_random(einfach, k)))
+
+
