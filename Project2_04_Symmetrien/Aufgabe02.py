@@ -1,5 +1,7 @@
 from sympy.utilities.iterables import multiset_permutations
 from math import factorial as fac
+import sys
+
 
 
 class TolleListe:
@@ -94,7 +96,7 @@ class TolleListe:
     def calculate_all_representations(self):
         """
         Get all possible representations:
-        1) Creates a list with values[1:] and placeholder (for pointer) and zeros if given, as basis for permutation
+        1) Creates a list with [values[1:], placeholder (for pointer)] and zeros if given, as basis for permutation
         2) Create the permutation
         3) Add first element of self.list_values and its pointer '0' and flatten the list so there is no list in a list
         4) Replace placeholder for pointer (or -1 at the end)
@@ -111,6 +113,7 @@ class TolleListe:
         permutation_elements += [0] * (self.list_length - self.list_values_amount * 2)
 
         # In case there is just one element with a list size of 2
+        # TODO: Adding zeros necessary?
         if permutation_elements == []:
             return [[self.list_values[0], -1]]
 
@@ -141,7 +144,7 @@ class TolleListe:
         return solution_final
 
 
-def multiply_table(value_amount=5, list_size=10, short=False):
+def permutation_table(value_amount=5, list_size=10, short=False):
     """
     Shows a multiply table depending on list size and values
     short=False --> Calculate every representation with the algorithm
@@ -180,7 +183,10 @@ def multiply_table(value_amount=5, list_size=10, short=False):
             print(table_row)
         print("^\nAmount of values")
 
+    #####
     # Calculation of the table
+    #####
+
     table = []
 
     for i in range(1, value_amount + 1):
@@ -230,6 +236,24 @@ def aufgabe2_1(beispiel):
         print(each)
 
 
+def aufgabe2_2_falsch(list_example=[23, 5, 0, 1337, -1, 42, 3, 0]):
+    """
+    F A L S C H !
+    Example for exercise 2_2:
+        Zunächst eine Theorieaufgabe: Bestimmen Sie die Struktur der Symmetriegruppe. Welche Transformationen sind
+        möglich, und was machen diese (prinzipiell)?
+        Visualisieren Sie die Gruppenstruktur, indem Sie eine Multiplikationstabelle berechnen.
+    """
+    # Transformationen:
+    # - Verschiebungen
+
+    symmetry_list = TolleListe(list_example)
+
+    print(f"Struktur der Symmetriegruppe von {list_example} is --> {symmetry_list.get_list_norm()}\n")
+
+    permutation_table(14, 43, short=True)
+
+
 def aufgabe2_2():
     """
     Example for exercise 2_2:
@@ -237,15 +261,179 @@ def aufgabe2_2():
         möglich, und was machen diese (prinzipiell)?
         Visualisieren Sie die Gruppenstruktur, indem Sie eine Multiplikationstabelle berechnen.
     """
-    # Transformationen?
-    # - Verschiebungen der Einträge
 
-    list_example = [23, 5, 0, 1337, -1, 42, 3, 0]
+    def show_table(table):
+        """ Prints cayley table """
+        print("\nCayley table:")
+        for row in table:
+            for element in row:
+                print(str(element) + "".ljust(4), end='')
+            print()
+        print()
+
+    def neutral_element_into_cayley_table():
+        fixed_coordinates = []
+
+        # neutral elements
+        for i in range(value_count-2):
+            cayley_table[i][i] = neutral_element
+            fixed_coordinates.append((i, i))
+        cayley_table[value_count-2][value_count-1] = neutral_element
+        fixed_coordinates.append((value_count-2, value_count-1))
+        cayley_table[value_count-1][value_count-2] = neutral_element
+        fixed_coordinates.append((value_count-1, value_count-2))
+
+        # elements in first row
+        for i in range(1, value_count):
+            cayley_table[0][i] = values_to_fill_in[i-1]
+            fixed_coordinates.append((0, i))
+
+        # elements in first column
+        for i in range(1, value_count):
+            cayley_table[i][0] = values_to_fill_in[i-1]
+            fixed_coordinates.append((i, 0))
+
+        return fixed_coordinates
+
+    def check_table_has_no_spaces(table):
+        """
+        returns True -> table contains no spaces
+        returns False -> table contains spaces
+        """
+        for row in table:
+            if '-' in row:
+                return False
+        return True
+
+    def check_row_and_column(table, x, y):
+        row = table[y]
+        column = [table[y][x] for y in range(value_count)]
+        lines_to_check = [row] + [column]
+
+        for line in lines_to_check:
+            values_should_be_used = values[:]
+            for each in line:
+                if each in values_should_be_used:
+                    values_should_be_used.pop(values_should_be_used.index(each))
+                elif each == '-':
+                    pass
+                else:
+                    return False
+        return True
+
+    def check_table_numbers(table):
+        """
+        returns True -> every value is just one time in line (horizontally or vertically)
+        returns False ->  more of the same value in line (horizontally or vertically)
+        """
+        # create lines -> horizontally, vertically
+        lines_to_check = [row for row in table]  # horizontal
+        lines_to_check += [[table[j][i] for j in range(value_count)] for i in range(value_count)]  # vertical
+
+        # proof each line if all elements of values are represented in each line)
+        # better approach but what about double values?
+        """
+        for line in lines_to_check:
+            if not all(element in line for element in values):
+                return False
+        """
+
+        # proof each line if all elements of values are represented in each line)
+        # first naive implementation:
+        for line in lines_to_check:
+            values_should_be_used = values[:]
+            for each in values:
+                if each in line:
+                    values_should_be_used.pop(values_should_be_used.index(each))
+            if len(values_should_be_used) > 0:
+                return False
+        return True
+
+    def find_empty_location(table):
+        for y in range(value_count):
+            for x in range(value_count):
+                if table[y][x] == '-':
+                    return x, y
+        return False
+
+    def calculate_table(table, x=0, y=0):
+        """ Backtracking to solve cayley table """
+
+        # solution
+        if check_table_has_no_spaces(table):
+            print("NO WAY")
+            return True
+
+        # get next empty space
+        x, y = find_empty_location(table)
+        print("places:", (x, y))
+
+        if (x, y) == (4, 1):
+            pass
+
+        for element in values_to_fill_in:
+            if table[y][x] == '-' and (x, y) not in fixed_fields:
+                table[y][x] = element
+
+                # does it fit? work with it, otherwise replace it with '-'
+                if check_row_and_column(table, x, y):
+                    # find next x,y
+                    x, y = find_empty_location(table)
+
+                    # same problem with one more element
+                    if calculate_table(table, x, y):
+                        return True
+                    else:
+                        if (x, y) not in fixed_fields:
+                            table[y][x] = '-'
+
+                else:
+                    if (x, y) not in fixed_fields:
+                        table[y][x] = '-'
+            else:
+                print("WHAT", (x, y))
+
+        return False
+
+    #####
+    # Data example
+    #####
+    list_example = [23, 5, 0, 1337, 7, 42, 3, 2, 9, 7, -1]  #, 0, 4, -1]
+
+    #####
+    # Get data from given list of representative
+    #####
     symmetry_list = TolleListe(list_example)
 
-    print(f"Struktur der Symmetriegruppe von {list_example} is --> {symmetry_list.get_list_norm()}\n")
+    values = symmetry_list.get_values()
+    value_count = len(values)
 
-    multiply_table(14, 43, short=True)
+    neutral_element = values[0]
+
+    #####
+    # Calculation of cayley table
+    #####
+
+    cayley_table = [['-' for _ in range(value_count)] for _ in range(value_count)]
+
+    # fill in neutral elements and neutral-multiplications
+    values_to_fill_in = values[1:]  # is used in calculate_table
+    fixed_fields = neutral_element_into_cayley_table()  # is used in calculate_table
+    print("Fixed fields:", fixed_fields)
+    print("Values to fill in:", values_to_fill_in)
+    show_table(cayley_table)
+
+    # example
+    """
+    cayley_table = [[23, 42, 1337],
+                    [42, 1337, 23],
+                    [1337, 23, 42]]
+    """
+
+    calculate_table(cayley_table)
+    print("DEBUG type of final_table:", type(cayley_table))
+    if type(cayley_table) is list:
+        show_table(cayley_table)
 
 
 def aufgabe2_3():
@@ -261,8 +449,14 @@ def aufgabe2_3():
     # 2) Schneller als? Wir nutzen Dictionaries und als key bspw. ein Tupel der Normalform.
     pass
 
+
 if __name__ == '__main__':
+    sys.setrecursionlimit(3500)
+    """ Testläufe sind beispielhaft in den Funktionen aufgabe* zu finden """
+
     #aufgabe2_1(1)
+    #aufgabe2_2_falsch()
+    aufgabe2_2()
     #aufgabe2_2()
     #aufgabe2_3()  # just comments
     pass
