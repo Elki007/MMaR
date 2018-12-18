@@ -14,7 +14,7 @@ class Pane(qw.QLabel):
         self.color = qc.Qt.white
         self.thickness = 3
         self.grid = False
-        self.k = 24
+        self.k = 24  # maximum of grids
         self.transposition = "rotation"
         # default value is false - means track mouse only when at least one button is pressed
 
@@ -112,7 +112,7 @@ class Pane(qw.QLabel):
             b = point.rotateZ(degree)
             return Point3D(b.x + center.x, b.y + center.y)
         else:
-            degree = (k+1) * 360 / self.k
+            degree = k * 360 / self.k
             b = point.rotateZ(degree)
             return Point3D(b.y + center.x, b.x + center.y)
 
@@ -249,7 +249,7 @@ class DrawWidget(qw.QWidget):
         b_erase = qw.QPushButton("Erase")
         b_erase.setFixedSize(qc.QSize(60, 27))
         #b_newgame.setStyleSheet("size: 15 x 2")
-        b_erase.clicked.connect(self.on_click_b_start)
+        b_erase.clicked.connect(self.on_click_b_erase)
         gr1.addButton(b_thickness1)
         gr1.addButton(b_thickness2)
         gr1.addButton(b_thickness3)
@@ -268,7 +268,7 @@ class DrawWidget(qw.QWidget):
         b_thickness2.setChecked(True)
 
         colorBox = qw.QComboBox(self)
-        color_list = ["white", "red", "green", "blue", "cyan", "yellow"]
+        color_list = ["white", "red", "green", "blue", "cyan", "yellow", "black"]
         for color in color_list:
             colorBox.addItem(color)
 
@@ -282,7 +282,7 @@ class DrawWidget(qw.QWidget):
         transpose_box.activated[str].connect(self.transpose_choice)
 
         kBox = qw.QComboBox(self)
-        item_list = [1, 7, 8, 17, 18, 24] # 120]
+        item_list = [1, 2, 3, 4, 7, 8, 17, 18, 24, 30]  # 28]  # doesn't work
         for number in item_list:
             kBox.addItem(f"{number}")
 
@@ -320,7 +320,7 @@ class DrawWidget(qw.QWidget):
         self.draw.create_bg()
         self.draw.update()
 
-    def on_click_b_start(self):
+    def on_click_b_erase(self):
         self.draw.ebene_pane.fill(qg.QColor(0, 0, 0, 0))
         self.draw.ebene_background.fill(qg.QColor(0, 0, 0))
 

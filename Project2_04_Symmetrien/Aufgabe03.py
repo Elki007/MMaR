@@ -3,11 +3,11 @@ import matplotlib.pylab as plt
 import numpy as np
 from datetime import datetime
 from scipy import misc
+from imageio import imread
 
-
-einfach = misc.imread('CleanWindows.png')
-einfach2 = misc.imread('CleanWindowsRed.png')
-mittel = misc.imread('CurvyWindows.png')
+einfach = imread('CleanWindows.png')
+#einfach2 = misc.imread('CleanWindowsRed.png')
+mittel = imread('CurvyWindows.png')
 
 
 
@@ -157,26 +157,26 @@ def test(image, time, k, **kwargs):
 time = 1    # second for algorithm
 k = 12      # (size of a Patch)
 
-#test(einfach, time, k, function=find_symmetry, bound=1000)
+test(einfach, time, k, function=find_symmetry, bound=1000)
 
 time = 5
 k = 32
-#test(mittel, time, k, function=find_symmetry, bound=1000)
+test(mittel, time, k, function=find_symmetry, bound=1000)
 
 #### Teil 2
 time = 10   # second for algorithm
 k = 32      # (size of a Patch)
 like = 0    # SSD difference allowed
 
-#test(einfach, time, k, like=like, function=find_symmetry_2, bound=1000)
+test(einfach, time, k, like=like, function=find_symmetry_2, bound=1000)
 
 time = 10   # second for algorithm
 k = 50      # (size of a Patch)
 like = 70   # SSD difference allowed
-#test(mittel, time, k, like=like, function=find_symmetry_2, bound=100)
+test(mittel, time, k, like=like, function=find_symmetry_2, bound=100)
 
 #### Teil 3
 time = 10   # second for algorithm
 k = 70      # (size of a Patch)
 like = 70   # SSD difference allowed
-test(mittel, time, k, like=like, function=find_symmetry_3, bound=100000)
+#test(mittel, time, k, like=like, function=find_symmetry_3, bound=100000)
