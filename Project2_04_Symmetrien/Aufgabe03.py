@@ -1,13 +1,16 @@
-import random, operator, math
+import random, operator, imageio
 import matplotlib.pylab as plt
 import numpy as np
 from datetime import datetime
-from scipy import misc
+from skimage.feature import hog
+from skimage import data, exposure
 
 
-einfach = misc.imread('CleanWindows.png')
-einfach2 = misc.imread('CleanWindowsRed.png')
-mittel = misc.imread('CurvyWindows.png')
+einfach = imageio.imread('CleanWindows.png')
+#einfach2 = misc.imread('CleanWindowsRed.png')
+mittel = imageio.imread('CurvyWindows.png')
+hard_t = imageio.imread('monge_true.png')
+hard_s = imageio.imread('monge_simple.png')
 
 
 
@@ -16,8 +19,8 @@ def plti(img):
     plt.axis('off')
 
 
-def plot_patches(patches, best, amount):
-    fig = plt.figure(num='Symmetrieerkennung auf Bildern. Teil 1', figsize=(8, 2))  # Title and layout
+def plot_patches(patches, best, amount, promt):
+    fig = plt.figure(num='Symmetrieerkennung auf Bildern. ' + promt, figsize=(8, 2))  # Title and layout
     fig.subplots_adjust(wspace=0.3)     # adjust distance between subplots
     if len(best)> amount:
         columns = amount
@@ -72,9 +75,65 @@ def find_symmetry_2(source, patch, like):
     for y in range(0, ymax-len):
         for x in range(0, xmax-len):
             A = crop(source, x, y, img)
+            #A[0] #4 Stueck [255,255,255] [] [] []
             s = np.sum((A[:, :, 0:3] - img[:, :, 0:3]) ** 2)
             if s <= like:
                 patch.add_symmetry()
+
+
+def find_symmetry_HOG(A, B, like):
+    """
+    this function takes 2 images and makes two HOG images.
+    :param A: first image (original)
+    :param B: second image (simple image)
+    :param like: no use
+    :return: nothing, just plots an HOG image A and B
+    :comment: by adjusting orientations = x, pixels_per_cell=(y, y),
+    cells_per_block=(z, z) we may recieve better sample for further comparison
+    """
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4), sharex=True, sharey=True)
+
+    fd_A, hog_image_A = hog(A, orientations=9, pixels_per_cell=(20, 20),
+                    cells_per_block=(10, 10), visualize=True, multichannel=True)
+
+    fd_B, hog_image_B = hog(B, orientations=8, pixels_per_cell=(16, 16),
+                            cells_per_block=(1, 1), visualize=True, multichannel=True)
+
+    # plotting
+
+    ax1.axis('off')
+    hog_image_rescaled_before = exposure.rescale_intensity(hog_image_A, in_range=(0, 10))
+    ax1.imshow(hog_image_rescaled_before, cmap=plt.cm.gray)
+    ax1.set_title('Image A')
+
+    # Rescale histogram for better display
+    hog_image_rescaled = exposure.rescale_intensity(hog_image_B, in_range=(0, 10))
+
+    ax2.axis('off')
+    ax2.imshow(hog_image_rescaled, cmap=plt.cm.gray)
+    ax2.set_title('Image B')
+    plt.show()
+
+
+
+def HOG(image):
+    fd, hog_image = hog(image, orientations=16, pixels_per_cell=(16, 16),
+                        cells_per_block=(1, 1), visualize=True, multichannel=True)
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4), sharex=True, sharey=True)
+
+    ax1.axis('off')
+    hog_image_rescaled_before = exposure.rescale_intensity(hog_image, in_range=(0, 1))
+    ax1.imshow(hog_image_rescaled_before, cmap=plt.cm.gray)
+    ax1.set_title('Input image')
+
+    # Rescale histogram for better display
+    hog_image_rescaled = exposure.rescale_intensity(hog_image, in_range=(0, 10))
+
+    ax2.axis('off')
+    ax2.imshow(hog_image_rescaled, cmap=plt.cm.gray)
+    ax2.set_title('Histogram of Oriented Gradients')
+    plt.show()
 
 
 def find_symmetry_3(source, patch, like):
@@ -123,7 +182,7 @@ class Patch:
     def add_symmetry(self):
         self.count_symm += 1
 
-def test(image, time, k, **kwargs):
+def test(image, time, k, promt, **kwargs):
     like = kwargs.get('like', 0)
     function = kwargs.get('function', 0)
     bound = kwargs.get('bound', False)
@@ -138,6 +197,7 @@ def test(image, time, k, **kwargs):
         function(image, patches[-1], like*k*k)  # Dynamic function (find_symmetry 1-3)
         end = datetime.now()
         passed = (end - start).seconds
+        # best < bound ?
         best.append([patches[-1].count_symm, len(patches) - 1])
         # print("found symmetries #", patches[-1].count_symm)
 
@@ -148,7 +208,7 @@ def test(image, time, k, **kwargs):
         best = [a for a in best if (a[0] < bound)]
     print(best)
 
-    plot_patches(patches, best, 5)
+    plot_patches(patches, best, 5, promt)
 
 ########
 ##main##
@@ -157,26 +217,26 @@ def test(image, time, k, **kwargs):
 time = 1    # second for algorithm
 k = 12      # (size of a Patch)
 
-#test(einfach, time, k, function=find_symmetry, bound=1000)
+#test(einfach, time, k, "Teil 1, einfach", function=find_symmetry, bound=1000)
 
 time = 5
 k = 32
-#test(mittel, time, k, function=find_symmetry, bound=1000)
+#test(mittel, time, k, "Teil 1, mittel", function=find_symmetry, bound=1000)
 
 #### Teil 2
 time = 10   # second for algorithm
 k = 32      # (size of a Patch)
 like = 0    # SSD difference allowed
-
-#test(einfach, time, k, like=like, function=find_symmetry_2, bound=1000)
+#test(einfach, time, k, "Teil 2, einfach", like=like, function=find_symmetry_2, bound=1000)
 
 time = 10   # second for algorithm
 k = 50      # (size of a Patch)
 like = 70   # SSD difference allowed
-#test(mittel, time, k, like=like, function=find_symmetry_2, bound=100)
+#test(mittel, time, k, "Teil 2, mittel", like=like, function=find_symmetry_2, bound=100)
 
 #### Teil 3
 time = 10   # second for algorithm
 k = 70      # (size of a Patch)
 like = 70   # SSD difference allowed
-test(mittel, time, k, like=like, function=find_symmetry_3, bound=100000)
+find_symmetry_HOG(hard_t, hard_s, like)
+#test(mittel, time, k, like=like, function=find_symmetry_HOG, bound=100000)
