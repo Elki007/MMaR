@@ -81,6 +81,61 @@ class PlotCanvas(FigureCanvas):
         #self.plot()
 
     def plot(self):
+        def p_1(t):
+            return 1 / 6 * t ** 3
+
+        def p_2(t):
+            return 1 / 6 * (1 + 3 * t + 3 * t ** 2 - 3 * t ** 3)
+
+        def p_3(t):
+            return 1 / 6 * (4 - 6 * t ** 2 + 3 * t ** 3)
+
+        def p_4(t):
+            return 1 / 6 * (1 - 3 * t + 3 * t ** 2 - t ** 3)
+
+        def b(t):
+            if t <= 0:
+                return 0
+            elif t <= 1:
+                return p_1(t)
+            elif t <= 2:
+                return p_2(t - 1)
+            elif t <= 3:
+                return p_3(t - 2)
+            elif t <= 4:
+                return p_4(t - 3)
+            else:
+                return 0
+
+        def b_sp(t, i):
+            return b(t - i)
+
+        def spline (cv):
+            k = len(cv)
+            if k < 4:
+                print("insufficient control points")
+                return False
+
+            t_min, t_max = 1, k+2
+            x=[]
+            y=[]
+            t = t_min
+            while t <= t_max:
+                subsum_x=0
+                subsum_y=0
+                for i in range(2,k-1):
+                    subsum_x += cv[i][0] * b_sp(t,i)
+                    print(f"P_x:{cv[i][0]} b_sp({t},{i}):{b_sp(t,i)}")
+                    subsum_y += cv[i][1] * b_sp(t,i)
+                x.append(subsum_x)
+                y.append(subsum_y)
+
+                t +=0.01
+
+            print("x:", x)
+            print("y:", y)
+            return x,y
+
 
         def bspline(cv, n=100, degree=3):
             """ Calculate n samples on a bspline
@@ -105,7 +160,9 @@ class PlotCanvas(FigureCanvas):
             return np.array(si.splev(u, (kv,cv.T,degree))).T
 
         p = bspline(self.test_cv, n=100)
-        x, y = p.T
+        #x, y = p.T
+        x,y = spline(self.test_cv)
+
         print(self.test_cv)
         #print(x,y)
 
