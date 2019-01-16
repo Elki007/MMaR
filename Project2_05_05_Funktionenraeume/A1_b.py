@@ -1,5 +1,5 @@
 import numpy as np
-import scipy.interpolate as si
+#import scipy.interpolate as si
 import matplotlib.pyplot as plt
 import sys
 
@@ -111,19 +111,23 @@ class PlotCanvas(FigureCanvas):
             return b(t - i)
 
         def spline (cv):
-            k = len(cv)
+            """
+            :param cv: Control vertexes
+            :return: x and y array for spline-curve
+            """
+            k = len(cv)  # Amount of CV
             if k < 4:
                 print("insufficient control points")
                 return False
 
-            t_min, t_max = 1, k+2
+            t_min, t_max = 1, k  # Axe for shifted basis functions
             x=[]
             y=[]
             t = t_min
             while t <= t_max:
                 subsum_x=0
                 subsum_y=0
-                for i in range(2,k-1):
+                for i in range(0,k):
                     subsum_x += cv[i][0] * b_sp(t,i)
                     print(f"P_x:{cv[i][0]} b_sp({t},{i}):{b_sp(t,i)}")
                     subsum_y += cv[i][1] * b_sp(t,i)
@@ -157,9 +161,9 @@ class PlotCanvas(FigureCanvas):
             u = np.linspace(False,(count-degree),n)
 
             # Calculate result
-            return np.array(si.splev(u, (kv,cv.T,degree))).T
+            #return np.array(si.splev(u, (kv,cv.T,degree))).T
 
-        p = bspline(self.test_cv, n=100)
+        #p = bspline(self.test_cv, n=100)
         #x, y = p.T
         x,y = spline(self.test_cv)
 
