@@ -30,6 +30,7 @@ def p3(x):
     return 1/6*(4-6*x**2+3*x**3)
 def p4(x):
     return 1/6*(1-3*x+3*x**2-x**3)
+
 def basis_f(x):
     if x<=0:
         return 0
@@ -53,6 +54,7 @@ def show_b_t(x):
 
 x = np.linspace(0, 6, 100)
 show_basis(x)
+x = np.linspace(0, 4, 100)
 show_b_t(x)
 
 """points = np.array([[0,0],[0,0],[0,0],[0,0],[0,0]])

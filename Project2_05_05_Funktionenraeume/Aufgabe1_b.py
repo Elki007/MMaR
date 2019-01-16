@@ -4,7 +4,7 @@ import numpy as np
 ### Teil b ###
 '''all functions should be splitted into 1-D functions'''
 def p1_y(x):
-    return 1/6*np.power(x,3)
+    return (x**3)/6
 def p2_y(x):
     return 1/6*(1+3*x+3*x**2-3*x**3)
 def p3_y(x):
