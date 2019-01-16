@@ -262,6 +262,10 @@ class Pane(qw.QLabel):
         if len(self.current_cv) != 0:
             p = bspline(self.current_cv, n=len(self.current_cv)*10) # n - amount of interpolated points
             x, y = p.T
+            if len(x) > 10:
+                x, y = x[5:], y[5:]
+                x, y = x[:-5], y[:-5]
+            #print(x)
             path = qg.QPainterPath()
 
             path.moveTo(x[0], y[0])
