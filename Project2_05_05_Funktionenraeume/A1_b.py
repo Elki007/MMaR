@@ -120,7 +120,7 @@ class PlotCanvas(FigureCanvas):
                 print("insufficient control points")
                 return False
 
-            t_min, t_max = 1, k  # Axe for shifted basis functions
+            t_min, t_max = 1, k-2  # Axe for shifted basis functions
             x=[]
             y=[]
             t = t_min
@@ -128,9 +128,9 @@ class PlotCanvas(FigureCanvas):
                 subsum_x=0
                 subsum_y=0
                 for i in range(0,k):
-                    subsum_x += cv[i][0] * b_sp(t,i)
+                    subsum_x += cv[i][0] * b_sp(t,i-2)
                     print(f"P_x:{cv[i][0]} b_sp({t},{i}):{b_sp(t,i)}")
-                    subsum_y += cv[i][1] * b_sp(t,i)
+                    subsum_y += cv[i][1] * b_sp(t,i-2)
                 x.append(subsum_x)
                 y.append(subsum_y)
 
