@@ -1,5 +1,4 @@
 import numpy as np
-import scipy.interpolate as si
 import sys
 
 import PyQt5.QtWidgets as qw
@@ -62,7 +61,7 @@ class DrawWidget(qw.QWidget):
 
         hack = qw.QWidget()
         hack.setLayout(vbox)
-        hack.setFixedWidth(80)
+        hack.setFixedWidth(110)
 
         hbox.addWidget(hack)
 
@@ -223,9 +222,102 @@ class Pane(qw.QLabel):
         self.ebene_pane.fill(qg.QColor(0, 0, 0))
         self.painter_pane = qg.QPainter(self.ebene_pane)
         self.painter_pane.setRenderHint(qg.QPainter.Antialiasing, True)
+
+        def p_1(t):
+            return 1 / 6 * t ** 3
+
+        def p_2(t):
+            return 1 / 6 * (1 + 3 * t + 3 * t ** 2 - 3 * t ** 3)
+
+        def p_3(t):
+            return 1 / 6 * (4 - 6 * t ** 2 + 3 * t ** 3)
+
+        def p_4(t):
+            return 1 / 6 * (1 - 3 * t + 3 * t ** 2 - t ** 3)
+
+        def b(t):
+            if t <= 0:
+                return 0
+            elif t <= 1:
+                return p_1(t)
+            elif t <= 2:
+                return p_2(t - 1)
+            elif t <= 3:
+                return p_3(t - 2)
+            elif t <= 4:
+                return p_4(t - 3)
+            else:
+                return 0
+
+        def b_sp(t, i):
+            return b(t - i)
+
+        def change_color(color):
+            if color%2 == 1:
+                return qc.Qt.green
+            else:
+                return qc.Qt.darkCyan
+
+        def test(x,y,color):
+            path = qg.QPainterPath()
+
+            break_j = 0
+            farbe = change_color(color[0])
+            self.painter_pane.setPen(qg.QPen(farbe, 3, qc.Qt.SolidLine))
+            path.moveTo(x[0], y[0])
+            for j in range(len(x)):
+                path.lineTo(x[j], y[j])
+                if j + 1 != len(color):
+                    if color[j] != color[j + 1]:
+                        break_j = j+1
+                        break
+            self.painter_pane.drawPath(path)
+            if  break_j != 0:
+                print(f"len(x):{len(x)}, len(color):{len(color)}, break_j:{break_j}")
+                return test(x[break_j:], y[break_j:], color[break_j:])
+
+        def spline(cv):
+            """
+            :param cv: Control vertexes
+            :return: x and y array for spline-curve
+            """
+            k = len(cv)  # Amount of CV
+            if k < 4:
+                print("insufficient control points")
+                return False
+
+            t_min, t_max = 1, k - 2  # Axe for shifted basis functions
+            x = []
+            y = []
+            color = []
+            color_temp = 0
+            color_temp_v2 = 1
+            t = t_min
+            while t <= t_max:
+                subsum_x = 0
+                subsum_y = 0
+                for i in range(0, k):
+                    b = b_sp(t, i - 2)
+                    # if b > 0.66:
+                    #    color_temp = i
+                    subsum_x += cv[i][0] * b
+                    #print(f"P_x:{cv[i][0]} b_sp({t},{i}):{b}")
+                    subsum_y += cv[i][1] * b
+                if color_temp_v2 + 1 <= t:
+                    color_temp_v2 += 1
+                x.append(subsum_x)
+                y.append(subsum_y)
+                color.append(color_temp_v2)
+
+                t += 0.01
+
+            #print("x:", x)
+            #print("y:", y)
+            #print("color: ", color)
+            return x, y, color
+
         def bspline(cv, n=100, degree=3):
             """ Calculate n samples on a bspline
-
                 cv :      Array of control vertices
                 n  :      Number of samples to return
                 degree:   Curve degree
@@ -243,36 +335,51 @@ class Pane(qw.QLabel):
             u = np.linspace(False,(count-degree),n)
 
             # Calculate result
-            return np.array(si.splev(u, (kv,cv.T,degree))).T
+            #return np.array(si.splev(u, (kv,cv.T,degree))).T
 
 
         self.painter_pane.setPen(qg.QPen(qc.Qt.red, 3, qc.Qt.SolidLine))
 
         for i in range(len(self.cvs)):
-            p = bspline(self.cvs[i], n=len(self.cvs[i])*10)
-            x, y = p.T
-            path = qg.QPainterPath()
+            #p = bspline(self.cvs[i], n=len(self.cvs[i])*10)
+            #x, y = p.T
+            temp = spline(self.cvs[i])
+            if temp:
+                x,y,color = temp[0], temp[1], temp[2]
+                test(x,y,color)
+                """
+                path = qg.QPainterPath()
 
-            path.moveTo(x[0],y[0])
-            for j in range(len(x)):
-                path.lineTo(x[j],y[j])
+                path.moveTo(x[0],y[0])
+                for j in range(len(x)):
+                    path.lineTo(x[j],y[j])
 
-            self.painter_pane.drawPath(path)
+                self.painter_pane.drawPath(path)"""
+
         # actual path, if it is not empty!
         if len(self.current_cv) != 0:
-            p = bspline(self.current_cv, n=len(self.current_cv)*10) # n - amount of interpolated points
-            x, y = p.T
-            if len(x) > 10:
-                x, y = x[5:], y[5:]
-                x, y = x[:-5], y[:-5]
-            #print(x)
-            path = qg.QPainterPath()
+            #p = bspline(self.current_cv, n=len(self.current_cv)*10) # n - amount of interpolated points
+            #x, y = p.T
+            temp = spline(self.current_cv)
+            if temp:
+                x,y, color = temp[0], temp[1], temp[2]
+                #if len(x) > 10:
+                    #x, y = x[5:], y[5:]
+                    #x, y = x[:-5], y[:-5]
+                #print(x)
+                test(x,y, color)
+                """
+                path = qg.QPainterPath()
 
-            path.moveTo(x[0], y[0])
-            for j in range(len(x)):
-                path.lineTo(x[j], y[j])
+                path.moveTo(x[0], y[0])
+                for j in range(len(x)):
+                    path.lineTo(x[j], y[j])
+                    if j+1 != len(x):
+                        if color[j] != color[j+1]:
 
-            self.painter_pane.drawPath(path)
+
+
+                self.painter_pane.drawPath(path)"""
 
         self.update()
 

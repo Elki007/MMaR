@@ -1,14 +1,10 @@
 import numpy as np
-#import scipy.interpolate as si
-import matplotlib.pyplot as plt
 import sys
 
 import PyQt5.QtWidgets as qw
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-
-import random
 
 
 class App(qw.QMainWindow):
@@ -123,21 +119,31 @@ class PlotCanvas(FigureCanvas):
             t_min, t_max = 1, k-2  # Axe for shifted basis functions
             x=[]
             y=[]
+            color=[]
+            color_temp = 0
+            color_temp_v2 = 1
             t = t_min
             while t <= t_max:
                 subsum_x=0
                 subsum_y=0
                 for i in range(0,k):
-                    subsum_x += cv[i][0] * b_sp(t,i-2)
-                    print(f"P_x:{cv[i][0]} b_sp({t},{i}):{b_sp(t,i)}")
-                    subsum_y += cv[i][1] * b_sp(t,i-2)
+                    b = b_sp(t,i-2)
+                    #if b > 0.66:
+                    #    color_temp = i
+                    subsum_x += cv[i][0] * b
+                    print(f"P_x:{cv[i][0]} b_sp({t},{i}):{b}")
+                    subsum_y += cv[i][1] * b
+                if color_temp_v2 + 1 <= t:
+                    color_temp_v2 += 1
                 x.append(subsum_x)
                 y.append(subsum_y)
+                color.append(color_temp_v2)
 
                 t +=0.01
 
             print("x:", x)
             print("y:", y)
+            print("color: ", color)
             return x,y
 
 
