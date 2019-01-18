@@ -46,11 +46,11 @@ class DrawWidget(qw.QWidget):
         b_plot.setToolTip('Plot a Graph')
         b_plot.clicked.connect(self.on_click_plot)"""
 
-        self.cm_type = qw.QComboBox(self)
+        """self.cm_type = qw.QComboBox(self)
         self.cm_type.addItem("normal")
         self.cm_type.addItem("speed up")
         self.cm_type.addItem("slow down")
-        self.cm_type.activated.connect(self.on_click_type)
+        self.cm_type.activated.connect(self.on_click_type)"""
 
         cm_style = qw.QComboBox(self)
         cm_style.setToolTip('choose a style')
@@ -70,7 +70,7 @@ class DrawWidget(qw.QWidget):
         vbox.addWidget(b_clear)
         vbox.addWidget(b_clear_pane)
         #vbox.addWidget(b_plot)
-        vbox.addWidget(self.cm_type)
+        #vbox.addWidget(self.cm_type)
         vbox.addWidget(cm_style)
         vbox.addWidget(b_show_cv)
 
@@ -95,8 +95,8 @@ class DrawWidget(qw.QWidget):
     def on_click_new_path(self):
         if len(self.pane.current_cv) != 0:
             self.pane.paths.append(self.pane.current_path)
-            self.pane.current_path = Path(qg.QPainterPath(), self.cm_type.currentText())
-            print(self.pane.current_path.color)
+            self.pane.current_path = qg.QPainterPath()
+
             self.pane.cvs.append(self.pane.current_cv)
             self.pane.current_cv = np.array([]).reshape(0, 2)
 
@@ -218,12 +218,12 @@ class Pane(qw.QLabel):
         if len(self.current_cv) != 0:
             self.current_cv = self.current_cv[:-1]
             if len(self.current_cv) != 0:
-                self.current_path.path = qg.QPainterPath()
-                self.current_path.path.moveTo(self.current_cv[0][0],self.current_cv[0][1])
+                self.current_path = qg.QPainterPath()
+                self.current_path.moveTo(self.current_cv[0][0],self.current_cv[0][1])
                 for i in range(len(self.current_cv)):
-                    self.current_path.path.lineTo(self.current_cv[i][0], self.current_cv[i][1])
-            self.update()
-            self.plot()
+                    self.current_path.lineTo(self.current_cv[i][0], self.current_cv[i][1])
+        self.update()
+        self.plot()
 
     def show_cv(self, value):
         self.showCV = value
