@@ -10,6 +10,8 @@ class App(qw.QMainWindow):
     def __init__(self):
         super().__init__()
         self.title = 'Aufgabe 1: Spline Kurven'
+        self.setMinimumHeight(qw.QDesktopWidget().height() // 3)
+        self.setMinimumWidth(qw.QDesktopWidget().width() // 3)
         self.init_ui()
 
 
@@ -329,7 +331,7 @@ class Pane(qw.QLabel):
                         break
             self.painter_pane.drawPath(path)
             if  break_j != 0:
-                print(f"len(x):{len(x)}, len(color):{len(color)}, break_j:{break_j}")
+                #print(f"len(x):{len(x)}, len(color):{len(color)}, break_j:{break_j}")
                 return test(x[break_j:], y[break_j:], color[break_j:])
 
         def spline(cv):
