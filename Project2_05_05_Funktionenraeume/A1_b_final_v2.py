@@ -203,7 +203,7 @@ class Pane(qw.QLabel):
         self.set_all_painters()
 
         self.paths = []
-        self.current_path.path = qg.QPainterPath()
+        self.current_path = qg.QPainterPath()
 
         self.cvs = []
         self.current_cv = np.array([]).reshape(0, 2)
