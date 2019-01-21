@@ -232,7 +232,7 @@ class Pane(qw.QLabel):
                 for i in range(len(self.current_cv)):
                     self.current_path.lineTo(self.current_cv[i][0], self.current_cv[i][1])
         self.update()
-        self.plot()
+        #self.plot()
 
     def show_cv(self, value):
         self.showCV = value
@@ -265,21 +265,33 @@ class Pane(qw.QLabel):
                 self.painter_cv.drawPath(path)
 
             # draw old paths
-            for j in range(len(self.cvs)):
+            """for j in range(len(self.cvs)):
                 for i in range(self.cvs[j].shape[0]):
                     self.painter_cv.setPen(qg.QPen(color, 6, qc.Qt.SolidLine))
                     self.painter_cv.drawPoint(self.cvs[j][i][0], self.cvs[j][i][1])
             # draw actual path
             for i in range(self.current_cv.shape[0]):
                 self.painter_cv.setPen(qg.QPen(color, 6, qc.Qt.SolidLine))
-                self.painter_cv.drawPoint(self.current_cv[i][0], self.current_cv[i][1])
+                self.painter_cv.drawPoint(self.current_cv[i][0], self.current_cv[i][1])"""
 
         self.ebene_total.fill(qg.QColor(0, 0, 0, 0))
         self.painter_total.drawPixmap(0, 0, self.ebene_pane)
         self.painter_total.drawPixmap(0, 0, self.ebene_cv)
         self.painter_total.drawPixmap(0, 0, self.ebene_schlitten)
         self.setPixmap(self.ebene_total)
+
+        self.get_all_values()
         # print("drawing all")
+
+    def get_all_values(self):
+        img = qg.QImage(self.ebene_total)
+        #print(img.height() , img.width())
+        for x in range(img.width()):
+            for y in range(img.height()):
+                pixel = img.pixelColor(x,y)
+                if (pixel.red(),pixel.green(),pixel.blue()) != (0,0,0):
+                    print(pixel.red())
+
 
     def plot(self):
         self.painter_pane.end()
@@ -454,10 +466,10 @@ class Pane(qw.QLabel):
         # x, y = p.T
         # print(x,y)
 
-    def lyambda_sin(self, m, n):
+    """def lyambda_sin(self, m, n):
         sum=0
         for i in range(1,n):
-            sum += np.sin(m*)
+            sum += np.sin(m*)"""
 
 
     def mousePressEvent(self, event):
