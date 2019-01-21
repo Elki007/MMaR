@@ -41,6 +41,9 @@ def show_b_sp(interval_for_i):
     for i in range(interval_for_i[0],interval_for_i[1]+1):
         y.append([b_sp(each,i) for each in x])
         plt.plot(x, y[-1], label=str("Basis function b(t-i), i=")+str(i))
+    plt.title("Basisfunktionen", fontdict=None, loc='center')
+    fig = plt.gcf()
+    fig.canvas.set_window_title('Aufgabe 1a: Spline Kurven')
     plt.legend()
     plt.show()
 

@@ -9,14 +9,14 @@ import PyQt5.QtGui as qg
 class App(qw.QMainWindow):
     def __init__(self):
         super().__init__()
-        self.title = 'Aufgabe 1: Spline Kurven'
+        self.title = 'Aufgabe 1b: Spline Kurven'
         self.setMinimumHeight(qw.QDesktopWidget().height() // 3)
         self.setMinimumWidth(qw.QDesktopWidget().width() // 3)
         self.init_ui()
 
 
     def init_ui(self):
-        self.setWindowTitle('Aufgabe 1: Spline Kurven')
+        self.setWindowTitle('Aufgabe 1b: Spline Kurven')
         self.setCentralWidget(DrawWidget(self))
         self.show()
 
