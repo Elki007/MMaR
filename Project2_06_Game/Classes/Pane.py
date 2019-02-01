@@ -7,6 +7,7 @@ import PyQt5.QtCore as qc
 import PyQt5.QtGui as qg
 
 from Path import Path
+from Point import Point
 
 
 class Pane(qw.QLabel):
@@ -19,6 +20,9 @@ class Pane(qw.QLabel):
         self.color = qc.Qt.red
         self.thickness = 3
         self.grid = False
+
+        self.points = []
+        self.mousePressedCoords = [0, 0]
 
         # background for black background with lines of grid/crystal if activated
         self.ebene_pane = qg.QPixmap(self.width(), self.height())
@@ -204,12 +208,33 @@ class Pane(qw.QLabel):
     def mousePressEvent(self, event):
         x = event.pos().x()
         y = event.pos().y()
-        if self.current_path.path.isEmpty():
-            self.current_path.path.moveTo(x, y)
-            self.current_path.path.lineTo(x+0.1, y+0.1)  # without +0.1 there is no line
-        self.current_path.path.lineTo(x, y)
+        self.mousePressedCoords = [x, y]
 
-        self.current_cv = np.r_[self.current_cv, [[x, y]]]
+        if event.buttons() == qc.Qt.LeftButton:
+            self.points.append(Point(x, y))
+
+            if self.current_path.path.isEmpty():
+                self.current_path.path.moveTo(self.points[-1].x, self.points[-1].y)
+                self.current_path.path.lineTo(self.points[-1].x+0.1, self.points[-1].y+0.1)  # without +0.1 there is no line
+            self.current_path.path.lineTo(self.points[-1].x, self.points[-1].y)
+
+            self.current_cv = np.r_[self.current_cv, [[self.points[-1].x, self.points[-1].y]]]
+
+        self.update()
+        self.plot()
+
+    def mouseMoveEvent(self, QMouseEvent):
+        """ Shows plotted data on the fly by click and drag the cv """
+        x = QMouseEvent.pos().x()
+        y = QMouseEvent.pos().y()
+
+        if QMouseEvent.buttons() == qc.Qt.LeftButton:
+            self.current_cv[-1] = x, y
+        elif QMouseEvent.buttons() == qc.Qt.RightButton:
+            self.current_cv += x - self.mousePressedCoords[0], y - self.mousePressedCoords[1]
+            for i in range(len(self.cvs)):
+                self.cvs[i] += x - self.mousePressedCoords[0], y - self.mousePressedCoords[1]
+            self.mousePressedCoords = [x, y]
 
         self.update()
         self.plot()

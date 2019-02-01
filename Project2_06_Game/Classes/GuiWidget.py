@@ -77,6 +77,7 @@ class GuiWidget(qw.QWidget):
 
         vbox_side_menu.addStretch(1)
 
+        # set position of pane and side menu
         hbox_pane_menu.addWidget(self.pane)
 
         side_menu = qw.QWidget()
