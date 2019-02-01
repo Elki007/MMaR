@@ -10,92 +10,93 @@ import PyQt5.QtGui as qg
 class App(qw.QMainWindow):
     def __init__(self):
         super().__init__()
-        self.title = 'Aufgabe 1: Spline Kurven'
         self.init_ui()
 
     def init_ui(self):
-        self.setWindowTitle('Aufgabe 1: Spline Kurven')
-        self.setCentralWidget(DrawWidget(self))
+        self.setWindowTitle('Project: Line Rider')
+        self.setCentralWidget(GuiWidget(self))
         self.setMinimumHeight(qw.QDesktopWidget().height() // 2)
         self.setMinimumWidth(qw.QDesktopWidget().width() // 2)
         self.show()
 
 
-class DrawWidget(qw.QWidget):
+class GuiWidget(qw.QWidget):
     def __init__(self, parent):
         qw.QWidget.__init__(self, parent)
         self.main_window = parent  # Main Window
         self.pane = Pane(self)
-        # vmtl. obsolet durch resizeEvent in Pane
-        sizePolicy = qw.QSizePolicy(qw.QSizePolicy.Ignored, qw.QSizePolicy.Ignored)
-        self.pane.setSizePolicy(sizePolicy)
-        #self.pane.setScaledContents(True)
 
-        hbox = qw.QHBoxLayout()
-        vbox = qw.QVBoxLayout()
-
+        # button: new path
         b_new = qw.QPushButton('New path', self)
-        b_new.setToolTip('New path')
+        b_new.setToolTip('Creates another path')
         b_new.clicked.connect(self.on_click_new_path)
 
+        # button: clear everything
         b_clear = qw.QPushButton('Clear', self)
-        b_clear.setToolTip('Clear the Graph')
+        b_clear.setToolTip('Clears everything')
         b_clear.clicked.connect(self.on_click_clear)
 
-        b_clear_pane = qw.QPushButton('Undo', self)
-        b_clear_pane.setToolTip('remove last change')
-        b_clear_pane.clicked.connect(self.on_click_undo)
+        # button: remove last change
+        b_remove_step = qw.QPushButton('Undo', self)
+        b_remove_step.setToolTip('Removes last change')
+        b_remove_step.clicked.connect(self.on_click_undo)
 
         """b_plot = qw.QPushButton('Plot', self)
         b_plot.setToolTip('Plot a Graph')
         b_plot.clicked.connect(self.on_click_plot)"""
 
+        # different colors/options for path 
         self.cm_type = qw.QComboBox(self)
         self.cm_type.addItem("normal")
         self.cm_type.addItem("speed up")
         self.cm_type.addItem("slow down")
         self.cm_type.activated.connect(self.on_click_type)
 
+        # different styles for buttons/elements in gui
         cm_style = qw.QComboBox(self)
         cm_style.setToolTip('choose a style')
         cm_style.addItem("Fusion")
         cm_style.addItem("Windows")
         cm_style.addItem("macintosh")
-        #m_style.addItem("Plastique")
+        #cm_style.addItem("Plastique")
         #cm_style.addItem("Cleanlooks")
         cm_style.addItem("windowsvista")
         cm_style.activated[str].connect(self.style_choice)
 
+        # shows direct connection between control vertices
         b_show_cv = qw.QCheckBox('Show CV', self)
         b_show_cv.clicked.connect(lambda: self.on_click_show_cv(b_show_cv.checkState()))
         b_show_cv.setChecked(True)
 
-        vbox.addWidget(b_new)
-        vbox.addWidget(b_clear)
-        vbox.addWidget(b_clear_pane)
+        #                    #
+        # Layout begins here #
+        #                    #
+
+        hbox_pane_menu = qw.QHBoxLayout()  # pane und side menu
+        vbox_side_menu = qw.QVBoxLayout()  # side menu order
+
+        # creates menu order
+        vbox_side_menu.addWidget(b_new)  # creates new path
+        vbox_side_menu.addWidget(b_clear)  # clears everything
+        vbox_side_menu.addWidget(b_remove_step)  # remove last step
         #vbox.addWidget(b_plot)
-        vbox.addWidget(self.cm_type)
-        vbox.addWidget(cm_style)
-        vbox.addWidget(b_show_cv)
+        vbox_side_menu.addWidget(self.cm_type)
+        vbox_side_menu.addWidget(cm_style)
+        vbox_side_menu.addWidget(b_show_cv)
 
-        vbox.addStretch(1)
+        vbox_side_menu.addStretch(1)
 
-        hbox.addWidget(self.pane)
+        hbox_pane_menu.addWidget(self.pane)
 
-        hack = qw.QWidget()
-        hack.setLayout(vbox)
-        hack.setFixedWidth(160)  # 80 with other resolution -> other unit than pixel?
+        side_menu = qw.QWidget()
+        side_menu.setLayout(vbox_side_menu)
+        side_menu.setFixedWidth(160)  # 80 with other resolution -> other unit than pixel?
 
-        hbox.addWidget(hack)
+        hbox_pane_menu.addWidget(side_menu)
 
-        self.setLayout(hbox)
+        self.setLayout(hbox_pane_menu)
 
-    def on_click_clear(self):
-        self.pane.clear_all_surfaces()
-
-    def on_click_plot(self):
-        self.pane.plot()
-
+    # function for button 'New Path'
     def on_click_new_path(self):
         if len(self.pane.current_cv) != 0:
             self.pane.paths.append(self.pane.current_path)
@@ -104,42 +105,42 @@ class DrawWidget(qw.QWidget):
             self.pane.cvs.append(self.pane.current_cv)
             self.pane.current_cv = np.array([]).reshape(0, 2)
 
+    # function for button 'Clear'
+    def on_click_clear(self):
+        self.pane.clear_all_surfaces()
+
+    # function for button 'Undo'
     def on_click_undo(self):
         self.pane.undo()
 
+    # function for box 'Show CV'
     def on_click_show_cv(self, value):
         """ value = True or False """
         self.pane.show_cv(value)
 
+    # function for style options
     def style_choice(self, text):
         qw.QApplication.setStyle(qw.QStyleFactory.create(text))
 
+    # functions for path color/function
     def on_click_type(self):
         text = self.cm_type.currentText()
         self.pane.current_path.changed_style(text)
         self.pane.plot()
 
-    def on_click_hight(self, text):
-        self.pane.hight = int(text)
-        self.pane.resolution_of_surfases()
-
-    def on_click_width(self, text):
-        self.pane.width = int(text)
-        self.pane.resolution_of_surfases()
-
     def resizeEvent(self, event):
-        self.pane.resolution_of_surfases()
+        self.pane.resolution_of_surfaces()
 
 
 class Path:
-    def __init__(self, path, type):
+    def __init__(self, path, path_type):
         self.path = path
-        self.type = type
+        self.path_type = path_type
         self.color = qc.Qt.cyan
-        self.changed_style(type)
+        self.changed_style(path_type)
 
     def changed_style(self, text):
-        self.type = text
+        self.path_type = text
         if text == "normal":
             self.color = qc.Qt.cyan
         elif text == "speed up":
@@ -156,7 +157,6 @@ class Pane(qw.QLabel):
         """ creates Pane """
         super().__init__()
         self.parent = parent  # App - Main window
-        main_window = parent.main_window
         self.style = "normal"
         self.color = qc.Qt.red
         self.thickness = 3
@@ -168,8 +168,8 @@ class Pane(qw.QLabel):
         self.ebene_schlitten = qg.QPixmap(self.width(), self.height())
         self.ebene_total = qg.QPixmap(self.width(), self.height())
 
-        self.fill_all_default()     # cleans all surfaces
-        self.set_all_painters()     # create all painters
+        self.fill_all_default()  # cleans all surfaces
+        self.set_all_painters()  # create all painters
 
         self.paths = []
         self.cvs = []
@@ -183,8 +183,8 @@ class Pane(qw.QLabel):
 
         self.update()
 
-    def resolution_of_surfases(self):
-        self.end_all_painters()
+    def resolution_of_surfaces(self):
+        self.end_all_painters()  # if not -> endless loop
 
         self.ebene_pane = qg.QPixmap(self.width(), self.height())
         self.ebene_cv = qg.QPixmap(self.width(), self.height())
@@ -232,6 +232,7 @@ class Pane(qw.QLabel):
         self.update()
 
     def undo(self):
+        """ removes last step"""
         if len(self.current_cv) == 0:
             if len(self.cvs) != 0:
                 self.current_cv = self.cvs[-1]
@@ -254,8 +255,7 @@ class Pane(qw.QLabel):
         self.update()
 
     def update(self):
-        """ draws everything """
-        """ draws control points (vertexes) and Paths """
+        """ draws everything (cv optional) """
 
         self.ebene_cv.fill(qg.QColor(0, 0, 0, 0))
 
@@ -286,7 +286,6 @@ class Pane(qw.QLabel):
         self.painter_total.drawPixmap(0, 0, self.ebene_cv)
         self.painter_total.drawPixmap(0, 0, self.ebene_schlitten)
         self.setPixmap(self.ebene_total)
-        #print("drawing all")
 
     def plot(self):
         self.painter_pane.end()
@@ -322,16 +321,16 @@ class Pane(qw.QLabel):
             x, y = p.T
             path = qg.QPainterPath()
 
-            path.moveTo(x[0],y[0])
+            path.moveTo(x[0], y[0])
             for j in range(len(x)):
-                path.lineTo(x[j],y[j])
+                path.lineTo(x[j], y[j])
 
             self.painter_pane.setPen(qg.QPen(self.paths[i].color, 3, qc.Qt.SolidLine))
             self.painter_pane.drawPath(path)
 
         # actual path, if it is not empty!
         if len(self.current_cv) != 0:
-            p = bspline(self.current_cv, n=len(self.current_cv)*10) # n - amount of interpolated points
+            p = bspline(self.current_cv, n=len(self.current_cv)*10)  # n - amount of interpolated points
             x, y = p.T
             path = qg.QPainterPath()
 
@@ -344,14 +343,7 @@ class Pane(qw.QLabel):
 
         self.update()
 
-
-        #print(self.current_cv)
-        #p = bspline(self.test_cv, n=100)
-        #x, y = p.T
-        #print(x,y)
-
     def mousePressEvent(self, event):
-        #print("click")
         x = event.pos().x()
         y = event.pos().y()
         if self.current_path.path.isEmpty():
@@ -360,7 +352,6 @@ class Pane(qw.QLabel):
         self.current_path.path.lineTo(x, y)
 
         self.current_cv = np.r_[self.current_cv, [[x, y]]]
-        #print(self.current_cv, self.current_cv[:, 0] )
 
         self.update()
         self.plot()
