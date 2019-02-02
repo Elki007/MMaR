@@ -224,7 +224,8 @@ class Pane(qw.QLabel):
         self.plot()
 
     def mouseMoveEvent(self, QMouseEvent):
-        """ Shows plotted data on the fly by click and drag the cv """
+        """ Shows plotted data on the fly by left click and drag the cvs by right clicks - 1st version """
+        #TODO: IST: cv-Positionen werden geändert, SOLL: cvs bleiben gleich, Pane aendert sich
         x = QMouseEvent.pos().x()
         y = QMouseEvent.pos().y()
 
