@@ -10,6 +10,10 @@ from Path import Path
 from Point import Point
 
 
+"""
+#Search -> Mögliche Verbesserung finden für das genannte Problem
+"""
+
 class Pane(qw.QLabel):
     """ Paint surface class """
     def __init__(self, parent):
@@ -21,8 +25,9 @@ class Pane(qw.QLabel):
         self.thickness = 3
         self.grid = False
 
-        self.points = []
-        self.mousePressedCoords = [0, 0]
+        self.points = []  # from class Points -> not relevant anymore
+        self.click_x_y = np.array([0, 0])  # x,y-coordinates from click (to track movement of pressed mouse)
+        self.track_movement = np.array([0, 0])  # difference of original position since beginning (tracks movement)
 
         # background for black background with lines of grid/crystal if activated
         self.ebene_pane = qg.QPixmap(self.width(), self.height())
@@ -94,7 +99,7 @@ class Pane(qw.QLabel):
         self.update()
 
     def undo(self):
-        """ removes last step"""
+        """ removes last step """
         if len(self.current_cv) == 0:
             if len(self.cvs) != 0:
                 self.current_cv = self.cvs[-1]
@@ -104,10 +109,7 @@ class Pane(qw.QLabel):
         if len(self.current_cv) != 0:
             self.current_cv = self.current_cv[:-1]
             if len(self.current_cv) != 0:
-                self.current_path.path = qg.QPainterPath()
-                self.current_path.path.moveTo(self.current_cv[0][0],self.current_cv[0][1])
-                for i in range(len(self.current_cv)):
-                    self.current_path.path.lineTo(self.current_cv[i][0], self.current_cv[i][1])
+                self.draw_path_between_cv(only_current=True)
             self.update()
             self.plot()
 
@@ -121,33 +123,41 @@ class Pane(qw.QLabel):
 
         self.ebene_cv.fill(qg.QColor(0, 0, 0, 0))
 
+        # if CV and lines in between shall be displayed
         if self.showCV:
             path = self.current_path.path
+            #print(path)
             color = qc.Qt.blue
             thickness = 1
             self.painter_cv.setPen(qg.QPen(color, thickness, qc.Qt.SolidLine))
-            # draw actual path
-            self.painter_cv.drawPath(path)
-            # draw old paths
-            for i in range(len(self.paths)):
-                path = self.paths[i].path
-                self.painter_cv.drawPath(path)
 
-            # draw old paths
+            # draw actual cv path
+            self.painter_cv.drawPath(path)
+
+            # draw old cv paths
+            for each_path in self.paths:
+                self.painter_cv.drawPath(each_path.path)
+
+            # draw old cv points
             for j in range(len(self.cvs)):
                 for i in range(self.cvs[j].shape[0]):
-                    self.painter_cv.setPen(qg.QPen(color, 6, qc.Qt.SolidLine))
-                    self.painter_cv.drawPoint(self.cvs[j][i][0], self.cvs[j][i][1])
-            # draw actual path
+                    self.painter_cv.setPen(qg.QPen(color, 10, qc.Qt.SolidLine))
+                    self.painter_cv.drawPoint(*self.cvs[j][i])
+
+            # draw actual cv points
             for i in range(self.current_cv.shape[0]):
-                self.painter_cv.setPen(qg.QPen(color, 6, qc.Qt.SolidLine))
-                self.painter_cv.drawPoint(self.current_cv[i][0],self.current_cv[i][1])
+                self.painter_cv.setPen(qg.QPen(color, 10, qc.Qt.SolidLine))
+                self.painter_cv.drawPoint(*self.current_cv[i])
 
         self.ebene_total.fill(qg.QColor(0, 0, 0, 0))  # wird woanders wiederholt/überschrieben
         self.painter_total.drawPixmap(0, 0, self.ebene_pane)
         self.painter_total.drawPixmap(0, 0, self.ebene_cv)
         self.painter_total.drawPixmap(0, 0, self.ebene_schlitten)
         self.setPixmap(self.ebene_total)
+
+    def draw_cv_points(self, color):
+        self.painter_cv.setPen(qg.QPen(color, 10, qc.Qt.SolidLine))
+        self.painter_cv.drawPoint(self.cvs[j][i][0], self.cvs[j][i][1])
 
     def plot(self):
         self.painter_pane.end()
@@ -203,39 +213,60 @@ class Pane(qw.QLabel):
             self.painter_pane.setPen(qg.QPen(self.current_path.color, 3, qc.Qt.SolidLine))
             self.painter_pane.drawPath(path)
 
-        self.update()
+        # self.update()  # wird einzeln aufgerufen
+
+    def draw_path_between_cv(self, only_current=False):
+        """ draws all paths betweens cv (optional only current ones) """
+        self.current_path.path = qg.QPainterPath()
+        self.current_path.path.moveTo(*self.current_cv[0])
+        for i in range(len(self.current_cv)):
+            self.current_path.path.lineTo(*self.current_cv[i])
+
+        if not only_current:
+            for i in range(len(self.paths)):
+                self.paths[i].path = qg.QPainterPath()
+                self.paths[i].path.moveTo(*self.cvs[i][0])
+                for j in range(len(self.cvs[i])):
+                    self.paths[i].path.lineTo(*self.cvs[i][j])
 
     def mousePressEvent(self, event):
-        x = event.pos().x()
-        y = event.pos().y()
-        self.mousePressedCoords = [x, y]
+        # TODO: Bug: showCV = True -> Create Point, Undo, Create Point -> ghost line
+        self.click_x_y = np.array([event.pos().x(), event.pos().y()])
 
         if event.buttons() == qc.Qt.LeftButton:
-            self.points.append(Point(x, y))
 
-            if self.current_path.path.isEmpty():
-                self.current_path.path.moveTo(self.points[-1].x, self.points[-1].y)
-                self.current_path.path.lineTo(self.points[-1].x+0.1, self.points[-1].y+0.1)  # without +0.1 there is no line
-            self.current_path.path.lineTo(self.points[-1].x, self.points[-1].y)
-
-            self.current_cv = np.r_[self.current_cv, [[self.points[-1].x, self.points[-1].y]]]
+            if len(self.current_cv) == 0:
+                self.current_path.path.moveTo(*self.click_x_y)
+            self.current_path.path.lineTo(*self.click_x_y)
+            self.current_cv = np.r_[self.current_cv, [self.click_x_y]]
 
         self.update()
         self.plot()
 
-    def mouseMoveEvent(self, QMouseEvent):
-        """ Shows plotted data on the fly by left click and drag the cvs by right clicks - 1st version """
-        #TODO: IST: cv-Positionen werden geändert, SOLL: cvs bleiben gleich, Pane aendert sich
-        x = QMouseEvent.pos().x()
-        y = QMouseEvent.pos().y()
+    def mouseMoveEvent(self, event):
+        """
+        events of moving mouse while button is clicked
+        left button: change current cv (dynamic view of line)
+        right button: move everything, tracked by self.track_movement
+        """
 
-        if QMouseEvent.buttons() == qc.Qt.LeftButton:
-            self.current_cv[-1] = x, y
-        elif QMouseEvent.buttons() == qc.Qt.RightButton:
-            self.current_cv += x - self.mousePressedCoords[0], y - self.mousePressedCoords[1]
-            for i in range(len(self.cvs)):
-                self.cvs[i] += x - self.mousePressedCoords[0], y - self.mousePressedCoords[1]
-            self.mousePressedCoords = [x, y]
+        tmp_x_y = np.array([event.pos().x(), event.pos().y()])
+
+        if event.buttons() == qc.Qt.LeftButton:
+            self.current_cv[-1] = tmp_x_y  # change last cv of current cv_path
+            self.draw_path_between_cv(only_current=True)
+
+        elif event.buttons() == qc.Qt.RightButton:
+            self.track_movement += tmp_x_y - self.click_x_y
+            self.current_cv += tmp_x_y - self.click_x_y  # change position of current cv_path
+
+            #Search: Statt über alles zu iterieren, muss mit numpy doch auch alles auf einmal gehen
+            if len(self.cvs) != 0:
+                for i in range(len(self.cvs)):
+                    self.cvs[i] += tmp_x_y - self.click_x_y  # if it exist, change pos of prior cv_paths
+
+            self.click_x_y = tmp_x_y
+            self.draw_path_between_cv()
 
         self.update()
         self.plot()
