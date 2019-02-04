@@ -218,6 +218,7 @@ class Pane(qw.QLabel):
             # Calculate result
             return np.array(si.splev(u, (kv, cv.T, degree))).T
 
+        # older paths
         self.track = []
         n=10
         for i in range(len(self.cvs)):
@@ -233,7 +234,7 @@ class Pane(qw.QLabel):
             self.painter_pane.setPen(qg.QPen(self.paths[i].color, 3, qc.Qt.SolidLine))
             self.painter_pane.drawPath(path)
 
-        # actual path, if it is not empty!
+        # current path, if it is not empty!
         if len(self.current_cv) != 0:
             p = bspline(self.current_cv, n=len(self.current_cv)*n)  # n - amount of interpolated points
             x, y = p.T

@@ -151,7 +151,12 @@ class GuiWidget(qw.QWidget):
             self.pane.cvs[i] -= self.pane.track_movement
         self.pane.current_cv -= self.pane.track_movement
         self.pane.track_movement -= self.pane.track_movement
-        self.pane.draw_path_between_cv()
+
+        if len(self.pane.cvs) > 0:
+            self.pane.draw_path_between_cv(only_old=True)
+        if len(self.pane.current_cv) > 0:
+            self.pane.draw_path_between_cv(only_current=True)
+
         self.pane.plot()
         self.pane.update()
 
