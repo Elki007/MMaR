@@ -30,6 +30,7 @@ class Pane(qw.QLabel):
         self.track_movement = np.array([0, 0])  # difference of original position since beginning (tracks movement)
 
         # background for black background with lines of grid/crystal if activated
+        self.ebene_bg = qg.QPixmap(self.width(), self.height())
         self.ebene_pane = qg.QPixmap(self.width(), self.height())
         self.ebene_cv = qg.QPixmap(self.width(), self.height())
         self.ebene_schlitten = qg.QPixmap(self.width(), self.height())
@@ -41,6 +42,7 @@ class Pane(qw.QLabel):
         self.paths = []
         self.cvs = []
         self.current_path = Path(qg.QPainterPath(), "normal")
+        self.track = []
 
         self.painter_cv.setPen(qg.QPen(self.color, 3, qc.Qt.SolidLine))
         self.painter_cv.drawPath(self.current_path.path)
@@ -66,6 +68,7 @@ class Pane(qw.QLabel):
     def resolution_of_surfaces(self):
         self.end_all_painters()  # if not -> endless loop
 
+        self.ebene_bg = qg.QPixmap(self.width(), self.height())
         self.ebene_pane = qg.QPixmap(self.width(), self.height())
         self.ebene_cv = qg.QPixmap(self.width(), self.height())
         self.ebene_schlitten = qg.QPixmap(self.width(), self.height())
@@ -80,7 +83,8 @@ class Pane(qw.QLabel):
         self.plot()
 
     def fill_all_default(self):
-        self.ebene_pane.fill(qg.QColor(0, 0, 0))
+        self.ebene_bg.fill(qg.QColor(0, 0, 0))
+        self.ebene_pane.fill(qg.QColor(0, 0, 0, 0))
         self.ebene_cv.fill(qg.QColor(0, 0, 0, 0))
         self.ebene_schlitten.fill(qg.QColor(0, 0, 0, 0))
         self.ebene_total.fill(qg.QColor(0, 0, 0, 0))
@@ -131,6 +135,17 @@ class Pane(qw.QLabel):
         self.showCV = value
         self.update()
 
+    def update_game(self):
+        #self.update()
+        #self.plot()
+        #self.ebene_total.fill(qg.QColor(0, 0, 0, 0))
+        self.painter_total.drawPixmap(0, 0, self.ebene_bg)
+        self.painter_total.drawPixmap(0, 0, self.ebene_pane)
+        #self.painter_total.drawPixmap(0, 0, self.ebene_cv)
+        self.painter_total.drawPixmap(0, 0, self.ebene_schlitten)
+        self.setPixmap(self.ebene_total)
+
+
     def update(self):
         """ draws everything (cv optional) """
 
@@ -164,6 +179,7 @@ class Pane(qw.QLabel):
                 self.painter_cv.drawPoint(*self.current_cv[i])
 
         self.ebene_total.fill(qg.QColor(0, 0, 0, 0))  # wird woanders wiederholt/überschrieben
+        self.painter_total.drawPixmap(0, 0, self.ebene_bg)
         self.painter_total.drawPixmap(0, 0, self.ebene_pane)
         self.painter_total.drawPixmap(0, 0, self.ebene_cv)
         self.painter_total.drawPixmap(0, 0, self.ebene_schlitten)
@@ -175,7 +191,7 @@ class Pane(qw.QLabel):
 
     def plot(self):
         self.painter_pane.end()
-        self.ebene_pane.fill(qg.QColor(0, 0, 0))
+        self.ebene_pane.fill(qg.QColor(0, 0, 0, 0))
         self.painter_pane = qg.QPainter(self.ebene_pane)
         self.painter_pane.setRenderHint(qg.QPainter.Antialiasing, True)
 
@@ -202,13 +218,16 @@ class Pane(qw.QLabel):
             # Calculate result
             return np.array(si.splev(u, (kv, cv.T, degree))).T
 
+        self.track = []
+        n=10
         for i in range(len(self.cvs)):
-            p = bspline(self.cvs[i], n=len(self.cvs[i])*10)
+            p = bspline(self.cvs[i], n=len(self.cvs[i])*n)
             x, y = p.T
             path = qg.QPainterPath()
 
             path.moveTo(x[0], y[0])
             for j in range(len(x)):
+                self.track.append([x[j], y[j]])
                 path.lineTo(x[j], y[j])
 
             self.painter_pane.setPen(qg.QPen(self.paths[i].color, 3, qc.Qt.SolidLine))
@@ -216,12 +235,13 @@ class Pane(qw.QLabel):
 
         # actual path, if it is not empty!
         if len(self.current_cv) != 0:
-            p = bspline(self.current_cv, n=len(self.current_cv)*10)  # n - amount of interpolated points
+            p = bspline(self.current_cv, n=len(self.current_cv)*n)  # n - amount of interpolated points
             x, y = p.T
             path = qg.QPainterPath()
 
             path.moveTo(x[0], y[0])
             for j in range(len(x)):
+                self.track.append([x[j], y[j]])
                 path.lineTo(x[j], y[j])
 
             self.painter_pane.setPen(qg.QPen(self.current_path.color, 3, qc.Qt.SolidLine))

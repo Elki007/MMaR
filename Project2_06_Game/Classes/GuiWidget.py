@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.interpolate as si
 import sys
+from datetime import date
 import time
 
 import PyQt5.QtWidgets as qw
@@ -9,6 +10,7 @@ import PyQt5.QtGui as qg
 
 from Pane import Pane
 from Path import Path
+from Player import Player
 
 
 class GuiWidget(qw.QWidget):
@@ -17,6 +19,8 @@ class GuiWidget(qw.QWidget):
         qw.QWidget.__init__(self, parent)
         self.main_window = parent  # Main Window
         self.pane = Pane(self)
+        self.player = Player(0, 0, self.pane.ebene_pane, self.pane.track)
+        self.run = True
 
         # button: new path
         b_new = qw.QPushButton('New path', self)
@@ -37,6 +41,15 @@ class GuiWidget(qw.QWidget):
         b_move_to_center = qw.QPushButton('Center', self)
         b_move_to_center.setToolTip('Removes last change')
         b_move_to_center.clicked.connect(self.on_click_move_to_center)
+
+        # button: start game
+        b_game = qw.QPushButton('Play', self)
+        b_game.setToolTip('Play')
+        b_game.clicked.connect(self.on_click_game)
+
+        b_pause = qw.QPushButton('play/pause', self)
+        b_pause.setToolTip('play/pause')
+        b_pause.clicked.connect(self.on_click_play_pause)
 
         """b_plot = qw.QPushButton('Plot', self)
         b_plot.setToolTip('Plot a Graph')
@@ -61,9 +74,9 @@ class GuiWidget(qw.QWidget):
         cm_style.activated[str].connect(self.style_choice)
 
         # shows direct connection between control vertices
-        b_show_cv = qw.QCheckBox('Show CV', self)
-        b_show_cv.clicked.connect(lambda: self.on_click_show_cv(b_show_cv.checkState()))
-        b_show_cv.setChecked(True)
+        self.b_show_cv = qw.QCheckBox('Show CV', self)
+        self.b_show_cv.clicked.connect(lambda: self.on_click_show_cv(self.b_show_cv.checkState()))
+        self.b_show_cv.setChecked(True)
 
         # tracking position
         self.b_show_tracking_position = qw.QLabel(f"Position: {self.pane.track_movement}")
@@ -82,7 +95,9 @@ class GuiWidget(qw.QWidget):
         #vbox.addWidget(b_plot)
         vbox_side_menu.addWidget(self.cm_type)
         vbox_side_menu.addWidget(cm_style)
-        vbox_side_menu.addWidget(b_show_cv)
+        vbox_side_menu.addWidget(self.b_show_cv)
+        vbox_side_menu.addWidget(b_game)
+        vbox_side_menu.addWidget(b_pause)
 
         vbox_side_menu.addStretch(1)
 
@@ -156,6 +171,26 @@ class GuiWidget(qw.QWidget):
 
     def resizeEvent(self, event):
         self.pane.resolution_of_surfaces()
+
+    # starts endless while with the game
+    def on_click_game(self):
+        self.player = Player(self.pane.width()//2, 0, self.pane.ebene_pane,self.pane.track)
+        #self.b_show_cv.setChecked(False)
+        #self.on_click_show_cv(self.b_show_cv.checkState())
+        self.pane.update()
+        self.game_loop()
+
+    def game_loop(self):
+        self.player.show(self.pane.ebene_schlitten, self.pane.painter_schlitten)
+        self.player.next()
+        self.pane.update_game()
+        if self.run:
+            self.timer = qc.QTimer.singleShot(40, self.game_loop)
+        #qc.QTimer.singleShot(20, self.game_loop)
+
+    def on_click_play_pause(self):
+        self.run = not self.run
+        print("hi")
 
     def update_gui(self):
         # tbd, how to update a function in GuiWidget from Pane? How to send a signal?
