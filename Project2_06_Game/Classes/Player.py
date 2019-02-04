@@ -40,14 +40,13 @@ class Player:
             self.x += self.vector.x
             self.y += self.vector.y
         else:
+            self.vector = self.vector.proj_on(self.surface_vector)
             self.vector += self.g.proj_on(self.surface_vector) * (t / n)
             print(self.vector.y)
             #self.vector.y = self.vector.y - 0.5
             self.x += self.vector.x
             self.y += self.vector.y
 
-        #print(self.acceleration.proj_on(self.vector))
-        #print(t)
 
     def check_on_track(self):
         vector = self.vector
@@ -55,12 +54,14 @@ class Player:
             vector = vector.norm()
         len = 0
         x = self.x
-        y = self.y-1
+        y = self.y
         x_hit = 0
         y_hit = 0
         hit = False
         while len < abs(self.vector):
-            if self.map.pixel(x, y) != 0:
+            if self.map.pixel(x, y) != 0 or \
+                    self.map.pixel(x, y+1) != 0 or \
+                    self.map.pixel(x, y-1) != 0:
                 hit = True
                 x_hit = x
                 y_hit = y
@@ -71,7 +72,8 @@ class Player:
             #print("HIT:",x_hit, y_hit)
             self.x = x_hit
             self.y = y_hit
-            self.project_speed(y_hit)
+            self.y -= 1
+            self.surface_vector = self.find_surface_vector(y_hit)
             return True
         return False
 
@@ -81,16 +83,10 @@ class Player:
         idx = (np.abs(y_list - value)).argmin()
         return idx
 
-    def find_surface(self, value):
+    def find_surface_vector(self, value):
         indx = self.argmin_values_along_axis(value,1)
         return Vector.make_vector(self, self.track[indx-1], self.track[indx])
 
-    def project_speed(self,y_hit):
-        self.surface_vector = self.find_surface(y_hit)
-        #print(type(self.vector))
-        #print(type(surface_vector))
-        self.vector = self.vector.proj_on(self.surface_vector)
-        #print(type(self.vector))
 
 
 
