@@ -55,6 +55,12 @@ class Pane(qw.QLabel):
         self.moved_path = None
         self.moved_cv = None
 
+        # variables for zoom
+        self.zoom = 0
+        self.zoom_factor = 0.05
+        self.original_current_cv = None
+        self.point_of_zoom = None
+
         self.update()
 
     def resolution_of_surfaces(self):
@@ -323,6 +329,35 @@ class Pane(qw.QLabel):
 
                 self.click_x_y = tmp_x_y
                 self.draw_path_between_cv()
+
+        self.plot()
+        self.update()
+
+    def wheelEvent(self, event):
+        self.point_of_zoom = np.array([event.pos().x(), event.pos().y()])
+        self.zoom += event.angleDelta().y()//120
+
+        if event.angleDelta().y() > 0:
+            for i in range(len(self.current_cv)):
+                tmp_vector = self.current_cv[i] - self.point_of_zoom
+                self.current_cv[i] = self.point_of_zoom + tmp_vector * (1 + self.zoom_factor)
+            for i in range(len(self.cvs)):
+                for j in range(len(self.cvs[i])):
+                    tmp_vector = self.cvs[i][j] - self.point_of_zoom
+                    self.cvs[i][j] = self.point_of_zoom + tmp_vector * (1 + self.zoom_factor)
+        else:
+            for i in range(len(self.current_cv)):
+                tmp_vector = self.current_cv[i] - self.point_of_zoom
+                self.current_cv[i] = self.point_of_zoom + tmp_vector * (1 - self.zoom_factor)
+            for i in range(len(self.cvs)):
+                for j in range(len(self.cvs[i])):
+                    tmp_vector = self.cvs[i][j] - self.point_of_zoom
+                    self.cvs[i][j] = self.point_of_zoom + tmp_vector * (1 - self.zoom_factor)
+
+        if len(self.current_cv) > 0:
+            self.draw_path_between_cv(only_current=True)
+        if len(self.cvs) > 0:
+            self.draw_path_between_cv(only_old=True)
 
         self.plot()
         self.update()
