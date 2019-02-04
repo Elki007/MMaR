@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.interpolate as si
 import sys
+import time
 
 import PyQt5.QtWidgets as qw
 import PyQt5.QtCore as qc
@@ -32,6 +33,11 @@ class GuiWidget(qw.QWidget):
         b_remove_step.setToolTip('Removes last change')
         b_remove_step.clicked.connect(self.on_click_undo)
 
+        # button: center position
+        b_move_to_center = qw.QPushButton('Center', self)
+        b_move_to_center.setToolTip('Removes last change')
+        b_move_to_center.clicked.connect(self.on_click_move_to_center)
+
         """b_plot = qw.QPushButton('Plot', self)
         b_plot.setToolTip('Plot a Graph')
         b_plot.clicked.connect(self.on_click_plot)"""
@@ -59,6 +65,9 @@ class GuiWidget(qw.QWidget):
         b_show_cv.clicked.connect(lambda: self.on_click_show_cv(b_show_cv.checkState()))
         b_show_cv.setChecked(True)
 
+        # tracking position
+        self.b_show_tracking_position = qw.QLabel(f"Position: {self.pane.track_movement}")
+
         #                    #
         # Layout begins here #
         #                    #
@@ -77,6 +86,9 @@ class GuiWidget(qw.QWidget):
 
         vbox_side_menu.addStretch(1)
 
+        vbox_side_menu.addWidget(b_move_to_center)
+        vbox_side_menu.addWidget(self.b_show_tracking_position)
+
         # set position of pane and side menu
         hbox_pane_menu.addWidget(self.pane)
 
@@ -87,6 +99,14 @@ class GuiWidget(qw.QWidget):
         hbox_pane_menu.addWidget(side_menu)
 
         self.setLayout(hbox_pane_menu)
+
+        #
+        # Aktualisiert die globale Positionsverschiebung
+        #
+
+        self.timer = qc.QTimer()
+        self.timer.timeout.connect(self.update_gui)
+        self.timer.start(10)
 
     # function for button 'New Path'
     def on_click_new_path(self):
@@ -111,6 +131,19 @@ class GuiWidget(qw.QWidget):
         """ value = True or False """
         self.pane.show_cv(value)
 
+    def on_click_move_to_center(self):
+        for i in range(len(self.pane.cvs)):
+            self.pane.cvs[i] -= self.pane.track_movement
+        self.pane.current_cv -= self.pane.track_movement
+        self.pane.track_movement -= self.pane.track_movement
+        self.pane.draw_path_between_cv()
+        self.pane.plot()
+        self.pane.update()
+
+        #TODO: Wieso wird Pane erst nach den 2 Sekunden sichtbar aktualisiert und nicht mit update()-Aufruf?
+        #time.sleep(2)
+        #print("DEBUG: Haiho")
+
     # function for style options
     def style_choice(self, text):
         qw.QApplication.setStyle(qw.QStyleFactory.create(text))
@@ -123,3 +156,9 @@ class GuiWidget(qw.QWidget):
 
     def resizeEvent(self, event):
         self.pane.resolution_of_surfaces()
+
+    def update_gui(self):
+        # tbd, how to update a function in GuiWidget from Pane? How to send a signal?
+        self.b_show_tracking_position.setText(f"Position: ({self.pane.track_movement[0]},{self.pane.track_movement[1]})")
+
+
