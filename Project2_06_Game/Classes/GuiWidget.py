@@ -1,8 +1,9 @@
 import numpy as np
 import scipy.interpolate as si
 import sys
-from datetime import date
+import time
 import json
+import qtawesome as qta
 
 import PyQt5.QtWidgets as qw
 import PyQt5.QtCore as qc
@@ -19,8 +20,9 @@ class GuiWidget(qw.QWidget):
         qw.QWidget.__init__(self, parent)
         self.main_window = parent  # Main Window
         self.pane = Pane(self)
-        self.player = Player(0, 0, self.pane.ebene_pane, self.pane.track)
+        self.player = Player(self.pane.width()//2, 0, self.pane.ebene_schlitten, self.pane.painter_schlitten, self.pane.ebene_pane, self.pane.track)
         self.run = True
+        self.forward = True
 
         # button: new path
         b_new = qw.QPushButton('New path', self)
@@ -43,13 +45,22 @@ class GuiWidget(qw.QWidget):
         b_move_to_center.clicked.connect(self.on_click_move_to_center)
 
         # button: start game
-        b_game = qw.QPushButton('Play', self)
-        b_game.setToolTip('Play')
-        b_game.clicked.connect(self.on_click_game)
+        self.b_game = qw.QPushButton('Play', self)
+        self.b_game.setToolTip('Play')
+        self.b_game.clicked.connect(self.on_click_game)
 
-        b_pause = qw.QPushButton('play/pause', self)
-        b_pause.setToolTip('play/pause')
-        b_pause.clicked.connect(self.on_click_play_pause)
+        styling_icon = qta.icon('fa5s.pause',
+                                #active='fa5s.balance-scale',
+                                color='black',
+                                color_active='orange')
+
+        self.b_pause = qw.QPushButton(styling_icon, "play/pause", self)
+        self.b_pause.setToolTip('play/pause')
+        self.b_pause.clicked.connect(self.on_click_play_pause)
+
+        self.b_back = qw.QPushButton("slow backward", self)
+        self.b_back.setToolTip('slow backward')
+        self.b_back.clicked.connect(self.on_click_play_back)
 
         b_save = qw.QPushButton('Save', self)
         b_save.setToolTip('Save')
@@ -104,8 +115,9 @@ class GuiWidget(qw.QWidget):
         vbox_side_menu.addWidget(self.cm_type)
         vbox_side_menu.addWidget(cm_style)
         vbox_side_menu.addWidget(self.b_show_cv)
-        vbox_side_menu.addWidget(b_game)
-        vbox_side_menu.addWidget(b_pause)
+        vbox_side_menu.addWidget(self.b_game)
+        vbox_side_menu.addWidget(self.b_pause)
+        vbox_side_menu.addWidget(self.b_back)
         vbox_side_menu.addWidget(b_save)
         vbox_side_menu.addWidget(b_load)
 
@@ -132,6 +144,11 @@ class GuiWidget(qw.QWidget):
         self.timer = qc.QTimer()
         self.timer.timeout.connect(self.update_gui)
         self.timer.start(10)
+
+        self.timer_4_game = qc.QTimer()
+        self.timer_4_game.setInterval(10)
+        self.timer_4_game.setSingleShot(True)
+        self.timer_4_game.timeout.connect(self.game_loop)
 
     # function for button 'New Path'
     def on_click_new_path(self):
@@ -189,23 +206,57 @@ class GuiWidget(qw.QWidget):
 
     # starts endless while with the game
     def on_click_game(self):
-        self.player = Player(self.pane.width()//2, 0, self.pane.ebene_pane,self.pane.track)
-        #self.b_show_cv.setChecked(False)
+        self.player = Player(self.pane.width()//2, 0, self.pane.ebene_schlitten, self.pane.painter_schlitten, self.pane.ebene_pane, self.pane.track)
+        self.b_show_cv.setChecked(False)
+        self.b_game.setText("Restart")
         #self.on_click_show_cv(self.b_show_cv.checkState())
         self.pane.update()
-        self.game_loop()
+        #self.game_loop()
+
+
+        self.timer_4_game.start()
 
     def game_loop(self):
-        self.player.show(self.pane.ebene_schlitten, self.pane.painter_schlitten)
-        self.player.next()
-        self.pane.update_game()
+        self.player.show()
         if self.run:
-            self.timer = qc.QTimer.singleShot(40, self.game_loop)
+            self.player.next()
+            self.pane.update_game()
+            self.timer_4_game.start()
+
+            #self.timer = qc.QTimer.singleShot(10, self.game_loop)
         #qc.QTimer.singleShot(20, self.game_loop)
 
     def on_click_play_pause(self):
         self.run = not self.run
-        print("hi")
+        print("hi", self.run)
+        if self.run:
+            self.player.track = self.pane.track
+            styling_icon = qta.icon('fa5s.pause', color='black', color_active='orange')
+            self.timer_4_game.start()
+        else:
+            styling_icon = qta.icon('fa5s.play', color='black', color_active='orange')
+            self.timer_4_game.stop()
+        self.b_pause.setIcon(styling_icon)
+        #self.game_loop()
+
+    def on_click_play_back(self):
+        self.forward = not self.forward
+        #print("hi", self.run)
+        if self.forward:
+            #self.player.track = self.pane.track
+            self.b_back.setText("backward")
+            #self.player.time_direction = 1
+            #self.player.g = self.player.g * (-1)
+            self.player.time_speed = 0.01
+            #styling_icon = qta.icon('fa5s.pause', color='black', color_active='orange')
+        else:
+            self.b_back.setText("forward")
+            #self.player.time_control_point = time.time()
+            #self.player.g = self.player.g * (-1)
+            self.player.time_speed = 0.001
+            #styling_icon = qta.icon('fa5s.play', color='black', color_active='orange')
+        #self.b_pause.setIcon(styling_icon)
+        #self.game_loop()
 
     def on_click_save(self):
         np.save('current_cv.npy', self.pane.current_cv)  # .npy extension is added if not given
