@@ -14,7 +14,6 @@ from Point import Point
 #Search -> Mögliche Verbesserung finden für das genannte Problem
 """
 
-
 class Pane(qw.QLabel):
     """ Paint surface class """
     def __init__(self, parent):
@@ -42,7 +41,7 @@ class Pane(qw.QLabel):
 
         self.paths = []
         self.cvs = []
-        self.current_path = Path()
+        self.current_path = Path(qg.QPainterPath(), "normal")
         self.track = []
 
         self.painter_cv.setPen(qg.QPen(self.color, 3, qc.Qt.SolidLine))
@@ -147,6 +146,7 @@ class Pane(qw.QLabel):
         self.painter_total.drawPixmap(0, 0, self.ebene_schlitten)
         self.setPixmap(self.ebene_total)
 
+
     def update(self):
         """ draws everything (cv optional) """
 
@@ -191,57 +191,65 @@ class Pane(qw.QLabel):
         self.painter_cv.drawPoint(self.cvs[j][i][0], self.cvs[j][i][1])
 
     def plot(self):
-        """ plots bezier curve """
         self.painter_pane.end()
         self.ebene_pane.fill(qg.QColor(0, 0, 0, 0))
         self.painter_pane = qg.QPainter(self.ebene_pane)
         self.painter_pane.setRenderHint(qg.QPainter.Antialiasing, True)
 
-        def bezier_func(four_points, x_y, n):
-            """ function from exercise - cubic bezier curve (called by bezier())"""
-            # returns np.array of one cubic bezier curve (of 4 given points)
-            # f(t):=(1−t)^3 * K1 + 3*(1−t)^2 * t * K2 + 3*(1−t)*t^2 * K3 + t^3 * K4 mit t->[0,1]
-            t = np.linspace(0, 1, n)
-            return (1-t)**3 * four_points[0][x_y] + 3*(1-t)**2 * t * four_points[1][x_y] + \
-                   3*(1-t)*t**2 * four_points[2][x_y] + t**3 * four_points[3][x_y]
+        # bspline -> Bezier
+        def bspline(cv, n=100, degree=3):
+            """ Calculate n samples on a bspline
 
-        def bezier(cv_points, n=50):
-            """ calculates cubic bezier curves """
-            # cv_points -> list of control vertices
-            # n -> amount of points in between
-            # returns x- and y-coordinates of paths
+                cv :      Array of control vertices
+                n  :      Number of samples to return
+                degree:   Curve degree
+            """
+            cv = np.asarray(cv)
+            count = len(cv)
 
-            x_coords, y_coords = np.array([]), np.array([])
+            degree = np.clip(degree, 1, count-1)
 
-            # splits cv_points in points of four to create a bezier curve
-            for i in range(0, len(cv_points), 3):
-                if i+4 <= len(cv_points):
-                    x_coords = np.append(x_coords, bezier_func(cv_points[i:i+4], 0, n))
-                    y_coords = np.append(y_coords, bezier_func(cv_points[i:i+4], 1, n))
+            # Calculate knot vector
+            kv = None
+            kv = np.clip(np.arange(count+degree+1)-degree, 0, count-degree)
 
-            return x_coords, y_coords
+            # Calculate query range
+            u = np.linspace(False, (count-degree), n)
 
-        def draw_bezier_path(cv_points):
-            """ calculates points (with bezier()) to draw lines between them """
-            x, y = bezier(cv_points)
-            path = qg.QPainterPath()
-
-            if len(x) > 0:
-                path.moveTo(x[0], y[0])  # start point
-                for j in range(len(x)):
-                    self.track.append([x[j], y[j]])
-                    path.lineTo(x[j], y[j])
-
-                self.painter_pane.setPen(qg.QPen(self.current_path.color, 3, qc.Qt.SolidLine))
-                self.painter_pane.drawPath(path)
-
-        # current path
-        draw_bezier_path(self.current_cv)
+            # Calculate result
+            return np.array(si.splev(u, (kv, cv.T, degree))).T
 
         # older paths
         self.track = []
+        n=10
         for i in range(len(self.cvs)):
-            draw_bezier_path(self.cvs[i])
+            p = bspline(self.cvs[i], n=len(self.cvs[i])*n)
+            x, y = p.T
+            path = qg.QPainterPath()
+
+            path.moveTo(x[0], y[0])
+            for j in range(len(x)):
+                self.track.append([x[j], y[j]])
+                path.lineTo(x[j], y[j])
+
+            self.painter_pane.setPen(qg.QPen(self.paths[i].color, 3, qc.Qt.SolidLine))
+            self.painter_pane.drawPath(path)
+
+        # current path, if it is not empty!
+        if len(self.current_cv) != 0:
+            p = bspline(self.current_cv, n=len(self.current_cv)*n)  # n - amount of interpolated points
+            x, y = p.T
+            path = qg.QPainterPath()
+
+            path.moveTo(x[0], y[0])
+            for j in range(len(x)):
+                self.track.append([x[j], y[j]])
+                path.lineTo(x[j], y[j])
+
+            self.painter_pane.setPen(qg.QPen(self.current_path.color, 3, qc.Qt.SolidLine))
+            self.painter_pane.drawPath(path)
+
+        # self.update()  # wird einzeln aufgerufen
 
     def draw_path_between_cv(self, only_current=False, only_old=False):
         """ draws all paths betweens cv (optional only current ones) """
@@ -261,25 +269,26 @@ class Pane(qw.QLabel):
     def mousePressEvent(self, event):
         self.click_x_y = np.array([event.pos().x(), event.pos().y()])
 
-        if event.buttons() == qc.Qt.LeftButton:
-            if len(self.cvs) > 0:
-                for index_path, each_path in enumerate(self.cvs):
-                    for index_cv, each_cv in enumerate(each_path):
-                        # calculate if the mouse click is on the cv position
-                        if (self.click_x_y <= each_cv + self.cv_size).all() and (self.click_x_y >= each_cv - self.cv_size).all():
-                            self.move_cv = True
-                            self.moved_path = index_path
-                            self.moved_cv = index_cv
-                            return
-
-            if len(self.current_cv) > 0:
-                for index, each_cv in enumerate(self.current_cv):
+        if len(self.cvs) > 0:
+            for index_path, each_path in enumerate(self.cvs):
+                for index_cv, each_cv in enumerate(each_path):
+                    # calculate if the mouse click is on the cv position
                     if (self.click_x_y <= each_cv + self.cv_size).all() and (self.click_x_y >= each_cv - self.cv_size).all():
                         self.move_cv = True
-                        self.moved_path = -1
-                        self.moved_cv = index
+                        self.moved_path = index_path
+                        self.moved_cv = index_cv
                         return
-            #print(self.click_x_y)
+
+        if len(self.current_cv) > 0:
+            for index, each_cv in enumerate(self.current_cv):
+                if (self.click_x_y <= each_cv + self.cv_size).all() and (self.click_x_y >= each_cv - self.cv_size).all():
+                    self.move_cv = True
+                    self.moved_path = -1
+                    self.moved_cv = index
+                    return
+        #print(self.click_x_y)
+
+        if event.buttons() == qc.Qt.LeftButton:
 
             if len(self.current_cv) == 0:
                 self.current_path.path.moveTo(*self.click_x_y)
@@ -317,6 +326,9 @@ class Pane(qw.QLabel):
                     self.draw_path_between_cv(only_current=True)
 
             elif (event.buttons() & qc.Qt.LeftButton) and (event.buttons() & qc.Qt.RightButton):
+                if len(self.current_cv) > 0:
+                    self.move_current_cv(tmp_x_y)
+
                 self.track_movement += tmp_x_y - self.click_x_y
                 self.move_everything(tmp_x_y)
 
@@ -355,47 +367,25 @@ class Pane(qw.QLabel):
         self.update()
 
     def wheelEvent(self, event):
-        """ Implements zoom through mouse wheel """
-        #TODO: zooming doesn't change position yet (but should)
         self.point_of_zoom = np.array([event.pos().x(), event.pos().y()])
         self.zoom += event.angleDelta().y()//120
 
-        def calculate_new_point(point, zoom):
-            tmp_vector = self.current_cv[i] - self.point_of_zoom
-            self.current_cv[i] = self.point_of_zoom + tmp_vector * (1 + self.zoom_factor)
-
-        #TODO: BUG: Zoom-Verschiebung-Relation ist off. Zum einen Vektorenlänge bezogen, andererseits auf Pane-Maße?
-        # Lösung -> Beides auf Pane-Maße beziehen
-        # to zoom in/scroll up
         if event.angleDelta().y() > 0:
-            # calculate current_cv
             for i in range(len(self.current_cv)):
                 tmp_vector = self.current_cv[i] - self.point_of_zoom
-                self.current_cv[i] = self.point_of_zoom + (tmp_vector * (1 + self.zoom_factor))
-            # calculate old cvs
+                self.current_cv[i] = self.point_of_zoom + tmp_vector * (1 + self.zoom_factor)
             for i in range(len(self.cvs)):
                 for j in range(len(self.cvs[i])):
                     tmp_vector = self.cvs[i][j] - self.point_of_zoom
-                    self.cvs[i][j] = self.point_of_zoom + (tmp_vector * (1 + self.zoom_factor))
-            self.track_zoom *= (1 + self.zoom_factor)
-
-            # change of track_movement
-            tmp_vector = self.track_movement - self.point_of_zoom
-            self.track_movement = self.point_of_zoom + (tmp_vector * (1 + self.zoom_factor))
-        # to zoom out
+                    self.cvs[i][j] = self.point_of_zoom + tmp_vector * (1 + self.zoom_factor)
         else:
             for i in range(len(self.current_cv)):
                 tmp_vector = self.current_cv[i] - self.point_of_zoom
-                self.current_cv[i] = self.point_of_zoom + (tmp_vector / (1 + self.zoom_factor))
+                self.current_cv[i] = self.point_of_zoom + tmp_vector * (1 - self.zoom_factor)
             for i in range(len(self.cvs)):
                 for j in range(len(self.cvs[i])):
                     tmp_vector = self.cvs[i][j] - self.point_of_zoom
-                    self.cvs[i][j] = self.point_of_zoom + (tmp_vector / (1 + self.zoom_factor))
-            self.track_zoom /= (1 + self.zoom_factor)
-
-            # change of track_movement
-            tmp_vector = self.track_movement - self.point_of_zoom
-            self.track_movement = self.point_of_zoom + (tmp_vector / (1 + self.zoom_factor))
+                    self.cvs[i][j] = self.point_of_zoom + tmp_vector * (1 - self.zoom_factor)
 
         if len(self.current_cv) > 0:
             self.draw_path_between_cv(only_current=True)
@@ -413,7 +403,7 @@ class Pane(qw.QLabel):
         if len(self.current_cv) > 0:
             self.current_cv += tmp_x_y - self.click_x_y  # change position of current cv_path
 
-        #Search: Statt über alles zu iterieren, muss es mit numpy doch auch alles auf einmal gehen?
+        #Search: Statt über alles zu iterieren, muss mit numpy doch auch alles auf einmal gehen?
         if len(self.cvs) != 0:
             for i in range(len(self.cvs)):
                 self.cvs[i] += tmp_x_y - self.click_x_y  # if it exist, change pos of prior cv_paths
@@ -427,8 +417,6 @@ class Pane(qw.QLabel):
                     if (self.click_x_y <= each_cv + self.cv_size).all() and (self.click_x_y >= each_cv - self.cv_size).all():
                         self.cvs[index_path] = np.delete(self.cvs[index_path], index_cv, 0)
 
-        #TODO: BUG: OutOfBound-Fehler beim Löschen von 2 Punkten auf einmal (Doppelklick auf 2 Punkte übereinander)
-        # Solution: Nur den Punkt löschen lassen, der als erstes gefunden wird
         if len(self.current_cv) > 0:
             for index, each_cv in enumerate(self.current_cv):
                 if (self.click_x_y <= each_cv + self.cv_size).all() and (self.click_x_y >= each_cv - self.cv_size).all():

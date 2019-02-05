@@ -99,6 +99,8 @@ class GuiWidget(qw.QWidget):
 
         # tracking position
         self.b_show_tracking_position = qw.QLabel(f"Position: {self.pane.track_movement}")
+        # tracking zoom
+        self.b_show_tracking_zoom = qw.QLabel(f"Zoom: {self.pane.track_zoom}")
 
         #                    #
         # Layout begins here #
@@ -124,6 +126,7 @@ class GuiWidget(qw.QWidget):
         vbox_side_menu.addStretch(1)
 
         vbox_side_menu.addWidget(b_move_to_center)
+        vbox_side_menu.addWidget(self.b_show_tracking_zoom)
         vbox_side_menu.addWidget(self.b_show_tracking_position)
 
         # set position of pane and side menu
@@ -174,10 +177,32 @@ class GuiWidget(qw.QWidget):
         self.pane.show_cv(value)
 
     def on_click_move_to_center(self):
+        """ to move everything back to the start position """
         for i in range(len(self.pane.cvs)):
             self.pane.cvs[i] -= self.pane.track_movement
         self.pane.current_cv -= self.pane.track_movement
         self.pane.track_movement -= self.pane.track_movement
+
+        if self.pane.track_zoom > 1:
+            for i in range(len(self.pane.current_cv)):
+                tmp_vector = self.pane.current_cv[i]
+                self.pane.current_cv[i] = (tmp_vector / (self.pane.track_zoom))
+            for i in range(len(self.pane.cvs)):
+                for j in range(len(self.pane.cvs[i])):
+                    tmp_vector = self.pane.cvs[i][j]
+                    self.pane.cvs[i][j] = (tmp_vector / (self.pane.track_zoom))
+            self.pane.track_zoom /= (self.pane.track_zoom)
+
+        else:
+            for i in range(len(self.pane.current_cv)):
+                tmp_vector = self.pane.current_cv[i]
+                self.pane.current_cv[i] = (tmp_vector / (self.pane.track_zoom))
+            # calculate old cvs
+            for i in range(len(self.pane.cvs)):
+                for j in range(len(self.pane.cvs[i])):
+                    tmp_vector = self.pane.cvs[i][j]
+                    self.pane.cvs[i][j] = (tmp_vector / (self.pane.track_zoom))
+            self.pane.track_zoom /= (self.pane.track_zoom)
 
         if len(self.pane.cvs) > 0:
             self.pane.draw_path_between_cv(only_old=True)
@@ -269,8 +294,6 @@ class GuiWidget(qw.QWidget):
         with open('colors.txt', 'w') as filehandle:
             json.dump(colors, filehandle)
 
-
-
     def on_click_load(self):
         self.pane.track = []
         self.pane.current_cv = np.load('current_cv.npy')
@@ -321,6 +344,8 @@ class GuiWidget(qw.QWidget):
 
     def update_gui(self):
         # tbd, how to update a function in GuiWidget from Pane? How to send a signal?
-        self.b_show_tracking_position.setText(f"Position: ({self.pane.track_movement[0]},{self.pane.track_movement[1]})")
+        self.b_show_tracking_position.setText(f"Position: ({int(self.pane.track_movement[0])},{int(self.pane.track_movement[1])})")
+        self.b_show_tracking_zoom.setText(f"Zoom: {round(self.pane.track_zoom, 2)}")
+
 
 

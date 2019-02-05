@@ -8,7 +8,7 @@ import PyQt5.QtGui as qg
 
 
 class Path:
-    def __init__(self, path, path_type):
+    def __init__(self, path=qg.QPainterPath(), path_type="normal"):
         self.path = path
         self.path_type = path_type
         self.color = qc.Qt.cyan
@@ -24,3 +24,6 @@ class Path:
             self.color = qc.Qt.gray
         elif text == "ignore":
             self.color = qc.Qt.green
+
+    def __str__(self):
+        return f"{self.path}"
