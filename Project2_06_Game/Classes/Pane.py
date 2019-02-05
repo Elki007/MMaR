@@ -127,8 +127,7 @@ class Pane(qw.QLabel):
 
         if len(self.current_cv) != 0:
             self.current_cv = self.current_cv[:-1]
-            if len(self.current_cv) != 0:
-                self.draw_path_between_cv(only_current=True)
+            self.draw_path_between_cv()
             self.plot()
             self.update()
 
@@ -243,15 +242,15 @@ class Pane(qw.QLabel):
         for i in range(len(self.cvs)):
             draw_bezier_path(self.cvs[i])
 
-    def draw_path_between_cv(self, only_current=False, only_old=False):
+    def draw_path_between_cv(self):
         """ draws all paths betweens cv (optional only current ones) """
-        if not only_old:
+        if len(self.current_cv) > 0:
             self.current_path.path = qg.QPainterPath()
             self.current_path.path.moveTo(*self.current_cv[0])
             for i in range(len(self.current_cv)):
                 self.current_path.path.lineTo(*self.current_cv[i])
 
-        if not only_current:
+        if len(self.cvs) > 0:
             for i in range(len(self.cvs)):
                 self.paths[i].path = qg.QPainterPath()
                 self.paths[i].path.moveTo(*self.cvs[i][0])
@@ -304,6 +303,7 @@ class Pane(qw.QLabel):
         left button: change current cv (dynamic view of line)
         right button: move everything, tracked by self.track_movement
         """
+        #TODO: Some structure and maybe a plan
 
         tmp_x_y = np.array([event.pos().x(), event.pos().y()])
 
@@ -311,10 +311,10 @@ class Pane(qw.QLabel):
             if event.buttons() == qc.Qt.LeftButton:
                 if self.moved_path is not None and self.moved_path >= 0:
                     self.cvs[self.moved_path][self.moved_cv] = tmp_x_y
-                    self.draw_path_between_cv(only_old=True)
+                    self.draw_path_between_cv()
                 elif self.moved_path is not None and self.moved_path == -1:
                     self.current_cv[self.moved_cv] = tmp_x_y
-                    self.draw_path_between_cv(only_current=True)
+                    self.draw_path_between_cv()
 
             elif (event.buttons() & qc.Qt.LeftButton) and (event.buttons() & qc.Qt.RightButton):
                 self.track_movement += tmp_x_y - self.click_x_y
@@ -334,7 +334,7 @@ class Pane(qw.QLabel):
                 self.move_everything(tmp_x_y)
 
                 self.click_x_y = tmp_x_y
-                self.draw_path_between_cv() if len(self.current_cv) > 0 else self.draw_path_between_cv(only_old=True)
+                self.draw_path_between_cv()
 
             # change both if both buttons are pressed (if there is a current cv)
             elif (event.buttons() & qc.Qt.LeftButton) and (event.buttons() & qc.Qt.RightButton):
@@ -354,60 +354,53 @@ class Pane(qw.QLabel):
         self.plot()
         self.update()
 
+    def calculate_zoom_translation(self, cv_list, reference_point, zoom_factor, zoom_in=True):
+        """ calculates zoom (in or out) for a list of points """
+        for i in range(len(cv_list)):
+            tmp_vector = cv_list[i] - reference_point
+            if zoom_in:
+                cv_list[i] = reference_point + tmp_vector * (1 + zoom_factor)
+            else:
+                cv_list[i] = reference_point + tmp_vector / (1 + zoom_factor)
+
     def wheelEvent(self, event):
         """ Implements zoom through mouse wheel """
-        #TODO: zooming doesn't change position yet (but should)
         self.point_of_zoom = np.array([event.pos().x(), event.pos().y()])
         self.zoom += event.angleDelta().y()//120
 
-        def calculate_new_point(point, zoom):
-            tmp_vector = self.current_cv[i] - self.point_of_zoom
-            self.current_cv[i] = self.point_of_zoom + tmp_vector * (1 + self.zoom_factor)
-
-        #TODO: BUG: Zoom-Verschiebung-Relation ist off. Zum einen Vektorenlänge bezogen, andererseits auf Pane-Maße?
         # Lösung -> Beides auf Pane-Maße beziehen
         # to zoom in/scroll up
         if event.angleDelta().y() > 0:
             # calculate current_cv
-            for i in range(len(self.current_cv)):
-                tmp_vector = self.current_cv[i] - self.point_of_zoom
-                self.current_cv[i] = self.point_of_zoom + (tmp_vector * (1 + self.zoom_factor))
+            self.calculate_zoom_translation(self.current_cv, self.point_of_zoom, self.zoom_factor)
             # calculate old cvs
             for i in range(len(self.cvs)):
-                for j in range(len(self.cvs[i])):
-                    tmp_vector = self.cvs[i][j] - self.point_of_zoom
-                    self.cvs[i][j] = self.point_of_zoom + (tmp_vector * (1 + self.zoom_factor))
+                self.calculate_zoom_translation(self.cvs[i], self.point_of_zoom, self.zoom_factor)
+
             self.track_zoom *= (1 + self.zoom_factor)
 
             # change of track_movement
             tmp_vector = self.track_movement - self.point_of_zoom
             self.track_movement = self.point_of_zoom + (tmp_vector * (1 + self.zoom_factor))
+
         # to zoom out
         else:
-            for i in range(len(self.current_cv)):
-                tmp_vector = self.current_cv[i] - self.point_of_zoom
-                self.current_cv[i] = self.point_of_zoom + (tmp_vector / (1 + self.zoom_factor))
+            self.calculate_zoom_translation(self.current_cv, self.point_of_zoom, self.zoom_factor, zoom_in=False)
             for i in range(len(self.cvs)):
-                for j in range(len(self.cvs[i])):
-                    tmp_vector = self.cvs[i][j] - self.point_of_zoom
-                    self.cvs[i][j] = self.point_of_zoom + (tmp_vector / (1 + self.zoom_factor))
+                self.calculate_zoom_translation(self.cvs[i], self.point_of_zoom, self.zoom_factor, zoom_in=False)
             self.track_zoom /= (1 + self.zoom_factor)
 
             # change of track_movement
             tmp_vector = self.track_movement - self.point_of_zoom
             self.track_movement = self.point_of_zoom + (tmp_vector / (1 + self.zoom_factor))
 
-        if len(self.current_cv) > 0:
-            self.draw_path_between_cv(only_current=True)
-        if len(self.cvs) > 0:
-            self.draw_path_between_cv(only_old=True)
-
+        self.draw_path_between_cv()
         self.plot()
         self.update()
 
     def move_current_cv(self, tmp_x_y):
         self.current_cv[-1] = tmp_x_y  # change last cv of current cv_path
-        self.draw_path_between_cv(only_current=True)
+        self.draw_path_between_cv()
 
     def move_everything(self, tmp_x_y):
         if len(self.current_cv) > 0:
@@ -419,31 +412,72 @@ class Pane(qw.QLabel):
                 self.cvs[i] += tmp_x_y - self.click_x_y  # if it exist, change pos of prior cv_paths
 
     def mouseDoubleClickEvent(self, event):
-        """ delete through double click """
-        if len(self.cvs) > 0:
+        """ delete through double click - only one at once """
+        # Shouldn't it be the newest one of the old ones? -> old ones count from behind (len-index)
+        point_found = False
+
+        if len(self.current_cv) > 0:
+            for index, each_cv in enumerate(self.current_cv):
+                if (self.click_x_y <= each_cv + self.cv_size).all() and (self.click_x_y >= each_cv - self.cv_size).all():
+                    self.current_cv = np.delete(self.current_cv, index, 0)
+                    point_found = True
+                    break
+
+        if len(self.cvs) > 0 and not point_found:
             for index_path, each_path in enumerate(self.cvs):
                 for index_cv, each_cv in enumerate(each_path):
                     # calculate if the mouse click is on the cv position
                     if (self.click_x_y <= each_cv + self.cv_size).all() and (self.click_x_y >= each_cv - self.cv_size).all():
                         self.cvs[index_path] = np.delete(self.cvs[index_path], index_cv, 0)
-
-        #TODO: BUG: OutOfBound-Fehler beim Löschen von 2 Punkten auf einmal (Doppelklick auf 2 Punkte übereinander)
-        # Solution: Nur den Punkt löschen lassen, der als erstes gefunden wird
-        if len(self.current_cv) > 0:
-            for index, each_cv in enumerate(self.current_cv):
-                if (self.click_x_y <= each_cv + self.cv_size).all() and (self.click_x_y >= each_cv - self.cv_size).all():
-                    self.current_cv = np.delete(self.current_cv, index, 0)
+                        point_found = True
+                        break
+                if point_found:
+                    break
 
         for index, each_path in enumerate(self.cvs):
             if len(each_path) == 0:
                 self.cvs.pop(index)
 
-        if len(self.current_cv) > 0:
-            self.draw_path_between_cv(only_current=True)
-        if len(self.cvs) > 0:
-            self.draw_path_between_cv(only_old=True)
+        self.draw_path_between_cv()
 
         self.plot()
         self.update()
 
+    def move_to_center(self):
+        """ Move everything to center (depends on self.track_movement and self.track_zoom """
+        for i in range(len(self.cvs)):
+            self.cvs[i] -= self.track_movement
+        self.current_cv -= self.track_movement
+        self.track_movement -= self.track_movement
+        
+        if self.track_zoom > 1:
+            for i in range(len(self.current_cv)):
+                tmp_vector = self.current_cv[i]
+                self.current_cv[i] = tmp_vector / self.track_zoom
+            for i in range(len(self.cvs)):
+                for j in range(len(self.cvs[i])):
+                    tmp_vector = self.cvs[i][j]
+                    self.cvs[i][j] = tmp_vector / self.track_zoom
+            self.track_zoom /= self.track_zoom
+        
+        else:
+            for i in range(len(self.current_cv)):
+                tmp_vector = self.current_cv[i]
+                self.current_cv[i] = tmp_vector / self.track_zoom
+            # calculate old cvs
+            for i in range(len(self.cvs)):
+                for j in range(len(self.cvs[i])):
+                    tmp_vector = self.cvs[i][j]
+                    self.cvs[i][j] = tmp_vector / self.track_zoom
+            self.track_zoom /= self.track_zoom
+        
+        self.draw_path_between_cv()
+        
+        self.plot()
+        self.update()
 
+    def display_tracking_position(self):
+        return f"Position: ({int(self.track_movement[0])},{int(self.track_movement[1])})"
+
+    def display_tracking_zoom(self):
+        return f"Zoom: {round(self.track_zoom, 2)}"
