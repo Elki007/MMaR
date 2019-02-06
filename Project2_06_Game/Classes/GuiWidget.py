@@ -188,6 +188,7 @@ class GuiWidget(qw.QWidget):
         text = self.cm_type.currentText()
         self.pane.current_path.changed_style(text)
         self.pane.plot()
+        self.pane.update()
 
     def resizeEvent(self, event):
         self.pane.resolution_of_surfaces()

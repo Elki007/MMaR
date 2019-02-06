@@ -6,20 +6,13 @@ import PyQt5.QtWidgets as qw
 import PyQt5.QtCore as qc
 import PyQt5.QtGui as qg
 
-from Path import GroupOfPaths, Path
+from Path import Path
 from Point import Point
 
 
 """
 #Search -> Mögliche Verbesserung finden für das genannte Problem
 """
-
-#TODO: Eigene Klasse für Fenster/Painter?
-#TODO: Eigene Klasse für Pfade und CVs
-# What about future Undo? an own class with all copies?
-#TODO: Eigene Klasse Orientierung -> MousePosition, track_movement, track_zoom
-
-# What about two Paneclasses -> One with draw-, one with calculation-functions
 
 
 class Pane(qw.QLabel):
@@ -33,6 +26,7 @@ class Pane(qw.QLabel):
         self.thickness = 3
         self.grid = False
 
+        self.points = []  # from class Points -> not relevant anymore
         self.click_x_y = np.array([0, 0])  # x,y-coordinates from click (to track movement of pressed mouse)
         self.track_movement = np.array([0, 0])  # difference of original position since beginning (tracks movement)
 
@@ -46,24 +40,18 @@ class Pane(qw.QLabel):
         self.fill_all_default()  # cleans all surfaces
         self.set_all_painters()  # create all painters
 
-        # New class implementation
-        #self.paths = GroupOfPaths()
-
-        # Old class implementation
-        self.paths = []  # -> self.paths.list_of_paths
-        self.cvs = []  # -> self.paths.list_of_paths[i].cvs
-        self.current_path = Path()  # -> self.paths.list_of_paths[0]
-
+        self.paths = []
+        self.cvs = []
+        self.current_path = Path()
         self.track = []
 
         self.painter_cv.setPen(qg.QPen(self.color, 3, qc.Qt.SolidLine))
         self.painter_cv.drawPath(self.current_path.path)
 
-        # Old class implementation
-        self.current_cv = np.array([]).reshape(0, 2)  # self.paths.list_of_paths[-1].cvs
-        self.cv_size = 10  # self.paths.list_of_paths[-1].cv_size
-
+        self.current_cv = np.array([]).reshape(0, 2)
         self.showCV = True
+
+        self.cv_size = 10  # size of cv points
 
         # variables for drag and drops
         self.move_cv = False  # is a cv moved by mouse?
@@ -90,6 +78,7 @@ class Pane(qw.QLabel):
 
         #print(self.width(), self.h)
         self.fill_all_default()
+
         self.set_all_painters()
 
         self.update()
@@ -121,19 +110,15 @@ class Pane(qw.QLabel):
         self.fill_all_default()
         self.set_all_painters()
 
-        # New class implementation
-        #self.paths = GroupOfPaths()
-
-        # Old class implementation
         self.paths = []
         self.current_path.path = qg.QPainterPath()
+
         self.cvs = []
         self.current_cv = np.array([]).reshape(0, 2)
-
         self.update()
 
     def undo(self):
-        """ outdated - removes last created point """
+        """ removes last step """
         if len(self.current_cv) == 0:
             if len(self.cvs) != 0:
                 self.current_cv = self.cvs[-1]
@@ -147,12 +132,11 @@ class Pane(qw.QLabel):
             self.update()
 
     def show_cv(self, value):
-        """ value = True or False -> if cv and lines will be displayed """
+        """ value = True or False """
         self.showCV = value
         self.update()
 
     def update_game(self):
-        #TODO: what for?
         #self.update()
         #self.plot()
         #self.ebene_total.fill(qg.QColor(0, 0, 0, 0))
@@ -169,43 +153,26 @@ class Pane(qw.QLabel):
 
         # if CV and lines in between shall be displayed
         if self.showCV:
-            # New class implementation
-            #path = self.paths.list_of_paths[-1]
-            # cv_size = self.paths.list_of_paths[-1].cv_size
-
-            # Old class implementation
             path = self.current_path.path
             cv_size = self.cv_size
-
             #print(path)
             color = qc.Qt.blue
             thickness = 1
             self.painter_cv.setPen(qg.QPen(color, thickness, qc.Qt.SolidLine))
 
-            # New class implementation
-            #for i in range(len(self.paths)):
-            #    self.painter_cv.drawPath(self.paths[i])
-
-            # Old class implementation
             # draw actual cv path
             self.painter_cv.drawPath(path)
+
             # draw old cv paths
             for each_path in self.paths:
                 self.painter_cv.drawPath(each_path.path)
 
-
-            # New class implementation
-            #for i in range(len(self.paths)):
-            #    for j in range(len(self.paths[i])):
-            #        self.painter_cv.setPen(qg.QPen(color, cv_size, qc.Qt.SolidLine))
-            #        self.painter_cv.drawPoint(*self.cvs[j][i])
-
-            # Old class implementation
             # draw old cv points
             for j in range(len(self.cvs)):
                 for i in range(self.cvs[j].shape[0]):
                     self.painter_cv.setPen(qg.QPen(color, cv_size, qc.Qt.SolidLine))
                     self.painter_cv.drawPoint(*self.cvs[j][i])
+
             # draw actual cv points
             for i in range(self.current_cv.shape[0]):
                 self.painter_cv.setPen(qg.QPen(color, cv_size, qc.Qt.SolidLine))
@@ -217,6 +184,10 @@ class Pane(qw.QLabel):
         self.painter_total.drawPixmap(0, 0, self.ebene_cv)
         self.painter_total.drawPixmap(0, 0, self.ebene_schlitten)
         self.setPixmap(self.ebene_total)
+
+    def draw_cv_points(self, color):
+        self.painter_cv.setPen(qg.QPen(color, 10, qc.Qt.SolidLine))
+        self.painter_cv.drawPoint(self.cvs[j][i][0], self.cvs[j][i][1])
 
     def plot(self):
         """ plots bezier curve """
@@ -249,7 +220,7 @@ class Pane(qw.QLabel):
 
             return x_coords, y_coords
 
-        def draw_bezier_path(cv_points, color):
+        def draw_bezier_path(cv_points):
             """ calculates points (with bezier()) to draw lines between them """
             x, y = bezier(cv_points)
             path = qg.QPainterPath()
@@ -260,23 +231,17 @@ class Pane(qw.QLabel):
                     self.track.append([x[j], y[j]])
                     path.lineTo(x[j], y[j])
 
-                self.painter_pane.setPen(qg.QPen(color, 3, qc.Qt.SolidLine))
+                self.painter_pane.setPen(qg.QPen(self.current_path.color, 3, qc.Qt.SolidLine))
                 self.painter_pane.drawPath(path)
 
-        self.track = []
-
-        # New class implementation
-        #for i in range(len(self.paths)):
-        #    draw_bezier_path(self.paths[i].cvs, self.paths[i].color)
-
-        # Old class implementation
         # current path
-        draw_bezier_path(self.current_cv, self.current_path.color)
-        # older paths
-        for i in range(len(self.cvs)):
-            draw_bezier_path(self.cvs[i], self.paths[i].color)
+        draw_bezier_path(self.current_cv)
 
-    #TODO: I'm here with New-Old-Class adaption
+        # older paths
+        self.track = []
+        for i in range(len(self.cvs)):
+            draw_bezier_path(self.cvs[i])
+
     def draw_path_between_cv(self):
         """ draws all paths betweens cv (optional only current ones) """
         if len(self.current_cv) > 0:
@@ -324,8 +289,9 @@ class Pane(qw.QLabel):
         self.update()
 
     def mouseReleaseEvent(self, event):
-        """ if left button is released, set some flags """
-        # flags affect moved cv/path
+        #  -> Wenn beide Buttons gedrückt sind und der linke als erstes freigegeben wird:
+        # if event.buttons() & qc.Qt.RightButton:
+        # TODO: What is the exact difference between event.button() and event.buttons()?
         if event.button() == qc.Qt.LeftButton:
             self.move_cv = False
             self.moved_path = None
