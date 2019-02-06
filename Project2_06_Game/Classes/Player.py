@@ -1,6 +1,7 @@
 import PyQt5.QtWidgets as qw
 import PyQt5.QtCore as qc
 import PyQt5.QtGui as qg
+import math
 import time
 from Vector import Vector
 import numpy as np
@@ -8,25 +9,24 @@ from scipy.spatial import distance
 
 
 class Player:
-    def __init__(self, x, y, layer, painter,map_layer, track):
-        self.x_initial = x
-        self.y_initial = y
+    def __init__(self, x, y, pane):
         self.x = x
         self.y = y
-        self.layer = layer
-        self.painter = painter
+        self.pane = pane
+        self.layer = pane.ebene_schlitten
+        self.painter = pane.painter_schlitten
         self.vector = Vector(0,1,0)
         self.color = qc.Qt.red
         self.g = Vector(0,9.8,0)
         self.start = time.time()
-        self.map = map_layer.toImage()
-        self.track = track
+        self.map = pane.ebene_pane.toImage()
+        self.track = pane.track
         self.surface_vector = Vector(0,0,0)
         self.time_direction = 1
         self.time_speed = 0.001  # 0.01 <=> 100-times slower
         self.time_control_point = time.time()
         self.hit_type = ""
-        print(track)
+        #print(pane.track)
 
     def show(self):
         '''
@@ -42,6 +42,7 @@ class Player:
         self.painter.drawLine(self.x, self.y, self.x+self.vector.x, self.y+self.vector.y)
 
     def next(self):
+        self.intersection()
         self.x += self.vector.x
         self.y += self.vector.y
 
@@ -123,3 +124,120 @@ class Player:
         x = x1 + ua * (x2 - x1)
         y = y1 + ua * (y2 - y1)
         return [x, y]
+
+    def intersection(self):
+        x1, y1 = self.x, self.y
+        x2, y2 = self.x + self.vector.x, self.y + self.vector.y
+
+        X = [False,False]
+        # create line equation as Ax+By+c=0
+        A = y2-y1
+        B = x1-x2
+        C = x1*(y1-y2)+y1*(x2-x1)
+
+        # now we have a line and we need fo figure out if it cross any of B.k
+        # reform B.k formula to receive coefficients for t**3, t**2, t, t**0
+
+        # TODO: B.k is made of 4 points, so if in 1 path there are multiple B.k, we need do run test multiple times
+        bx = self.pane.bezier_coeffs(self.pane.current_cv, 0)
+        by = self.pane.bezier_coeffs(self.pane.current_cv, 1)
+
+        P = []
+        P.append(A * bx[0] + B * by[0])
+        P.append(A * bx[1] + B * by[1])
+        P.append(A * bx[2] + B * by[2])
+        P.append(A * bx[3] + B * by[3] + C)
+
+        # now we need to solve a cubic equation
+        def cubic_roots(P):
+            a = P[0]
+            b = P[1]
+            c = P[2]
+            d = P[3]
+
+            A = b / a
+            B = c / a
+            C = d / a
+
+            Q = (3 * B - A**2) / 9
+            R = (9 * A * B - 27 * C - 2 * A**3) / 54
+            D = Q**3 + R**2 # polynomial discriminant
+
+            t = [False,False,False]
+
+            if D >= 0:
+                # complex or duplicate roots
+                sgn_1 = 0
+                sgn_2 = 0
+                if R + math.sqrt(D)>0:
+                    sgn_1=+1
+                elif R + math.sqrt(D)>0:
+                    sgn_1=-1
+                else:
+                    sgn_1=0
+
+                if R - math.sqrt(D)>0:
+                    sgn_2=+1
+                elif R - math.sqrt(D)>0:
+                    sgn_2=-1
+                else:
+                    sgn_2=0
+
+                S = sgn_1 * abs(R + math.sqrt(D))**(1 / 3)
+                T = sgn_2 * abs(R - math.sqrt(D))**(1 / 3)
+
+                t[0] = -A / 3 + (S + T)  # real root
+                t[1] = -A / 3 - (S + T) / 2  # real part of complex root
+                t[2] = -A / 3 - (S + T) / 2  # real part of complex root
+                Im = abs(math.sqrt(3) * (S - T) / 2)  # complex part of root pair
+
+                # discard complex roots
+                if Im != 0:
+                    t[1] = -1
+                    t[2] = -1
+            else:
+                # distinct real roots
+                th = math.acos(R / math.sqrt(-math.pow(Q, 3)))
+
+                t[0] = 2 * math.sqrt(-Q) * math.cos(th / 3) - A / 3
+                t[1] = 2 * math.sqrt(-Q) * math.cos((th + 2 * math.pi) / 3) - A / 3
+                t[2] = 2 * math.sqrt(-Q) * math.cos((th + 4 * math.pi) / 3) - A / 3
+                Im = 0.0
+
+            # discard out of spec roots
+            for i in range(0,3):
+                if t[i] < 0 or t[i] > 1.0:
+                    t[i]=-1
+
+            return t
+
+        r = cubic_roots(P)
+
+        print("before: ",r)
+        # check if root suits to the line
+        for i in range(3):
+            t = r[i]
+            if t and t != -1:
+                X[0] = bx[0] * t ** 3 + bx[1] * t ** 2 + bx[2] * t + bx[3]
+                X[1] = by[0] * t ** 3 + by[1] * t ** 2 + by[2] * t + by[3]
+
+                if x2-x1 != 0: #  if not vertical
+                    s = (X[0]-x1)/(x2-x1)
+                else:
+                    s = (X[1]-y1)/(y2-y1)
+                print(s,"(", X[0],X[1],")")
+                self.painter.setPen(qg.QPen(qc.Qt.white, 20, qc.Qt.SolidLine))
+                self.painter.drawPoint(X[0],X[1])
+                # between two points?
+                if t<0 or t>1 or s<0 or s>1:
+                    #no
+                    r[i] = False
+
+        print("after: ",r)
+
+
+
+        # older paths
+        #self.track = []
+        #for i in range(len(self.cvs)):
+            #self.pane.bezier(self.cvs[i])

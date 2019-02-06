@@ -189,6 +189,20 @@ class Pane(qw.QLabel):
         self.painter_cv.setPen(qg.QPen(color, 10, qc.Qt.SolidLine))
         self.painter_cv.drawPoint(self.cvs[j][i][0], self.cvs[j][i][1])
 
+    def bezier_coeffs(self, cv_points, x_y):
+        #print("bezier_coeffs")
+        if len(cv_points) == 4:
+            P0=cv_points[0][x_y]
+            P1=cv_points[1][x_y]
+            P2=cv_points[2][x_y]
+            P3=cv_points[3][x_y]
+            A = -P0+3*P1-3*P2+P3
+            B = 3*P0-6*P1+3*P2
+            C = -3*P0+3*P1
+            D = P0
+            return [A,B,C,D]
+        return False
+
     def plot(self):
         """ plots bezier curve """
         self.painter_pane.end()
@@ -203,6 +217,7 @@ class Pane(qw.QLabel):
             t = np.linspace(0, 1, n)
             return (1-t)**3 * four_points[0][x_y] + 3*(1-t)**2 * t * four_points[1][x_y] + \
                    3*(1-t)*t**2 * four_points[2][x_y] + t**3 * four_points[3][x_y]
+
 
         def bezier(cv_points, n=50):
             """ calculates cubic bezier curves """
@@ -235,10 +250,11 @@ class Pane(qw.QLabel):
                 self.painter_pane.drawPath(path)
 
         # current path
+        self.track = []
         draw_bezier_path(self.current_cv)
 
         # older paths
-        self.track = []
+
         for i in range(len(self.cvs)):
             draw_bezier_path(self.cvs[i])
 
