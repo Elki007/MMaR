@@ -98,9 +98,9 @@ class GuiWidget(qw.QWidget):
         self.b_show_cv.setChecked(True)
 
         # tracking position
-        self.b_show_tracking_position = qw.QLabel(f"Position: {self.pane.track_movement}")
+        self.b_show_tracking_position = qw.QLabel(self.pane.display_tracking("position"))
         # tracking zoom
-        self.b_show_tracking_zoom = qw.QLabel(f"Zoom: {self.pane.track_zoom}")
+        self.b_show_tracking_zoom = qw.QLabel(self.pane.display_tracking("zoom"))
 
         #                    #
         # Layout begins here #
@@ -155,13 +155,7 @@ class GuiWidget(qw.QWidget):
 
     # function for button 'New Path'
     def on_click_new_path(self):
-        if len(self.pane.current_cv) != 0:
-            self.pane.paths.append(self.pane.current_path)
-            self.pane.current_path = Path(qg.QPainterPath(), self.cm_type.currentText())
-            #print(self.cm_type.currentText())
-            #print(self.pane.current_path.color)
-            self.pane.cvs.append(self.pane.current_cv)
-            self.pane.current_cv = np.array([]).reshape(0, 2)
+        self.pane.create_new_path(self.cm_type.currentText())
 
     # function for button 'Clear'
     def on_click_clear(self):
@@ -181,6 +175,7 @@ class GuiWidget(qw.QWidget):
         self.pane.move_to_center()
 
         #TODO: Wieso wird Pane erst nach den 2 Sekunden sichtbar aktualisiert und nicht mit update()-Aufruf?
+        # Wie lässt sich das ändern?
         #time.sleep(2)
         #print("DEBUG: Haiho")
 
@@ -193,6 +188,7 @@ class GuiWidget(qw.QWidget):
         text = self.cm_type.currentText()
         self.pane.current_path.changed_style(text)
         self.pane.plot()
+        self.pane.update()
 
     def resizeEvent(self, event):
         self.pane.resolution_of_surfaces()
@@ -311,9 +307,8 @@ class GuiWidget(qw.QWidget):
         #self.pane.update()
 
     def update_gui(self):
-        # tbd, how to update a function in GuiWidget from Pane? How to send a signal?
-        self.b_show_tracking_position.setText(self.pane.display_tracking_position())
-        self.b_show_tracking_zoom.setText(self.pane.display_tracking_zoom())
+        self.b_show_tracking_position.setText(self.pane.display_tracking("position"))
+        self.b_show_tracking_zoom.setText(self.pane.display_tracking("zoom"))
 
 
 
