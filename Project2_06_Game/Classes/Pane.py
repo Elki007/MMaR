@@ -14,6 +14,11 @@ from Point import Point
 #Search -> Mögliche Verbesserung finden für das genannte Problem
 """
 
+"""
+Glossary:
+cv -> control vertice -> point that's clicked with mouse
+"""
+
 #TODO: Eigene Klasse für Fenster/Painter?
 #TODO: Eigene Klasse für Pfade und CVs
 # What about future Undo? an own class with all copies?
@@ -133,7 +138,8 @@ class Pane(qw.QLabel):
         self.update()
 
     def undo(self):
-        """ outdated - removes last created point """
+        #TODO: outdated
+        """ removes last created point """
         if len(self.current_cv) == 0:
             if len(self.cvs) != 0:
                 self.current_cv = self.cvs[-1]
@@ -152,7 +158,6 @@ class Pane(qw.QLabel):
         self.update()
 
     def update_game(self):
-        #TODO: what for?
         #self.update()
         #self.plot()
         #self.ebene_total.fill(qg.QColor(0, 0, 0, 0))
@@ -219,6 +224,7 @@ class Pane(qw.QLabel):
         self.setPixmap(self.ebene_total)
 
     def draw_cv_points(self, color):
+        #TODO: outdated - can it still be useful?
         self.painter_cv.setPen(qg.QPen(color, 10, qc.Qt.SolidLine))
         self.painter_cv.drawPoint(self.cvs[j][i][0], self.cvs[j][i][1])
 
@@ -294,9 +300,10 @@ class Pane(qw.QLabel):
         for i in range(len(self.cvs)):
             draw_bezier_path(self.cvs[i], self.paths[i].color)
 
-    #TODO: I'm here with New-Old-Class adaption
     def draw_path_between_cv(self):
+        #TODO: outdated
         """ draws all paths betweens cv (optional only current ones) """
+        """ new: tbd - draw just some 'strings' to the main cvs """
         if len(self.current_cv) > 0:
             self.current_path.path = qg.QPainterPath()
             self.current_path.path.moveTo(*self.current_cv[0])
@@ -311,9 +318,28 @@ class Pane(qw.QLabel):
                     self.paths[i].path.lineTo(*self.cvs[i][j])
 
     def mousePressEvent(self, event):
+        """ actions that happen, if mouse button will be clicked """
         self.click_x_y = np.array([event.pos().x(), event.pos().y()])
 
         if event.buttons() == qc.Qt.LeftButton:
+            # New class implementation
+            # If you click on a point, change flags, remember path and cv index
+            #if len(self.paths) > 0:
+            #    for index_path, each_path in enumerate(self.paths.list_of_paths):
+            #        for index_cv, each_cv in enumerate(each_path.cvs):
+            #            # calculate if the mouse click is on the cv position
+            #            if (self.click_x_y <= each_cv + each_path.cv_size).all() and (self.click_x_y >= each_cv - each_path.cv_size).all():
+            #                self.move_cv = True
+            #                self.moved_path = index_path
+            #                self.moved_cv = index_cv
+            #                return
+            ## If not a point, set a point
+            #if len(self.current_cv) == 0:
+            #    self.paths[-1].path.moveTo(*self.click_x_y)
+            #self.paths[-1].path.lineTo(*self.click_x_y)
+            #self.paths[-1].cvs = np.r_[self.paths[-1].cvs, [self.click_x_y]]
+
+            # Old class implementation
             if len(self.cvs) > 0:
                 for index_path, each_path in enumerate(self.cvs):
                     for index_cv, each_cv in enumerate(each_path):
@@ -323,7 +349,6 @@ class Pane(qw.QLabel):
                             self.moved_path = index_path
                             self.moved_cv = index_cv
                             return
-
             if len(self.current_cv) > 0:
                 for index, each_cv in enumerate(self.current_cv):
                     if (self.click_x_y <= each_cv + self.cv_size).all() and (self.click_x_y >= each_cv - self.cv_size).all():
@@ -331,8 +356,6 @@ class Pane(qw.QLabel):
                         self.moved_path = -1
                         self.moved_cv = index
                         return
-            #print(self.click_x_y)
-
             if len(self.current_cv) == 0:
                 self.current_path.path.moveTo(*self.click_x_y)
             self.current_path.path.lineTo(*self.click_x_y)
@@ -359,6 +382,44 @@ class Pane(qw.QLabel):
 
         tmp_x_y = np.array([event.pos().x(), event.pos().y()])
 
+        # New class implementation
+        # if click began on cv
+        #if self.move_cv:
+        #    # if (only?) left mouse button is on hold
+        #    if event.buttons() == qc.Qt.LeftButton:
+        #        if self.moved_path is not None and self.moved_path >= 0:
+        #            self.paths[self.moved_path][self.moved_cv] = tmp_x_y
+        #    # if both buttons are on hold
+        #    elif (event.buttons() & qc.Qt.LeftButton) and (event.buttons() & qc.Qt.RightButton):
+        #        self.track_movement += tmp_x_y - self.click_x_y
+        #        self.move_everything(tmp_x_y)
+        #        self.click_x_y = tmp_x_y
+        ## if click began somewhere else than a cv
+        #else:
+        #    # change current cv if there is one with holding left mouse button
+        #    #TODO: Might be a problem: how to declare active path?
+        #    if event.buttons() == qc.Qt.LeftButton and len(self.paths[-1]) > 0:
+        #        self.move_current_cv(tmp_x_y)
+        #    # change position of everything with right mouse button
+        #    elif event.buttons() == qc.Qt.RightButton:
+        #        self.track_movement += tmp_x_y - self.click_x_y
+        #        self.move_everything(tmp_x_y)
+        #        self.click_x_y = tmp_x_y
+        #    # change both if both buttons are pressed (if there is a current cv)
+        #    elif (event.buttons() & qc.Qt.LeftButton) and (event.buttons() & qc.Qt.RightButton):
+        #        if len(self.paths[-1]) == 0:
+        #            self.paths[-1].path.moveTo(*self.click_x_y)
+        #        self.paths[-1].path.lineTo(*self.click_x_y)
+        #        self.paths[-1].cvs = np.r_[self.current_cv, [self.click_x_y]]
+        #
+        #        self.move_cv = True
+        #
+        #        self.track_movement += tmp_x_y - self.click_x_y
+        #        self.move_everything(tmp_x_y)
+        #
+        #        self.click_x_y = tmp_x_y
+
+        # Old class implementation
         if self.move_cv:
             if event.buttons() == qc.Qt.LeftButton:
                 if self.moved_path is not None and self.moved_path >= 0:
@@ -367,7 +428,6 @@ class Pane(qw.QLabel):
                 elif self.moved_path is not None and self.moved_path == -1:
                     self.current_cv[self.moved_cv] = tmp_x_y
                     self.draw_path_between_cv()
-
             elif (event.buttons() & qc.Qt.LeftButton) and (event.buttons() & qc.Qt.RightButton):
                 self.track_movement += tmp_x_y - self.click_x_y
                 self.move_everything(tmp_x_y)
@@ -419,8 +479,33 @@ class Pane(qw.QLabel):
         """ Implements zoom through mouse wheel """
         self.point_of_zoom = np.array([event.pos().x(), event.pos().y()])
         self.zoom += event.angleDelta().y()//120
+        # New class implementation
+        # to zoom in/scroll up
+        #if event.angleDelta().y() > 0:
+        #    # calculate cvs
+        #    for i in range(len(self.paths)):
+        #        for j in range(len(self.paths[i].cvs)):
+        #            self.calculate_zoom_translation(self.paths[i].cvs[i], self.point_of_zoom, self.zoom_factor)
+        #
+        #    self.track_zoom *= (1 + self.zoom_factor)
+        #
+        #    # change of track_movement
+        #    tmp_vector = self.track_movement - self.point_of_zoom
+        #    self.track_movement = self.point_of_zoom + (tmp_vector * (1 + self.zoom_factor))
+        #
+        ## to zoom out
+        #else:
+        #    for i in range(len(self.paths)):
+        #        for j in range(len(self.paths[i].cvs)):
+        #            self.calculate_zoom_translation(self.paths[i].cvs[i], self.point_of_zoom, self.zoom_factor, zoom_in=False)
+        #
+        #    self.track_zoom /= (1 + self.zoom_factor)
+        #
+        #    # change of track_movement
+        #    tmp_vector = self.track_movement - self.point_of_zoom
+        #    self.track_movement = self.point_of_zoom + (tmp_vector / (1 + self.zoom_factor))
 
-        # Lösung -> Beides auf Pane-Maße beziehen
+        # Old class implementation
         # to zoom in/scroll up
         if event.angleDelta().y() > 0:
             # calculate current_cv
@@ -451,14 +536,23 @@ class Pane(qw.QLabel):
         self.update()
 
     def move_current_cv(self, tmp_x_y):
+        #TODO: outdated
+        """ moved the most recent path cvs """
+        #TODO: new: tbd - moves a specific path
         self.current_cv[-1] = tmp_x_y  # change last cv of current cv_path
         self.draw_path_between_cv()
 
     def move_everything(self, tmp_x_y):
+        """ moves every cv """
+        # New class implementation
+        #if len(self.paths) != 0:
+        #    for i in range(len(self.paths)):
+        #        self.paths[i] += tmp_x_y - self.click_x_y  # if it exist, change pos of all cv_paths
+
+        # Old class implementation
         if len(self.current_cv) > 0:
             self.current_cv += tmp_x_y - self.click_x_y  # change position of current cv_path
 
-        #Search: Statt über alles zu iterieren, muss es mit numpy doch auch alles auf einmal gehen?
         if len(self.cvs) != 0:
             for i in range(len(self.cvs)):
                 self.cvs[i] += tmp_x_y - self.click_x_y  # if it exist, change pos of prior cv_paths
@@ -468,13 +562,29 @@ class Pane(qw.QLabel):
         # Shouldn't it be the newest one of the old ones? -> old ones count from behind (len-index)
         point_found = False
 
+        # New class implementation
+        #if len(self.paths) > 0 and not point_found:
+        #    for index_path, each_path in enumerate(self.paths):
+        #        for index_cv, each_cv in enumerate(each_path.cvs):
+        #            # calculate if the mouse click is on the cv position
+        #            if (self.click_x_y <= each_cv + each_path.cv_size).all() and (self.click_x_y >= each_cv - each_path.cv_size).all():
+        #                self.paths[index_path] = np.delete(self.paths[index_path], index_cv, 0)
+        #                point_found = True
+        #                break
+        #        if point_found:
+        #            break
+        # if path is empty
+        #for index, each_path in enumerate(self.paths):
+        #    if len(each_path) == 0:
+        #        self.paths.pop(index)
+
+        # Old class implementation
         if len(self.current_cv) > 0:
             for index, each_cv in enumerate(self.current_cv):
                 if (self.click_x_y <= each_cv + self.cv_size).all() and (self.click_x_y >= each_cv - self.cv_size).all():
                     self.current_cv = np.delete(self.current_cv, index, 0)
                     point_found = True
                     break
-
         if len(self.cvs) > 0 and not point_found:
             for index_path, each_path in enumerate(self.cvs):
                 for index_cv, each_cv in enumerate(each_path):
@@ -485,7 +595,7 @@ class Pane(qw.QLabel):
                         break
                 if point_found:
                     break
-
+        # if path is empty
         for index, each_path in enumerate(self.cvs):
             if len(each_path) == 0:
                 self.cvs.pop(index)
@@ -495,8 +605,30 @@ class Pane(qw.QLabel):
         self.plot()
         self.update()
 
+    #TODO: I'm here with New-Old-Class adaption
     def move_to_center(self):
         """ Move everything to center (depends on self.track_movement and self.track_zoom """
+        # New class implementation
+        #for i in range(len(self.paths)):
+        #    self.paths[i] -= self.track_movement
+        #self.track_movement -= self.track_movement
+        #
+        #if self.track_zoom > 1:
+        #    for i in range(len(self.paths)):
+        #        #TODO: Gibt eine Funktion, die hier benutzt werden kann -> calculate_zoom_translation()
+        #        for j in range(len(self.paths[i])):
+        #            tmp_vector = self.paths[i][j]
+        #            self.paths[i][j] = tmp_vector / self.track_zoom
+        #    self.track_zoom /= self.track_zoom
+        #else:
+        #    for i in range(len(self.paths)):
+        #        for j in range(len(self.paths[i])):
+        #            tmp_vector = self.paths[i][j]
+        #            self.paths[i][j] = tmp_vector / self.track_zoom
+        #    self.track_zoom /= self.track_zoom
+
+
+        # Old class implementation
         for i in range(len(self.cvs)):
             self.cvs[i] -= self.track_movement
         self.current_cv -= self.track_movement
@@ -538,6 +670,11 @@ class Pane(qw.QLabel):
 
     def create_new_path(self, cm_type):
         """ creates new path with cm_type(normal/fast/slow) """
+        # New class implementation
+        #if len(self.paths[-1]) != 0:
+        #    self.paths.append(Path(path_type=cm_type))
+
+        # Old class implementation
         if len(self.current_cv) != 0:
             self.paths.append(self.current_path)
             self.current_path = Path(qg.QPainterPath(), cm_type)
