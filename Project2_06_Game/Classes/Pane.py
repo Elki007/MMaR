@@ -449,7 +449,7 @@ class Pane(qw.QLabel):
             self.cvs[i] -= self.track_movement
         self.current_cv -= self.track_movement
         self.track_movement -= self.track_movement
-        
+
         if self.track_zoom > 1:
             for i in range(len(self.current_cv)):
                 tmp_vector = self.current_cv[i]
@@ -459,7 +459,7 @@ class Pane(qw.QLabel):
                     tmp_vector = self.cvs[i][j]
                     self.cvs[i][j] = tmp_vector / self.track_zoom
             self.track_zoom /= self.track_zoom
-        
+
         else:
             for i in range(len(self.current_cv)):
                 tmp_vector = self.current_cv[i]
@@ -470,14 +470,24 @@ class Pane(qw.QLabel):
                     tmp_vector = self.cvs[i][j]
                     self.cvs[i][j] = tmp_vector / self.track_zoom
             self.track_zoom /= self.track_zoom
-        
+
         self.draw_path_between_cv()
-        
+
         self.plot()
         self.update()
 
-    def display_tracking_position(self):
-        return f"Position: ({int(self.track_movement[0])},{int(self.track_movement[1])})"
+    def display_tracking(self, display):
+        """ returns string to display movement/position and zoom """
+        # used in GuiWidget -> update_gui()
+        if display == "position":
+            return f"Position: ({int(self.track_movement[0])},{int(self.track_movement[1])})"
+        elif display == "zoom":
+            return f"Zoom: {round(self.track_zoom, 2)}"
 
-    def display_tracking_zoom(self):
-        return f"Zoom: {round(self.track_zoom, 2)}"
+    def create_new_path(self, cm_type):
+        """ creates new path with cm_type(normal/fast/slow) """
+        if len(self.current_cv) != 0:
+            self.paths.append(self.current_path)
+            self.current_path = Path(qg.QPainterPath(), cm_type)
+            self.cvs.append(self.current_cv)
+            self.current_cv = np.array([]).reshape(0, 2)
