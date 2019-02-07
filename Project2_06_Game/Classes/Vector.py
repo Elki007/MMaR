@@ -56,6 +56,25 @@ class Vector:
         if (type(self) == type(other)):
             return (self*other)/(abs(self)*abs(other))
 
+    def rotate(self, angle):
+        theta = angle*math.pi/180
+        cs = math.cos(theta)
+        sn = math.sin(theta)
+
+        return Vector(self.x*cs-self.y*sn,self.x*sn+self.y*cs,0)
+
+    def reflect(self, surface):
+        if (type(self) == type(surface)):
+            n = surface.rotate(90).norm()
+            print(n*surface)
+            temp = self*n
+            r = self - n * 2 * temp
+            print(r)
+            return r
+
+
+
+
     def __pow__(self, other):
         return Vector(self.y * other.z - self.z * other.y, self.z * other.x - self.x * other.z,
                       self.x * other.y - self.y * other.x)

@@ -149,7 +149,7 @@ class GuiWidget(qw.QWidget):
         self.timer.start(10)
 
         self.timer_4_game = qc.QTimer()
-        self.timer_4_game.setInterval(10)
+        self.timer_4_game.setInterval(100)
         self.timer_4_game.setSingleShot(True)
         self.timer_4_game.timeout.connect(self.game_loop)
 

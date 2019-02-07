@@ -242,6 +242,16 @@ class Pane(qw.QLabel):
             return [A,B,C,D]
         return False
 
+    def bezier_diff(self, cv_points,t, x_y):
+
+        if len(cv_points) == 4:
+            P0=cv_points[0][x_y]
+            P1=cv_points[1][x_y]
+            P2=cv_points[2][x_y]
+            P3=cv_points[3][x_y]
+            return (1-t)**2*(P1-P0)+2*t*(1-t)*(P2-P1)+t**2*(P3-P2)
+        return False
+
     def plot(self):
         """ plots bezier curve """
         self.painter_pane.end()

@@ -42,11 +42,23 @@ class Player:
         self.painter.drawLine(self.x, self.y, self.x+self.vector.x, self.y+self.vector.y)
 
     def next(self):
-        self.intersection()
         self.x += self.vector.x
         self.y += self.vector.y
 
         t = time.time() - self.start
+
+        crossing = self.intersection()
+        if crossing:
+            at,surface = crossing
+            #print(at[0],at[1],surface)
+            # TODO: depends on hit_type?
+            self.x, self.y = at[0],at[1]
+            print(self.vector)
+            self.vector = self.vector.reflect(surface)
+        else:
+            self.vector += self.g * (t * self.time_speed)
+
+        """
         #  am I crossing smw?
         indx_a = self.closest_node([self.x, self.y])
         if abs(self.vector)< 10:
@@ -88,7 +100,7 @@ class Player:
                 self.y -= 1
             self.vector = self.vector.proj_on(surface)
             print("collision at: ",collision)
-
+"""
         self.vector += self.g * (t * self.time_speed)
 
 
@@ -97,6 +109,9 @@ class Player:
 
     def closest_node(self, node):
         closest_index = distance.cdist([node], self.track).argmin()
+        return closest_index
+    def closest_node2(self, node, where):
+        closest_index = distance.cdist([node], where).argmin()
         return closest_index
 
     def exact_intersection(self, i, j):
@@ -126,8 +141,18 @@ class Player:
         return [x, y]
 
     def intersection(self):
+        def line_eq(x1, y1, x2, y2):
+            if x2 - x1 == 0:
+                return False, False
+            m = (y2 - y1) / (x2 - x1)
+            b = y1 - m * x1
+
+            return m, b
+
         x1, y1 = self.x, self.y
         x2, y2 = self.x + self.vector.x, self.y + self.vector.y
+
+        four_points = self.pane.current_cv
 
         X = [False,False]
         # create line equation as Ax+By+c=0
@@ -139,8 +164,8 @@ class Player:
         # reform B.k formula to receive coefficients for t**3, t**2, t, t**0
 
         # TODO: B.k is made of 4 points, so if in 1 path there are multiple B.k, we need do run test multiple times
-        bx = self.pane.bezier_coeffs(self.pane.current_cv, 0)
-        by = self.pane.bezier_coeffs(self.pane.current_cv, 1)
+        bx = self.pane.bezier_coeffs(four_points, 0)
+        by = self.pane.bezier_coeffs(four_points, 1)
 
         P = []
         P.append(A * bx[0] + B * by[0])
@@ -213,27 +238,75 @@ class Player:
 
         r = cubic_roots(P)
 
-        print("before: ",r)
+        #print("before: ",r)
         # check if root suits to the line
+        result = []
+        result_t = []
         for i in range(3):
             t = r[i]
-            if t and t != -1:
-                X[0] = bx[0] * t ** 3 + bx[1] * t ** 2 + bx[2] * t + bx[3]
-                X[1] = by[0] * t ** 3 + by[1] * t ** 2 + by[2] * t + by[3]
+            #if t and t != -1:
+            X[0] = bx[0] * t ** 3 + bx[1] * t ** 2 + bx[2] * t + bx[3]
+            X[1] = by[0] * t ** 3 + by[1] * t ** 2 + by[2] * t + by[3]
 
-                if x2-x1 != 0: #  if not vertical
-                    s = (X[0]-x1)/(x2-x1)
-                else:
-                    s = (X[1]-y1)/(y2-y1)
-                print(s,"(", X[0],X[1],")")
-                self.painter.setPen(qg.QPen(qc.Qt.white, 20, qc.Qt.SolidLine))
-                self.painter.drawPoint(X[0],X[1])
-                # between two points?
-                if t<0 or t>1 or s<0 or s>1:
-                    #no
-                    r[i] = False
+            if x2-x1 != 0: #  if not vertical
+                s = (X[0]-x1)/(x2-x1)
+            else:
+                s = (X[1]-y1)/(y2-y1)
+            #print(s,"(", X[0],X[1],")")
+            self.painter.setPen(qg.QPen(qc.Qt.white, 2, qc.Qt.SolidLine))
+            self.painter.drawPoint(X[0],X[1])
+            # between two points?
+            m,b = line_eq(x1,y1,x2,y2)
 
-        print("after: ",r)
+            on_the_line = False
+            if m:
+                #print("check: ",X[1], m*X[0]+b)
+                # TODO: check pixel-wise find f'(t) at x,y position
+                # try 3
+                #if abs(self.x -X[0]) < 5 and abs(self.y-X[1]<5):
+                    #on_the_line = True
+                #try 2
+                dxc = X[0] - round(x1)
+                dyc = X[1] - round(y1)
+
+                dxl = round(x2) - round(x1)
+                dyl = round(y2) - round(y1)
+                cross = dxc * dyl - dyc * dxl
+                # try 1
+                print(abs(X[1] - m*X[0]+b),cross)
+                if abs(cross)<1:
+                    on_the_line = True
+                if abs(X[1] - m*X[0]+b) < 0.01:
+                    on_the_line = True
+            else:
+                #print("check: ", X[0], x1)
+                if abs(X[0] - x1) < 0.01:
+                    on_the_line = True
+
+            if on_the_line:
+                if x1>x2: x_max, x_min = x1, x2
+                else: x_max, x_min = x2, x1
+                if y1>y2: y_max, y_min = y1, y2
+                else: y_max, y_min = y2, y1
+                if X[0]< x_max+5 and X[0]>x_min-5 and X[1]<y_max+5 and X[1]>y_min-5:
+                    result.append([X[0], X[1]])
+                    result_t.append(t)
+            """if t<0 or t>1 or s<0 or s>1:
+                #no
+                r[i] = False"""
+
+        # if there where many intersections along self.vector, we'll choose the closest one
+        if result:
+            #print(result)
+            closest_index = self.closest_node2([self.x, self.y], result)
+            x = self.pane.bezier_diff(four_points, result_t[closest_index],0)
+            y = self.pane.bezier_diff(four_points, result_t[closest_index],1)
+            #  (x,y) is a slope vector!
+            # TODO: return type may be ust vector of the surface? no, also x,y
+            print("cross point: ",result[closest_index])
+            return result[closest_index], Vector(x,y,0)  # hit point and surface vector
+        return False
+
 
 
 
