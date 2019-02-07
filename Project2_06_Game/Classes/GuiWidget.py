@@ -97,6 +97,11 @@ class GuiWidget(qw.QWidget):
         self.b_show_cv.clicked.connect(lambda: self.on_click_show_cv(self.b_show_cv.checkState()))
         self.b_show_cv.setChecked(True)
 
+        # enters the edit mode
+        self.b_edit_mode = qw.QCheckBox('Edit Mode', self)
+        self.b_edit_mode.clicked.connect(lambda: self.on_click_edit_mode(self.b_edit_mode.checkState()))
+        self.b_edit_mode.setChecked(False)
+
         # tracking position
         self.b_show_tracking_position = qw.QLabel(self.pane.display_tracking("position"))
         # tracking zoom
@@ -109,6 +114,10 @@ class GuiWidget(qw.QWidget):
         hbox_pane_menu = qw.QHBoxLayout()  # pane und side menu
         vbox_side_menu = qw.QVBoxLayout()  # side menu order
 
+        mini_hbox_checkboxes = qw.QHBoxLayout()
+        mini_hbox_checkboxes.addWidget(self.b_show_cv)
+        mini_hbox_checkboxes.addWidget(self.b_edit_mode)
+
         # creates menu order
         vbox_side_menu.addWidget(b_new)  # creates new path
         vbox_side_menu.addWidget(b_clear)  # clears everything
@@ -116,7 +125,7 @@ class GuiWidget(qw.QWidget):
         #vbox.addWidget(b_plot)
         vbox_side_menu.addWidget(self.cm_type)
         vbox_side_menu.addWidget(cm_style)
-        vbox_side_menu.addWidget(self.b_show_cv)
+        vbox_side_menu.addLayout(mini_hbox_checkboxes)
         vbox_side_menu.addWidget(self.b_game)
         vbox_side_menu.addWidget(self.b_pause)
         vbox_side_menu.addWidget(self.b_back)
@@ -169,6 +178,11 @@ class GuiWidget(qw.QWidget):
     def on_click_show_cv(self, value):
         """ value = True or False """
         self.pane.show_cv(value)
+
+    # function for box 'Edit Mode'
+    def on_click_edit_mode(self, value):
+        """ value = True or False """
+        self.pane.edit_mode(value)
 
     def on_click_move_to_center(self):
         """ to move everything back to the start position """

@@ -60,7 +60,7 @@ class Path:
         # - Schnittpunkt der Kollision
         # - Anstieg am Schnittpunkt
         #
-        self.active = False  # is it a chosen path?
+        self.active = False  # is it a chosen path for edit mode?
         self.path_type = path_type  # normal, fast, slow?
         self.color = qc.Qt.cyan
         self.changed_style(path_type)  # what was the previous color

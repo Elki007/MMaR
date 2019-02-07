@@ -56,6 +56,8 @@ class Pane(qw.QLabel):
 
         self.showCV = True
 
+        self.editMode = False
+
         # variables for drag and drops
         self.move_cv = False  # is a cv moved by mouse?
         self.moved_path = None
@@ -124,6 +126,10 @@ class Pane(qw.QLabel):
     def show_cv(self, value):
         """ value = True or False -> if cv and lines will be displayed """
         self.showCV = value
+        self.update()
+
+    def edit_mode(self, value):
+        self.editMode = value
         self.update()
 
     def update_game(self):
