@@ -8,8 +8,9 @@ import PyQt5.QtGui as qg
 
 
 class GroupOfPaths:
-    def __init__(self, path=qg.QPainterPath(), path_type="normal", cv_size=10):
-        self.list_of_paths = [Path(path, path_type, cv_size)]
+    def __init__(self, qpath=qg.QPainterPath(), path_type="normal", cv_size=10):
+        self.list_of_paths = [Path(path_type, cv_size)]
+        self.qpath=qpath  # QPainter.Path
 
     def __len__(self):
         """ Length of GroupOfPaths is amount of Path Elements """
@@ -40,9 +41,18 @@ class GroupOfPaths:
         if len(self[index_path]) == 0 and not len(self) == 1:
             self.pop(index_path)
 
+    def draw_reset(self):
+        self.qpath = qg.QPainterPath()
+
+    def draw_moveTo(self, np_point_x, np_point_y):
+        self.qpath.moveTo(np_point_x, np_point_y)
+
+    def draw_lineTo(self, np_point_x, np_point_y):
+        self.qpath.lineTo(np_point_x, np_point_y)
+
 
 class Path:
-    def __init__(self, path=qg.QPainterPath(), path_type="normal", cv_size=10):
+    def __init__(self, path_type="normal", cv_size=10):
         #TODO: Einzelne x- und y-Koordinaten
         #TODO: Anstieg an beliebigen Punkt ausgeben
         # 2 Punkte übergeben -> gibt es Schnittpunkt mit einem Path?
@@ -51,11 +61,11 @@ class Path:
         # - Anstieg am Schnittpunkt
         #
         self.active = False  # is it a chosen path?
-        self.path = path  # QPainter.Path
         self.path_type = path_type  # normal, fast, slow?
         self.color = qc.Qt.cyan
         self.changed_style(path_type)  # what was the previous color
         self.thickness = 1
+        self.form = "bezier"  # not implemented yet -> "bezier", "circle", "line"
 
         self.cvs = np.array([]).reshape(0, 2)  # control points
         self.cv_size = cv_size  # unterschiedliche Punkte, unterschiedliche Größe?

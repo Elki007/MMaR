@@ -20,7 +20,6 @@ cv -> control vertice -> point that's clicked with mouse
 """
 
 #TODO: Eigene Klasse für Fenster/Painter?
-#TODO: Eigene Klasse für Pfade und CVs
 # What about future Undo? an own class with all copies?
 #TODO: Eigene Klasse Orientierung -> MousePosition, track_movement, track_zoom
 
@@ -144,20 +143,11 @@ class Pane(qw.QLabel):
 
         # if CV and lines in between shall be displayed
         if self.showCV:
-            path = self.paths.list_of_paths[-1]
-            cv_size = self.paths.list_of_paths[-1].cv_size
+            # draws points of cvs
+            self.draw_cv_points()
 
-            color = qc.Qt.blue
-            thickness = 1
-            self.painter_cv.setPen(qg.QPen(color, thickness, qc.Qt.SolidLine))
-
-            for i in range(len(self.paths)):
-                self.painter_cv.drawPath(self.paths[i].path)
-
-            for i in range(len(self.paths)):
-                for j in range(len(self.paths[i])):
-                    self.painter_cv.setPen(qg.QPen(color, cv_size, qc.Qt.SolidLine))
-                    self.painter_cv.drawPoint(*self.paths[i][j])
+            # draws lines between direct and manipulation cvs
+            self.draw_cv_lines(qc.Qt.green, 1)
 
         self.ebene_total.fill(qg.QColor(0, 0, 0, 0))  # wird woanders wiederholt/überschrieben?
         self.painter_total.drawPixmap(0, 0, self.ebene_bg)
@@ -166,10 +156,37 @@ class Pane(qw.QLabel):
         self.painter_total.drawPixmap(0, 0, self.ebene_schlitten)
         self.setPixmap(self.ebene_total)
 
-    def draw_cv_points(self, color):
-        #TODO: outdated - can it still be useful?
-        self.painter_cv.setPen(qg.QPen(color, 10, qc.Qt.SolidLine))
-        self.painter_cv.drawPoint(self.cvs[j][i][0], self.cvs[j][i][1])
+    def draw_cv_points(self):
+        """ draws cv points of bezier lines """
+        for i in range(len(self.paths)):
+            if self.paths[i].form == "bezier":
+                for j in range(len(self.paths[i])):
+                    if j%3 == 0:
+                        self.painter_cv.setPen(qg.QPen(qc.Qt.blue, self.paths[i].cv_size, qc.Qt.SolidLine))
+                        self.painter_cv.drawPoint(*self.paths[i][j])
+                    else:
+                        radius = self.paths[i].cv_size/2
+                        self.painter_cv.setPen(qg.QPen(qc.Qt.red, radius, qc.Qt.SolidLine))
+                        self.painter_cv.setBrush(qc.Qt.red)
+                        self.painter_cv.drawEllipse(*(self.paths[i][j]-(radius/2)), radius, radius)
+
+    def draw_cv_lines(self, color, pen_size):
+        """ draws lines between cvs """
+        self.paths.draw_reset()
+        for i in range(len(self.paths)):
+            if self.paths[i].form == "bezier":
+                for j in range(len(self.paths[i])):
+                    # connects 2nd with 1st main cv (1st of 4)
+                    if (j+2) % 3 == 0:
+                        self.paths.draw_moveTo(*self.paths[i][j])
+                        self.paths.draw_lineTo(*self.paths[i][j-1])
+                    # connects 3rd with 4th main cv (4th of 4)
+                    elif (j+1) % 3 == 0 and len(self.paths[i]) > j+1:
+                        self.paths.draw_moveTo(*self.paths[i][j])
+                        self.paths.draw_lineTo(*self.paths[i][j+1])
+        self.painter_cv.setPen(qg.QPen(color, pen_size, qc.Qt.SolidLine))
+        self.painter_cv.drawPath(self.paths.qpath)
+
 
     def bezier_coeffs(self, cv_points, x_y):
         #print("bezier_coeffs")
@@ -452,6 +469,5 @@ class Pane(qw.QLabel):
             self.paths.append(Path(path_type=cm_type))
 
     def change_path_style(self, text):
-        print(type(self.paths[-1]))
         self.paths[-1].changed_style(text)
 
