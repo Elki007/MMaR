@@ -164,32 +164,38 @@ class Pane(qw.QLabel):
             # draws points and lines of bounding box
             self.draw_bounding_box()
 
-        self.ebene_total.fill(qg.QColor(0, 0, 0, 0))  # wird woanders wiederholt/überschrieben?
+        self.fill_layers()
+
+    def fill_layers(self):
+        self.ebene_total.fill(qg.QColor(0, 0, 0, 0))
         self.painter_total.drawPixmap(0, 0, self.ebene_bg)
         self.painter_total.drawPixmap(0, 0, self.ebene_pane)
         self.painter_total.drawPixmap(0, 0, self.ebene_cv)
         self.painter_total.drawPixmap(0, 0, self.ebene_schlitten)
         self.setPixmap(self.ebene_total)
 
-    def draw_cv_points(self, only_active=False):
-        """ draws cv points of bezier lines """
-        for i in range(len(self.paths)):
-            if only_active:
-                if not self.paths[i].active:
-                    continue
+    def draw_cv_points(self, active_one=None):
+        """ draws cv points """
+        if active_one is None:
+            for i in range(len(self.paths)):
+                if self.paths[i].form == "bezier":
+                    self.draw_cv_points_bezier(i)
+        else:
+            self.draw_cv_points_bezier(active_one)
 
-            if self.paths[i].form == "bezier":
-                for j in range(len(self.paths[i])):
-                    # only main cvs will be painted here, others will be painted in 'else'
-                    if j%3 == 0:
-                        self.painter_cv.setPen(qg.QPen(qc.Qt.blue, self.paths[i].cv_size, qc.Qt.SolidLine))
-                        self.painter_cv.drawPoint(*self.paths[i][j])
-                    else:
-                        radius = self.paths[i].cv_size/2
-                        self.painter_cv.setPen(qg.QPen(qc.Qt.red, radius, qc.Qt.SolidLine))
-                        self.painter_cv.setBrush(qc.Qt.red)
-                        self.painter_cv.drawEllipse(*(self.paths[i][j]-(radius/2)), radius, radius)
-                        self.painter_cv.setBrush(qc.Qt.transparent)
+    def draw_cv_points_bezier(self, i):
+        """ draws cv points of bezier """
+        for j in range(len(self.paths[i])):
+            # only main cvs will be painted here, others will be painted in 'else'
+            if j%3 == 0:
+                self.painter_cv.setPen(qg.QPen(qc.Qt.blue, self.paths[i].cv_size, qc.Qt.SolidLine))
+                self.painter_cv.drawPoint(*self.paths[i][j])
+            else:
+                radius = self.paths[i].cv_size/2
+                self.painter_cv.setPen(qg.QPen(qc.Qt.red, radius, qc.Qt.SolidLine))
+                self.painter_cv.setBrush(qc.Qt.red)
+                self.painter_cv.drawEllipse(*(self.paths[i][j]-(radius/2)), radius, radius)
+                self.painter_cv.setBrush(qc.Qt.transparent)
 
     def draw_cv_lines(self, color, pen_size):
         """ draws lines between cvs """
@@ -210,13 +216,14 @@ class Pane(qw.QLabel):
 
     def draw_bounding_box(self):
         self.paths.draw_reset_bounding_box()
-        self.paths[0].bounding_box_refresh()
-        self.painter_cv.setPen(qg.QPen(qc.Qt.white, self.paths[0].cv_size, qc.Qt.SolidLine))
+        for i in range(len(self.paths)):
+            self.paths[i].bounding_box_refresh()
+            self.painter_cv.setPen(qg.QPen(qc.Qt.white, self.paths[i].cv_size, qc.Qt.SolidLine))
 
-        self.paths.draw_moveTo_bounding_box(*self.paths[0].bounding_box[0])
-        for i in range(1, 5):
-            self.painter_cv.drawPoint(*self.paths[0].bounding_box[i % 4])
-            self.paths.draw_lineTo_bounding_box(*self.paths[0].bounding_box[i % 4])
+            self.paths.draw_moveTo_bounding_box(*self.paths[i].bounding_box[0])
+            for j in range(1, 5):
+                self.painter_cv.drawPoint(*self.paths[i].bounding_box[j % 4])
+                self.paths.draw_lineTo_bounding_box(*self.paths[i].bounding_box[j % 4])
 
         self.painter_cv.setPen(qg.QPen(qc.Qt.white, 1, qc.Qt.SolidLine))
         self.painter_cv.drawPath(self.paths.qpath_bounding_box)
@@ -319,16 +326,15 @@ class Pane(qw.QLabel):
         # if left mouse button is clicked
         if event.buttons() == qc.Qt.LeftButton:
             # If you click on a point, change flags, remember path and cv index
-            #TODO: self.paths ist immer mindestens 1 - kann das weg oder ist das Kunst?
-            if len(self.paths) > 0:
-                for index_path, each_path in enumerate(self.paths):
-                    for index_cv, each_cv in enumerate(each_path):
-                        # calculate if the mouse click is on the cv position
-                        if (self.click_x_y <= each_cv + each_path.cv_size).all() and (self.click_x_y >= each_cv - each_path.cv_size).all():
-                            self.move_cv = True
-                            self.moved_path = index_path
-                            self.moved_cv = index_cv
-                            return
+
+            for index_path, each_path in enumerate(self.paths):
+                for index_cv, each_cv in enumerate(each_path):
+                    # calculate if the mouse click is on the cv position
+                    if (self.click_x_y <= each_cv + each_path.cv_size).all() and (self.click_x_y >= each_cv - each_path.cv_size).all():
+                        self.move_cv = True
+                        self.moved_path = index_path
+                        self.moved_cv = index_cv
+                        return
             # If not a point, set a point
             self.paths[-1].append_cvs(self.click_x_y)
 
