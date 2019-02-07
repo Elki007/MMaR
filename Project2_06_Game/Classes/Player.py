@@ -152,7 +152,7 @@ class Player:
         x1, y1 = self.x, self.y
         x2, y2 = self.x + self.vector.x, self.y + self.vector.y
 
-        four_points = self.pane.current_cv
+        four_points = self.pane.paths[-1]
 
         X = [False,False]
         # create line equation as Ax+By+c=0

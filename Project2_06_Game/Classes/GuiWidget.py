@@ -186,7 +186,7 @@ class GuiWidget(qw.QWidget):
     # functions for path color/function
     def on_click_type(self):
         text = self.cm_type.currentText()
-        self.pane.current_path.changed_style(text)
+        self.pane.change_path_style(text)
         self.pane.plot()
         self.pane.update()
 
