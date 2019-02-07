@@ -149,11 +149,20 @@ class Pane(qw.QLabel):
 
         # if CV and lines in between shall be displayed
         if self.showCV:
-            # draws points of cvs
-            self.draw_cv_points()
 
             # draws lines between direct and manipulation cvs
             self.draw_cv_lines(qc.Qt.green, 1)
+
+            # draws points of cvs
+            self.draw_cv_points()
+
+        if self.editMode:
+            # draws lines between direct and manipulation cvs
+            self.draw_cv_lines(qc.Qt.green, 1)
+            # draws points of cvs
+            self.draw_cv_points()
+            # draws points and lines of bounding box
+            self.draw_bounding_box()
 
         self.ebene_total.fill(qg.QColor(0, 0, 0, 0))  # wird woanders wiederholt/überschrieben?
         self.painter_total.drawPixmap(0, 0, self.ebene_bg)
@@ -162,11 +171,16 @@ class Pane(qw.QLabel):
         self.painter_total.drawPixmap(0, 0, self.ebene_schlitten)
         self.setPixmap(self.ebene_total)
 
-    def draw_cv_points(self):
+    def draw_cv_points(self, only_active=False):
         """ draws cv points of bezier lines """
         for i in range(len(self.paths)):
+            if only_active:
+                if not self.paths[i].active:
+                    continue
+
             if self.paths[i].form == "bezier":
                 for j in range(len(self.paths[i])):
+                    # only main cvs will be painted here, others will be painted in 'else'
                     if j%3 == 0:
                         self.painter_cv.setPen(qg.QPen(qc.Qt.blue, self.paths[i].cv_size, qc.Qt.SolidLine))
                         self.painter_cv.drawPoint(*self.paths[i][j])
@@ -175,6 +189,7 @@ class Pane(qw.QLabel):
                         self.painter_cv.setPen(qg.QPen(qc.Qt.red, radius, qc.Qt.SolidLine))
                         self.painter_cv.setBrush(qc.Qt.red)
                         self.painter_cv.drawEllipse(*(self.paths[i][j]-(radius/2)), radius, radius)
+                        self.painter_cv.setBrush(qc.Qt.transparent)
 
     def draw_cv_lines(self, color, pen_size):
         """ draws lines between cvs """
@@ -193,6 +208,18 @@ class Pane(qw.QLabel):
         self.painter_cv.setPen(qg.QPen(color, pen_size, qc.Qt.SolidLine))
         self.painter_cv.drawPath(self.paths.qpath)
 
+    def draw_bounding_box(self):
+        self.paths.draw_reset_bounding_box()
+        self.paths[0].bounding_box_refresh()
+        self.painter_cv.setPen(qg.QPen(qc.Qt.white, self.paths[0].cv_size, qc.Qt.SolidLine))
+
+        self.paths.draw_moveTo_bounding_box(*self.paths[0].bounding_box[0])
+        for i in range(1, 5):
+            self.painter_cv.drawPoint(*self.paths[0].bounding_box[i % 4])
+            self.paths.draw_lineTo_bounding_box(*self.paths[0].bounding_box[i % 4])
+
+        self.painter_cv.setPen(qg.QPen(qc.Qt.white, 1, qc.Qt.SolidLine))
+        self.painter_cv.drawPath(self.paths.qpath_bounding_box)
 
     def bezier_coeffs(self, cv_points, x_y):
         #print("bezier_coeffs")
@@ -303,7 +330,7 @@ class Pane(qw.QLabel):
                             self.moved_cv = index_cv
                             return
             # If not a point, set a point
-            self.paths[-1].append(self.click_x_y)
+            self.paths[-1].append_cvs(self.click_x_y)
 
         self.plot()
         self.update()
@@ -351,7 +378,7 @@ class Pane(qw.QLabel):
                 self.click_x_y = tmp_x_y
             # change both if both buttons are pressed (if there is a last cv)
             elif (event.buttons() & qc.Qt.LeftButton) and (event.buttons() & qc.Qt.RightButton):
-                self.paths[-1].append(self.click_x_y)
+                self.paths[-1].append_cvs(self.click_x_y)
 
                 self.move_cv = True
 

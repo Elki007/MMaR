@@ -10,7 +10,8 @@ import PyQt5.QtGui as qg
 class GroupOfPaths:
     def __init__(self, qpath=qg.QPainterPath(), path_type="normal", cv_size=10):
         self.list_of_paths = [Path(path_type, cv_size)]
-        self.qpath=qpath  # QPainter.Path
+        self.qpath = qg.QPainterPath()  # QPainter.Path
+        self.qpath_bounding_box = qg.QPainterPath()
 
     def __len__(self):
         """ Length of GroupOfPaths is amount of Path Elements """
@@ -50,6 +51,15 @@ class GroupOfPaths:
     def draw_lineTo(self, np_point_x, np_point_y):
         self.qpath.lineTo(np_point_x, np_point_y)
 
+    def draw_reset_bounding_box(self):
+        self.qpath_bounding_box = qg.QPainterPath()
+
+    def draw_moveTo_bounding_box(self, np_point_x, np_point_y):
+        self.qpath_bounding_box.moveTo(np_point_x, np_point_y)
+
+    def draw_lineTo_bounding_box(self, np_point_x, np_point_y):
+        self.qpath_bounding_box.lineTo(np_point_x, np_point_y)
+
 
 class Path:
     def __init__(self, path_type="normal", cv_size=10):
@@ -66,6 +76,7 @@ class Path:
         self.changed_style(path_type)  # what was the previous color
         self.thickness = 1
         self.form = "bezier"  # not implemented yet -> "bezier", "circle", "line"
+        self.bounding_box = self.bounding_box_initialize()
 
         self.cvs = np.array([]).reshape(0, 2)  # control points
         self.cv_size = cv_size  # unterschiedliche Punkte, unterschiedliche Größe?
@@ -81,6 +92,9 @@ class Path:
         elif text == "ignore":
             self.color = qc.Qt.green
 
+    def is_active(self):
+        return self.active
+
     def __str__(self):
         return f"{self.cvs}"
 
@@ -94,15 +108,30 @@ class Path:
     def __setitem__(self, key, value):
         self.cvs[key] = value
 
-    def append(self, new_cv):
+    def append_cvs(self, new_cv):
         self.cvs = np.r_[self.cvs, [new_cv]]
+        self.bounding_box_refresh()
 
     def __iadd__(self, value):
         """ add value to self.cvs """
         self.cvs = self.cvs + value
+        self.bounding_box_refresh()
         return self
 
     def __isub__(self, value):
         """ sub value from self.cvs """
         self.cvs = self.cvs - value
+        self.bounding_box_refresh()
         return self
+
+    @staticmethod
+    def bounding_box_initialize():
+        return np.zeros((4, 2))
+
+    def bounding_box_refresh(self):
+        min, max = np.amin(self.cvs, 0), np.amax(self.cvs, 0)
+
+        self.bounding_box = np.r_[min[0], min[1], max[0], min[1],
+                                  max[0], max[1], min[0], max[1]].reshape(4, 2)
+
+

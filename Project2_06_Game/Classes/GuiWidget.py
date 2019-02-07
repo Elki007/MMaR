@@ -97,7 +97,7 @@ class GuiWidget(qw.QWidget):
         self.b_show_cv.clicked.connect(lambda: self.on_click_show_cv(self.b_show_cv.checkState()))
         self.b_show_cv.setChecked(True)
 
-        # enters the edit mode
+        # enters the edit mode and disable show_cv
         self.b_edit_mode = qw.QCheckBox('Edit Mode', self)
         self.b_edit_mode.clicked.connect(lambda: self.on_click_edit_mode(self.b_edit_mode.checkState()))
         self.b_edit_mode.setChecked(False)
@@ -183,6 +183,13 @@ class GuiWidget(qw.QWidget):
     def on_click_edit_mode(self, value):
         """ value = True or False """
         self.pane.edit_mode(value)
+        if value:
+            self.on_click_show_cv(False)
+            self.b_show_cv.setDisabled(True)
+        else:
+            self.b_show_cv.setDisabled(False)
+            self.on_click_show_cv(self.b_show_cv.checkState())
+
 
     def on_click_move_to_center(self):
         """ to move everything back to the start position """
