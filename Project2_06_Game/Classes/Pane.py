@@ -241,10 +241,10 @@ class Pane(qw.QLabel):
         self.paths[index].bounding_box_refresh()
         self.painter_cv.setPen(qg.QPen(qc.Qt.white, self.paths[index].cv_size, qc.Qt.SolidLine))
 
-        self.paths.draw_moveTo_bounding_box(*self.paths[index].bounding_box[0])
-        for j in range(1, 5):
-            self.painter_cv.drawPoint(*self.paths[index].bounding_box[j % 4])
-            self.paths.draw_lineTo_bounding_box(*self.paths[index].bounding_box[j % 4])
+        self.paths.draw_moveTo_bounding_box(*self.paths[index].bounding_box[3])
+        for j in range(4):
+            self.painter_cv.drawPoint(*self.paths[index].bounding_box[j])
+            self.paths.draw_lineTo_bounding_box(*self.paths[index].bounding_box[j])
 
     def bezier_coeffs(self, cv_points, x_y):
         #print("bezier_coeffs")
@@ -363,18 +363,18 @@ class Pane(qw.QLabel):
         """ find nearest path with ckdtree (from scipy) and return its index """
         #TODO: Generalisieren, damit mit jedem beliebigen Punkt der naheliegendste Path gefunden wird
         path_index = [None]
-        for i in range(len(self.paths)):
-
-            tmp_tree = cKDTree(self.paths[i].plotted_points)
-            dist, index = tmp_tree.query(self.click_x_y)
-            if path_index == [None]:
-                path_index = [i, dist, index]
-            else:
-                if dist < path_index[1]:
+        if not self.paths.isempty():
+            for i in range(len(self.paths)):
+                tmp_tree = cKDTree(self.paths[i].plotted_points)
+                dist, index = tmp_tree.query(self.click_x_y)
+                if path_index == [None]:
                     path_index = [i, dist, index]
+                else:
+                    if dist < path_index[1]:
+                        path_index = [i, dist, index]
 
-        if path_index != [None]:
-            self.paths.activates_path(path_index[0])
+            if path_index != [None]:
+                self.paths.activates_path(path_index[0])
 
     def set_new_cv(self, active_path=False):
         if active_path:
