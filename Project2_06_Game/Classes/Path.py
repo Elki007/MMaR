@@ -12,6 +12,7 @@ class GroupOfPaths:
         self.list_of_paths = [Path(path_type, cv_size)]
         self.qpath = qg.QPainterPath()  # QPainter.Path
         self.qpath_bounding_box = qg.QPainterPath()
+        self.active_path = None
 
     def __len__(self):
         """ Length of GroupOfPaths is amount of Path Elements """
@@ -42,6 +43,9 @@ class GroupOfPaths:
         if len(self[index_path]) == 0 and not len(self) == 1:
             self.pop(index_path)
 
+    def activates_path(self, index):
+        self.active_path = index
+
     def draw_reset(self):
         self.qpath = qg.QPainterPath()
 
@@ -70,13 +74,14 @@ class Path:
         # - Schnittpunkt der Kollision
         # - Anstieg am Schnittpunkt
         #
-        self.active = False  # is it a chosen path for edit mode?
         self.path_type = path_type  # normal, fast, slow?
         self.color = qc.Qt.cyan
         self.changed_style(path_type)  # what was the previous color
         self.thickness = 1
         self.form = "bezier"  # not implemented yet -> "bezier", "circle", "line"
         self.bounding_box = self.bounding_box_initialize()
+
+        self.plotted_points = np.ndarray([])
 
         self.cvs = np.array([]).reshape(0, 2)  # control points
         self.cv_size = cv_size  # unterschiedliche Punkte, unterschiedliche Größe?
@@ -91,9 +96,6 @@ class Path:
             self.color = qc.Qt.gray
         elif text == "ignore":
             self.color = qc.Qt.green
-
-    def is_active(self):
-        return self.active
 
     def __str__(self):
         return f"{self.cvs}"

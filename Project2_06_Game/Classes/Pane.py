@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.interpolate as si
 import sys
+from scipy.spatial import cKDTree
 
 import PyQt5.QtWidgets as qw
 import PyQt5.QtCore as qc
@@ -149,7 +150,7 @@ class Pane(qw.QLabel):
 
         # if CV and lines in between shall be displayed
         if self.showCV:
-
+            # TODO: Hier self.paths[self.paths.active_path] den Funktionen übergeben
             # draws lines between direct and manipulation cvs
             self.draw_cv_lines(qc.Qt.green, 1)
 
@@ -215,6 +216,7 @@ class Pane(qw.QLabel):
         self.painter_cv.drawPath(self.paths.qpath)
 
     def draw_bounding_box(self):
+        """ draws a bounding box """
         self.paths.draw_reset_bounding_box()
         for i in range(len(self.paths)):
             self.paths[i].bounding_box_refresh()
@@ -264,8 +266,10 @@ class Pane(qw.QLabel):
             # returns np.array of one cubic bezier curve (of 4 given points)
             # f(t):=(1−t)^3 * K1 + 3*(1−t)^2 * t * K2 + 3*(1−t)*t^2 * K3 + t^3 * K4 mit t->[0,1]
             t = np.linspace(0, 1, n)
-            return (1-t)**3 * four_points[0][x_y] + 3*(1-t)**2 * t * four_points[1][x_y] + \
-                   3*(1-t)*t**2 * four_points[2][x_y] + t**3 * four_points[3][x_y]
+            return (1-t)**3 * four_points[0][x_y] + \
+                   3*(1-t)**2 * t * four_points[1][x_y] + \
+                   3*(1-t)*t**2 * four_points[2][x_y] + \
+                   t**3 * four_points[3][x_y]
 
         def bezier(cv_points, n=50):
             """ calculates cubic bezier curves """
@@ -281,26 +285,26 @@ class Pane(qw.QLabel):
                     x_coords = np.append(x_coords, bezier_func(cv_points[i:i+4], 0, n))
                     y_coords = np.append(y_coords, bezier_func(cv_points[i:i+4], 1, n))
 
-            return x_coords, y_coords
+            return np.stack((x_coords, y_coords), 1)
 
-        def draw_bezier_path(cv_points, color):
+        def draw_bezier_path(path, color):
             """ calculates points (with bezier()) to draw lines between them """
-            x, y = bezier(cv_points)
-            path = qg.QPainterPath()
+            path.plotted_points = bezier(path.cvs)
+            qpath = qg.QPainterPath()
 
-            if len(x) > 0:
-                path.moveTo(x[0], y[0])  # start point
-                for j in range(len(x)):
-                    self.track.append([x[j], y[j]])
-                    path.lineTo(x[j], y[j])
+            if len(path.plotted_points) > 0:
+                qpath.moveTo(*(path.plotted_points[0]))  # start point
+                for j in range(len(path.plotted_points)):
+                    self.track.append([*path.plotted_points[j]])
+                    qpath.lineTo(*path.plotted_points[j])
 
                 self.painter_pane.setPen(qg.QPen(color, 3, qc.Qt.SolidLine))
-                self.painter_pane.drawPath(path)
+                self.painter_pane.drawPath(qpath)
 
         self.track = []
 
         for i in range(len(self.paths)):
-            draw_bezier_path(self.paths[i].cvs, self.paths[i].color)
+            draw_bezier_path(self.paths[i], self.paths[i].color)
 
     def draw_path_between_cv(self):
         #TODO: outdated
@@ -325,21 +329,46 @@ class Pane(qw.QLabel):
 
         # if left mouse button is clicked
         if event.buttons() == qc.Qt.LeftButton:
-            # If you click on a point, change flags, remember path and cv index
-
-            for index_path, each_path in enumerate(self.paths):
-                for index_cv, each_cv in enumerate(each_path):
-                    # calculate if the mouse click is on the cv position
-                    if (self.click_x_y <= each_cv + each_path.cv_size).all() and (self.click_x_y >= each_cv - each_path.cv_size).all():
-                        self.move_cv = True
-                        self.moved_path = index_path
-                        self.moved_cv = index_cv
-                        return
-            # If not a point, set a point
-            self.paths[-1].append_cvs(self.click_x_y)
+            if self.editMode:
+                self.activate_nearest_path()
+            else:
+                # check if your click was on a cv
+                if not self.find_clicked_point():
+                    # If not a point, set a point to latest path
+                    self.set_new_cv()
 
         self.plot()
         self.update()
+
+    def activate_nearest_path(self):
+        """ find nearest path with ckdtree (from scipy) """
+        path_index = [None]
+        for i in range(len(self.paths)):
+            tmp_tree = cKDTree(self.paths[i].plotted_points)
+            dist, index = tmp_tree.query(self.click_x_y)
+            if path_index == [None]:
+                path_index = [i, dist, index]
+            else:
+                if dist < path_index[1]:
+                    path_index = [i, dist, index]
+
+        if path_index != [None]:
+            self.paths.activates_path(path_index[0])
+
+
+    def set_new_cv(self):
+        self.paths[-1].append_cvs(self.click_x_y)
+
+    def find_clicked_point(self):
+        # check if you click on a cv -> if yes -> self.move_cv activated
+        for index_path, each_path in enumerate(self.paths):
+            for index_cv, each_cv in enumerate(each_path):
+                # calculate if the mouse click is on the cv position
+                if (self.click_x_y <= each_cv + each_path.cv_size).all() and (self.click_x_y >= each_cv - each_path.cv_size).all():
+                    self.move_cv = True
+                    self.moved_path = index_path
+                    self.moved_cv = index_cv
+                    return True
 
     def mouseReleaseEvent(self, event):
         """ if left button is released, set some flags """
