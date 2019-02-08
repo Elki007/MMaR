@@ -346,9 +346,10 @@ class Pane(qw.QLabel):
         # if left mouse button is clicked
         if event.buttons() == qc.Qt.LeftButton:
             if self.editMode:
-                #TODO: Nicht hier activate -> nur einmal
-                #self.activate_nearest_path()
-                pass
+                # check if your click was on a cv of active path
+                if not self.find_clicked_point(active_path=True):
+                    # If not an active point, set a point to active path
+                    self.set_new_cv(active_path=True)
             else:
                 # check if your click was on a cv
                 if not self.find_clicked_point():
@@ -375,19 +376,33 @@ class Pane(qw.QLabel):
         if path_index != [None]:
             self.paths.activates_path(path_index[0])
 
-    def set_new_cv(self):
-        self.paths[-1].append_cvs(self.click_x_y)
+    def set_new_cv(self, active_path=False):
+        if active_path:
+            index = 0 if self.paths.active_path is None else self.paths.active_path
+            self.paths[index].append_cvs(self.click_x_y)
+        else:
+            self.paths[-1].append_cvs(self.click_x_y)
 
-    def find_clicked_point(self):
-        # check if you click on a cv -> if yes -> self.move_cv activated
-        for index_path, each_path in enumerate(self.paths):
-            for index_cv, each_cv in enumerate(each_path):
+    def find_clicked_point(self, active_path=False):
+        if active_path:
+            index = 0 if self.paths.active_path is None else self.paths.active_path
+            for index_cv, each_cv in enumerate(self.paths[index]):
                 # calculate if the mouse click is on the cv position
-                if (self.click_x_y <= each_cv + each_path.cv_size).all() and (self.click_x_y >= each_cv - each_path.cv_size).all():
+                if (self.click_x_y <= each_cv + self.paths[index].cv_size).all() and (self.click_x_y >= each_cv - self.paths[index].cv_size).all():
                     self.move_cv = True
-                    self.moved_path = index_path
+                    self.moved_path = index
                     self.moved_cv = index_cv
                     return True
+        else:
+            # check if you click on a cv -> if yes -> self.move_cv activated
+            for index_path, each_path in enumerate(self.paths):
+                for index_cv, each_cv in enumerate(each_path):
+                    # calculate if the mouse click is on the cv position
+                    if (self.click_x_y <= each_cv + each_path.cv_size).all() and (self.click_x_y >= each_cv - each_path.cv_size).all():
+                        self.move_cv = True
+                        self.moved_path = index_path
+                        self.moved_cv = index_cv
+                        return True
 
     def mouseReleaseEvent(self, event):
         """ if left button is released, set some flags """
@@ -421,15 +436,22 @@ class Pane(qw.QLabel):
         # if click began somewhere else than a cv
         else:
             # TODO: BUG: Wenn neuer Punkt erstellt & gehalten wird und die rechte Maustaste hinzukommt
+
+            index = -1 if self.paths.active_path is None else self.paths.active_path
+
             # left mouse button on hold: change last placed cv if there is one
-            # TODO: Might be a problem: how to declare active path?
-            if event.buttons() == qc.Qt.LeftButton and len(self.paths[-1]) > 0:
-                self.move_last_cv(tmp_x_y)
+            if event.buttons() == qc.Qt.LeftButton and len(self.paths[index]) > 0:
+                self.move_last_cv(tmp_x_y, index)
+
             # right mouse button on hold: change position of everything
             elif event.buttons() == qc.Qt.RightButton:
-                self.track_movement += tmp_x_y - self.click_x_y
-                self.move_everything(tmp_x_y)
-                self.click_x_y = tmp_x_y
+                if self.editMode:
+                    self.move_specific_path(tmp_x_y, index)
+                    self.click_x_y = tmp_x_y
+                else:
+                    self.track_movement += tmp_x_y - self.click_x_y
+                    self.move_everything(tmp_x_y)
+                    self.click_x_y = tmp_x_y
             # change both if both buttons are pressed (if there is a last cv)
             elif (event.buttons() & qc.Qt.LeftButton) and (event.buttons() & qc.Qt.RightButton):
                 self.paths[-1].append_cvs(self.click_x_y)
@@ -510,20 +532,20 @@ class Pane(qw.QLabel):
             else:
                 cv_list[i] = reference_point + tmp_vector / (1 + zoom_factor)
 
-    def move_specific_path(self):
+    def move_specific_path(self, tmp_x_y, index):
         """ moves a specific chosen path """
-        # TODO: tbd
-        pass
+        self.paths[index] += tmp_x_y - self.click_x_y  # if it exist, change pos of all cv_paths
 
-    def move_last_cv(self, tmp_x_y):
-        """ moves the most recent cv """
-        self.paths[-1][-1] = tmp_x_y  # change last cv of last cv_path
+    def move_last_cv(self, tmp_x_y, index):
+        """ moves the most recent cv of given path[index] """
+        self.paths[index][-1] = tmp_x_y  # change last cv of last cv_path
 
     def move_everything(self, tmp_x_y):
-        """ moves every cv of every path """
-        if len(self.paths) != 0:
-            for i in range(len(self.paths)):
-                self.paths[i] += tmp_x_y - self.click_x_y  # if it exist, change pos of all cv_paths
+        """ moves every cv of a specific or any path """
+        for i in range(len(self.paths)):
+            self.paths[i] += tmp_x_y - self.click_x_y  # if it exist, change pos of all cv_paths
+
+
 
     def move_to_center(self):
         """ Move everything to center (depends on self.track_movement and self.track_zoom """
