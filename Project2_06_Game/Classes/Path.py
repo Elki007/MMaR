@@ -141,11 +141,8 @@ class GroupOfPaths:
         return [[each.path_type, each.thickness, each.form, each.cvs, each.cv_size] for each in self.list_of_paths]
 
     def isempty(self):
-        print(self)
-        print(self.qpath)
-        print(len(self.qpath))
-        if len(self) == 1 and len(self.list_of_paths[0]) == 0:
+        if len(self) == 1 and len(self[0].plotted_points) == 0:
             return True
-        return False
-
+        else:
+            return False
 
