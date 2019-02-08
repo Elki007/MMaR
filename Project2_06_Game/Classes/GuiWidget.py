@@ -190,7 +190,6 @@ class GuiWidget(qw.QWidget):
             self.b_show_cv.setDisabled(False)
             self.on_click_show_cv(self.b_show_cv.checkState())
 
-
     def on_click_move_to_center(self):
         """ to move everything back to the start position """
         self.pane.move_to_center()
@@ -269,63 +268,17 @@ class GuiWidget(qw.QWidget):
         #self.game_loop()
 
     def on_click_save(self):
-        np.save('current_cv.npy', self.pane.current_cv)  # .npy extension is added if not given
-        np.save('cvs.npy', self.pane.cvs)
-        colors = []
-        for i in range(len(self.pane.paths)):
-            colors.append(self.pane.paths[i].color)
-            print(self.pane.paths[i].color)
-
-        with open('colors.txt', 'w') as filehandle:
-            json.dump(colors, filehandle)
+        """ Saves all paths """
+        save_paths = self.pane.save_all_paths()
+        np.save('something.npy', save_paths)
 
     def on_click_load(self):
-        self.pane.track = []
-        self.pane.current_cv = np.load('current_cv.npy')
+        """ Load all saved paths """
+        # TODO: Nur paths updated, bspw. self.pane.track fehlt
+        # self.pane.track = []  # not reimplemented
 
-
-        path = qg.QPainterPath()
-        path.moveTo(self.pane.current_cv[0][0], self.pane.current_cv[0][1])
-        for j in range(len(self.pane.current_cv)):
-            x, y = self.pane.current_cv[j][0], self.pane.current_cv[j][1]
-            self.pane.track.append([x, y])
-            path.lineTo(x, y)
-        self.pane.current_path = Path(path,"normal")
-
-        temp = np.load('cvs.npy')
-        self.pane.cvs = []
-        for i in range(len(temp)):
-            self.pane.cvs.append(temp[i])
-
-        colors = []
-        with open('colors.txt', 'r') as filehandle:
-            colors = json.load(filehandle)
-
-
-        for n in range(len(self.pane.cvs)):
-            path = qg.QPainterPath()
-            type = 5
-            if colors[n] == 10:
-                type = "normal"
-            elif colors[n] == 13:
-                type = "speed up"
-            elif colors[n] == 5:
-                type = "slow down"
-
-            path.moveTo(self.pane.cvs[n][0][0], self.pane.cvs[n][0][1])
-            for j in range(len(self.pane.cvs[n])):
-                x, y = self.pane.cvs[n][j][0], self.pane.cvs[n][j][1]
-                self.pane.track.append([x, y])
-                path.lineTo(x, y)
-            self.pane.paths.append(Path(path,type))
-
-
-        print(self.pane.cvs, " \n len: ",len(self.pane.cvs))
-
-        self.pane.update()
-        self.pane.plot()
-        self.pane.update()
-        #self.pane.update()
+        load_paths = np.load('something.npy')
+        self.pane.load_all_paths(load_paths)
 
     def update_gui(self):
         self.b_show_tracking_position.setText(self.pane.display_tracking("position"))

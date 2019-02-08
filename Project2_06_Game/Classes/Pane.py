@@ -113,9 +113,7 @@ class Pane(qw.QLabel):
         self.end_all_painters()
         self.fill_all_default()
         self.set_all_painters()
-
-        self.paths = GroupOfPaths()
-
+        self.paths = GroupOfPaths(path=Path())  # TODO: Why [Interessant]: Wenn path=Path() weggelassen wird: Alter Path wird neu referenziert
         self.update()
 
     def undo(self):
@@ -131,6 +129,8 @@ class Pane(qw.QLabel):
 
     def edit_mode(self, value):
         self.editMode = value
+        if self.editMode == False:
+            self.paths.active_path = None
         self.update()
 
     def update_game(self):
@@ -145,25 +145,27 @@ class Pane(qw.QLabel):
 
     def update(self):
         """ draws everything (cv optional) """
+        #TODO: Unterscheidung zwischen update_calculate und upadate? (Um plot dazwischenzulegen)
 
         self.ebene_cv.fill(qg.QColor(0, 0, 0, 0))
 
         # if CV and lines in between shall be displayed
         if self.showCV:
-            # TODO: Hier self.paths[self.paths.active_path] den Funktionen übergeben
             # draws lines between direct and manipulation cvs
             self.draw_cv_lines(qc.Qt.green, 1)
 
             # draws points of cvs
             self.draw_cv_points()
 
-        if self.editMode:
+        if self.editMode and self.paths.active_path is not None:
+            active_index = self.paths.active_path
+
             # draws lines between direct and manipulation cvs
-            self.draw_cv_lines(qc.Qt.green, 1)
+            self.draw_cv_lines(qc.Qt.green, 1, active_index)
             # draws points of cvs
-            self.draw_cv_points()
+            self.draw_cv_points(active_index)
             # draws points and lines of bounding box
-            self.draw_bounding_box()
+            self.draw_bounding_box(active_index)
 
         self.fill_layers()
 
@@ -175,60 +177,74 @@ class Pane(qw.QLabel):
         self.painter_total.drawPixmap(0, 0, self.ebene_schlitten)
         self.setPixmap(self.ebene_total)
 
-    def draw_cv_points(self, active_one=None):
+    def draw_cv_lines(self, color, pen_size, active_index=None):
+        """ draws lines between cvs """
+        self.paths.draw_reset()
+        if active_index is None:
+            for i in range(len(self.paths)):
+                if self.paths[i].form == "bezier":
+                    self.draw_cv_lines_bezier(i)
+        else:
+            if self.paths[active_index].form == "bezier":
+                self.draw_cv_lines_bezier(active_index)
+        self.painter_cv.setPen(qg.QPen(color, pen_size, qc.Qt.SolidLine))
+        self.painter_cv.drawPath(self.paths.qpath)
+
+    def draw_cv_lines_bezier(self, index):
+        """ draws cv lines of bezier type """
+        for j in range(len(self.paths[index])):
+            # connects 2nd with 1st main cv (1st of 4)
+            if (j + 2) % 3 == 0:
+                self.paths.draw_moveTo(*self.paths[index][j])
+                self.paths.draw_lineTo(*self.paths[index][j - 1])
+            # connects 3rd with 4th main cv (4th of 4)
+            elif (j + 1) % 3 == 0 and len(self.paths[index]) > j + 1:
+                self.paths.draw_moveTo(*self.paths[index][j])
+                self.paths.draw_lineTo(*self.paths[index][j + 1])
+
+    def draw_cv_points(self, active_index=None):
         """ draws cv points """
-        if active_one is None:
+        if active_index is None:
             for i in range(len(self.paths)):
                 if self.paths[i].form == "bezier":
                     self.draw_cv_points_bezier(i)
         else:
-            self.draw_cv_points_bezier(active_one)
+            self.draw_cv_points_bezier(active_index)
 
-    def draw_cv_points_bezier(self, i):
+    def draw_cv_points_bezier(self, index):
         """ draws cv points of bezier """
-        for j in range(len(self.paths[i])):
+        for j in range(len(self.paths[index])):
             # only main cvs will be painted here, others will be painted in 'else'
             if j%3 == 0:
-                self.painter_cv.setPen(qg.QPen(qc.Qt.blue, self.paths[i].cv_size, qc.Qt.SolidLine))
-                self.painter_cv.drawPoint(*self.paths[i][j])
+                self.painter_cv.setPen(qg.QPen(qc.Qt.blue, self.paths[index].cv_size, qc.Qt.SolidLine))
+                self.painter_cv.drawPoint(*self.paths[index][j])
             else:
-                radius = self.paths[i].cv_size/2
+                radius = self.paths[index].cv_size/2
                 self.painter_cv.setPen(qg.QPen(qc.Qt.red, radius, qc.Qt.SolidLine))
                 self.painter_cv.setBrush(qc.Qt.red)
-                self.painter_cv.drawEllipse(*(self.paths[i][j]-(radius/2)), radius, radius)
+                self.painter_cv.drawEllipse(*(self.paths[index][j]-(radius/2)), radius, radius)
                 self.painter_cv.setBrush(qc.Qt.transparent)
 
-    def draw_cv_lines(self, color, pen_size):
-        """ draws lines between cvs """
-        self.paths.draw_reset()
-        for i in range(len(self.paths)):
-            if self.paths[i].form == "bezier":
-                for j in range(len(self.paths[i])):
-                    # connects 2nd with 1st main cv (1st of 4)
-                    if (j+2) % 3 == 0:
-                        self.paths.draw_moveTo(*self.paths[i][j])
-                        self.paths.draw_lineTo(*self.paths[i][j-1])
-                    # connects 3rd with 4th main cv (4th of 4)
-                    elif (j+1) % 3 == 0 and len(self.paths[i]) > j+1:
-                        self.paths.draw_moveTo(*self.paths[i][j])
-                        self.paths.draw_lineTo(*self.paths[i][j+1])
-        self.painter_cv.setPen(qg.QPen(color, pen_size, qc.Qt.SolidLine))
-        self.painter_cv.drawPath(self.paths.qpath)
-
-    def draw_bounding_box(self):
+    def draw_bounding_box(self, active_index=None):
         """ draws a bounding box """
         self.paths.draw_reset_bounding_box()
-        for i in range(len(self.paths)):
-            self.paths[i].bounding_box_refresh()
-            self.painter_cv.setPen(qg.QPen(qc.Qt.white, self.paths[i].cv_size, qc.Qt.SolidLine))
-
-            self.paths.draw_moveTo_bounding_box(*self.paths[i].bounding_box[0])
-            for j in range(1, 5):
-                self.painter_cv.drawPoint(*self.paths[i].bounding_box[j % 4])
-                self.paths.draw_lineTo_bounding_box(*self.paths[i].bounding_box[j % 4])
+        if active_index is None:
+            for i in range(len(self.paths)):
+                self.draw_bounding_box_single(i)
+        else:
+            self.draw_bounding_box_single(active_index)
 
         self.painter_cv.setPen(qg.QPen(qc.Qt.white, 1, qc.Qt.SolidLine))
         self.painter_cv.drawPath(self.paths.qpath_bounding_box)
+
+    def draw_bounding_box_single(self, index):
+        self.paths[index].bounding_box_refresh()
+        self.painter_cv.setPen(qg.QPen(qc.Qt.white, self.paths[index].cv_size, qc.Qt.SolidLine))
+
+        self.paths.draw_moveTo_bounding_box(*self.paths[index].bounding_box[0])
+        for j in range(1, 5):
+            self.painter_cv.drawPoint(*self.paths[index].bounding_box[j % 4])
+            self.paths.draw_lineTo_bounding_box(*self.paths[index].bounding_box[j % 4])
 
     def bezier_coeffs(self, cv_points, x_y):
         #print("bezier_coeffs")
@@ -330,7 +346,9 @@ class Pane(qw.QLabel):
         # if left mouse button is clicked
         if event.buttons() == qc.Qt.LeftButton:
             if self.editMode:
-                self.activate_nearest_path()
+                #TODO: Nicht hier activate -> nur einmal
+                #self.activate_nearest_path()
+                pass
             else:
                 # check if your click was on a cv
                 if not self.find_clicked_point():
@@ -341,9 +359,11 @@ class Pane(qw.QLabel):
         self.update()
 
     def activate_nearest_path(self):
-        """ find nearest path with ckdtree (from scipy) """
+        """ find nearest path with ckdtree (from scipy) and return its index """
+        #TODO: Generalisieren, damit mit jedem beliebigen Punkt der naheliegendste Path gefunden wird
         path_index = [None]
         for i in range(len(self.paths)):
+
             tmp_tree = cKDTree(self.paths[i].plotted_points)
             dist, index = tmp_tree.query(self.click_x_y)
             if path_index == [None]:
@@ -354,7 +374,6 @@ class Pane(qw.QLabel):
 
         if path_index != [None]:
             self.paths.activates_path(path_index[0])
-
 
     def set_new_cv(self):
         self.paths[-1].append_cvs(self.click_x_y)
@@ -429,6 +448,12 @@ class Pane(qw.QLabel):
         """ delete through double click - only one at once """
         # Shouldn't it be the newest one of the old ones? -> old ones count from behind (len-index)
         point_found = False
+
+        # if left mouse button is double clicked
+        if event.buttons() == qc.Qt.LeftButton:
+            if self.editMode:
+                #TODO: Nicht hier activate -> nur einmal
+                self.activate_nearest_path()
 
         if len(self.paths) > 0 and not point_found:
             for index_path, each_path in enumerate(self.paths):
@@ -539,3 +564,12 @@ class Pane(qw.QLabel):
     def change_path_style(self, text):
         self.paths[-1].changed_style(text)
 
+    def save_all_paths(self):
+        return self.paths.save_all_paths()
+
+    def load_all_paths(self, all_paths):
+        self.paths = GroupOfPaths(path=Path(*all_paths[0]))
+        for i in range(1, len(all_paths)):
+            self.paths.append(Path(*all_paths[i]))
+        self.plot()
+        self.update()
