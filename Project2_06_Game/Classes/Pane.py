@@ -1,7 +1,9 @@
 import numpy as np
 import scipy.interpolate as si
 import sys
-from scipy.spatial import cKDTree
+import math
+from scipy.spatial import cKDTree, distance
+from scipy.ndimage import interpolation
 
 import PyQt5.QtWidgets as qw
 import PyQt5.QtCore as qc
@@ -63,6 +65,10 @@ class Pane(qw.QLabel):
         self.move_cv = False  # is a cv moved by mouse?
         self.moved_path = None
         self.moved_cv = None
+
+        # variables for drag and drops of bounding box
+        self.move_bbox = False
+        self.moved_bbox_point = None
 
         # variables for zoom
         self.zoom = 0
@@ -238,7 +244,7 @@ class Pane(qw.QLabel):
         self.painter_cv.drawPath(self.paths.qpath_bounding_box)
 
     def draw_bounding_box_single(self, index):
-        self.paths[index].bounding_box_refresh()
+        self.paths[index].bounding_box_refresh(self.move_bbox, self.moved_bbox_point, self.click_x_y)
         self.painter_cv.setPen(qg.QPen(qc.Qt.white, self.paths[index].cv_size, qc.Qt.SolidLine))
 
         self.paths.draw_moveTo_bounding_box(*self.paths[index].bounding_box[3])
@@ -339,26 +345,6 @@ class Pane(qw.QLabel):
                 for j in range(len(self.cvs[i])):
                     self.paths[i].path.lineTo(*self.cvs[i][j])
 
-    def mousePressEvent(self, event):
-        """ actions that happen, if mouse button will be clicked """
-        self.click_x_y = np.array([event.pos().x(), event.pos().y()])
-
-        # if left mouse button is clicked
-        if event.buttons() == qc.Qt.LeftButton:
-            if self.editMode:
-                # check if your click was on a cv of active path
-                if not self.find_clicked_point(active_path=True):
-                    # If not an active point, set a point to active path
-                    self.set_new_cv(active_path=True)
-            else:
-                # check if your click was on a cv
-                if not self.find_clicked_point():
-                    # If not a point, set a point to latest path
-                    self.set_new_cv()
-
-        self.plot()
-        self.update()
-
     def activate_nearest_path(self):
         """ find nearest path with ckdtree (from scipy) and return its index """
         #TODO: Generalisieren, damit mit jedem beliebigen Punkt der naheliegendste Path gefunden wird
@@ -386,6 +372,14 @@ class Pane(qw.QLabel):
     def find_clicked_point(self, active_path=False):
         if active_path:
             index = 0 if self.paths.active_path is None else self.paths.active_path
+
+            for index_point, each_point in enumerate(self.paths[index].bounding_box):
+                # calculate if the mouse click is on the cv position
+                if (self.click_x_y <= each_point + self.paths[index].cv_size).all() and (self.click_x_y >= each_point - self.paths[index].cv_size).all():
+                    self.move_bbox = True
+                    self.moved_bbox_point = index_point
+                    return True
+
             for index_cv, each_cv in enumerate(self.paths[index]):
                 # calculate if the mouse click is on the cv position
                 if (self.click_x_y <= each_cv + self.paths[index].cv_size).all() and (self.click_x_y >= each_cv - self.paths[index].cv_size).all():
@@ -393,6 +387,7 @@ class Pane(qw.QLabel):
                     self.moved_path = index
                     self.moved_cv = index_cv
                     return True
+
         else:
             # check if you click on a cv -> if yes -> self.move_cv activated
             for index_path, each_path in enumerate(self.paths):
@@ -404,6 +399,26 @@ class Pane(qw.QLabel):
                         self.moved_cv = index_cv
                         return True
 
+    def mousePressEvent(self, event):
+        """ actions that happen, if mouse button will be clicked """
+        self.click_x_y = np.array([event.pos().x(), event.pos().y()])
+
+        # if left mouse button is clicked
+        if event.buttons() == qc.Qt.LeftButton:
+            if self.editMode:
+                # check if your click was on a cv of active path
+                if not self.find_clicked_point(active_path=True) and self.paths.active_path is not None:
+                    # If not an active point, set a point to active path
+                    self.set_new_cv(active_path=True)
+            else:
+                # check if your click was on a cv
+                if not self.find_clicked_point():
+                    # If not a point, set a point to latest path
+                    self.set_new_cv()
+
+        self.plot()
+        self.update()
+
     def mouseReleaseEvent(self, event):
         """ if left button is released, set some flags """
         # flags affect moved cv/path
@@ -411,6 +426,12 @@ class Pane(qw.QLabel):
             self.move_cv = False
             self.moved_path = None
             self.moved_cv = None
+
+            self.move_bbox = False
+            self.moved_bbox_point = None
+
+            self.plot()
+            self.update()
 
     def mouseMoveEvent(self, event):
         """
@@ -424,28 +445,86 @@ class Pane(qw.QLabel):
 
         # if click began on cv
         if self.move_cv:
-            # if (only?) left mouse button is on hold
+            # if (only?) left mouse button is on hold, drag cv to mouse position
             if event.buttons() == qc.Qt.LeftButton:
                 if self.moved_path is not None and self.moved_path >= 0:
                     self.paths[self.moved_path][self.moved_cv] = tmp_x_y
-            # if both buttons are on hold
+            # if both buttons are on hold, drag cv and position of point
             elif (event.buttons() & qc.Qt.LeftButton) and (event.buttons() & qc.Qt.RightButton):
                 self.track_movement += tmp_x_y - self.click_x_y
                 self.move_everything(tmp_x_y)
                 self.click_x_y = tmp_x_y
+
+        elif self.move_bbox:
+            # TODO: HÄSSLICH! Geht auch mit Matrizenmultiplikation, funktioniert aber noch nicht ganz
+            # if (only?) left mouse button is on hold, drag cv to mouse position
+            pindex = self.paths.active_path
+            if event.buttons() == qc.Qt.LeftButton:
+                box_center = (self.paths[pindex].bounding_box[0] + self.paths[pindex].bounding_box[2])/2
+                box_point = self.paths[pindex].bounding_box[self.moved_bbox_point]
+                related_point = self.paths[pindex].bounding_box[self.moved_bbox_point-1]
+                norm_length = distance.euclidean(box_center, related_point)
+                length = distance.euclidean(tmp_x_y, box_center)
+
+                relative_length = length/norm_length
+
+                vector_one = tmp_x_y-box_center
+                vector_two = box_point-box_center
+                angle = self.angle(vector_two, vector_one)  # in rad
+
+                punkt_v2 = self.paths[pindex].cvs - box_center
+                # would work point for two matrices
+                punkte_laenge_v2 = []
+                for i in range(len(self.paths[pindex].cvs)):
+                    punkte_laenge_v2.append(distance.euclidean(self.paths[pindex].cvs[i], box_center))
+                for i in range(len(self.paths[pindex].bounding_box)):
+                    punkte_laenge_v2.append(distance.euclidean(self.paths[pindex].bounding_box[i], box_center))
+                # evtl. umrechnen in Matrix und dann ein 2-Zeiler?
+                # Berechnung der Länge muss auch über Matrix gehen
+
+                for i, each in enumerate(self.paths[pindex].cvs):
+
+                    punkt = self.paths[pindex].cvs[i] - box_center
+                    punkt_laenge = distance.euclidean(self.paths[pindex].cvs[i], box_center)
+                    punkt = punkt/punkt_laenge
+
+                    x, y = punkt
+
+                    xx = x * np.cos(angle) + y * np.sin(angle)
+                    yy = -x * np.sin(angle) + y * np.cos(angle)
+
+                    self.paths[pindex].cvs[i] = box_center + (np.array([xx, yy]) * punkt_laenge * relative_length)
+
+                for i, each in enumerate(self.paths[pindex].bounding_box):
+                    punkt = self.paths[pindex].bounding_box[i] - box_center
+                    punkt_laenge = distance.euclidean(self.paths[pindex].bounding_box[i], box_center)
+                    punkt = punkt/punkt_laenge
+
+                    x, y = punkt
+
+                    xx = x * np.cos(angle) + y * np.sin(angle)
+                    yy = -x * np.sin(angle) + y * np.cos(angle)
+
+                    self.paths[pindex].bounding_box[i] = box_center + (np.array([xx, yy]) * punkt_laenge  * relative_length)
+
+                self.click_x_y = tmp_x_y
+
+            # if both buttons are on hold, drag cv and position of point
+            elif (event.buttons() & qc.Qt.LeftButton) and (event.buttons() & qc.Qt.RightButton):
+                pass
         # if click began somewhere else than a cv
         else:
             # TODO: BUG: Wenn neuer Punkt erstellt & gehalten wird und die rechte Maustaste hinzukommt
-
             index = -1 if self.paths.active_path is None else self.paths.active_path
 
             # left mouse button on hold: change last placed cv if there is one
             if event.buttons() == qc.Qt.LeftButton and len(self.paths[index]) > 0:
-                self.move_last_cv(tmp_x_y, index)
+                if not self.editMode or (self.editMode and self.paths.active_path is not None):
+                    self.move_last_cv(tmp_x_y, index)
 
             # right mouse button on hold: change position of everything
             elif event.buttons() == qc.Qt.RightButton:
-                if self.editMode:
+                if self.editMode and self.paths.active_path is not None:
                     self.move_specific_path(tmp_x_y, index)
                     self.click_x_y = tmp_x_y
                 else:
@@ -465,6 +544,12 @@ class Pane(qw.QLabel):
 
         self.plot()
         self.update()
+
+    @staticmethod
+    def angle(vector_one, vector_two):
+        ang1 = np.arctan2(*vector_one)
+        ang2 = np.arctan2(*vector_two)
+        return (ang2-ang1) % (2*np.pi)
 
     def mouseDoubleClickEvent(self, event):
         """ delete through double click - only one at once """
@@ -544,8 +629,6 @@ class Pane(qw.QLabel):
         for i in range(len(self.paths)):
             self.paths[i] += tmp_x_y - self.click_x_y  # if it exist, change pos of all cv_paths
 
-
-
     def move_to_center(self):
         """ Move everything to center (depends on self.track_movement and self.track_zoom """
         for i in range(len(self.paths)):
@@ -589,6 +672,7 @@ class Pane(qw.QLabel):
         return self.paths.save_all_paths()
 
     def load_all_paths(self, all_paths):
+        # TODO: BUG: Load ist noch nicht abhängig von Verschiebung und Zoom
         self.paths = GroupOfPaths(path=Path(*all_paths[0]))
         for i in range(1, len(all_paths)):
             self.paths.append(Path(*all_paths[i]))
