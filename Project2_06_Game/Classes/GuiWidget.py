@@ -58,8 +58,8 @@ class GuiWidget(qw.QWidget):
         self.b_pause.setToolTip('play/pause')
         self.b_pause.clicked.connect(self.on_click_play_pause)
 
-        self.b_back = qw.QPushButton("slow backward", self)
-        self.b_back.setToolTip('slow backward')
+        self.b_back = qw.QPushButton("step forward", self)
+        self.b_back.setToolTip('step forward')
         self.b_back.clicked.connect(self.on_click_play_back)
 
         b_save = qw.QPushButton('Save', self)
@@ -249,7 +249,11 @@ class GuiWidget(qw.QWidget):
         #self.game_loop()
 
     def on_click_play_back(self):
-        self.forward = not self.forward
+        self.timer_4_game.stop()
+        self.player.show()
+        self.player.next()
+        self.pane.update_game()
+        """self.forward = not self.forward
         #print("hi", self.run)
         if self.forward:
             #self.player.track = self.pane.track
@@ -265,7 +269,7 @@ class GuiWidget(qw.QWidget):
             self.player.time_speed = 0.001
             #styling_icon = qta.icon('fa5s.play', color='black', color_active='orange')
         #self.b_pause.setIcon(styling_icon)
-        #self.game_loop()
+        #self.game_loop()"""
 
     def on_click_save(self):
         """ Saves all paths """

@@ -16,20 +16,14 @@ class Player:
         self.pane = pane
         self.layer = pane.ebene_schlitten
         self.painter = pane.painter_schlitten
+        self.paths = pane.paths
         self.vector = Vector(0,1,0)
         self.color = qc.Qt.red
         self.g = Vector(0,9.8,0)
         self.start = time.time()
-        self.map = pane.ebene_pane.toImage()
-        self.track = pane.track
-        self.surface_vector = Vector(0,0,0)
-        self.time_direction = 1
         self.time_speed = 0.01  # 0.01 <=> 100-times slower
-        self.time_control_point = time.time()
-        self.hit_type = ""
-        self.math_reflected_before = False
-        self.special = ""
-        #print(pane.track)
+        #print(type(self.paths.list_of_paths), len(self.paths.list_of_paths), self.paths.list_of_paths[0].plotted_points)
+        print(self.intersection_with_array_test([4,1.5],Vector(0,-2.5),[[0,4],[3,1],[5,2]]))
 
     def show(self):
         '''
@@ -39,219 +33,80 @@ class Player:
         '''
         self.layer.fill(qg.QColor(0, 0, 0, 0))
         self.painter.setPen(qg.QPen(self.color, 10, qc.Qt.SolidLine))
-        self.painter.drawPoint(self.x, self.y)
+        #self.painter.drawPoint(self.x, self.y)
         #  draw vector
         self.painter.setPen(qg.QPen(qc.Qt.green, 2, qc.Qt.SolidLine))
         self.painter.drawLine(self.x, self.y, self.x+self.vector.x, self.y+self.vector.y)
 
     def next(self):
-        if self.special == "calm":
-            return
-
         t = time.time() - self.start
 
-        #self.recursion(t)
+        intersection = self.intersection_by_plotted()
+        if intersection:
+            if self.vector.y > 0:
+                hit_type = "hit_floor"
+            elif self.vector.y < 0:
+                hit_type = "hit_roof"
+            else:
+                print("VECTOR Y = 0")
+            dummy, path_type = intersection
+            at, a, b = dummy
+            aa = Vector.make_vector(Vector, [self.x, self.y], a)
+            bb = Vector.make_vector(Vector, [self.x, self.y], b)
+            #if self.vector.cos(aa) * self.vector.cos(bb) > 0:
+                #print("COSINUS - check not passed!")
 
-        crossing = self.intersection(self.x, self.y, self.x + self.vector.x*1.2, self.y + self.vector.y*1.2)
-        if crossing:
-            at, surface, self.special = crossing
-            if self.special == "calm":
-                self.vector = Vector(0, 0)
-            #print(at[0],at[1],surface, self.special, self.vector, self.math_reflected_before)
-            # TODO: depends on hit_type?
-            if self.vector.y >0:
-                self.hit_type = "hit_floor"
-            else:
-                self.hit_type = "hit_roof"
-            self.x, self.y = at[0], at[1]
-            if not self.math_reflected_before:
-                #print("correction")
-                self.x, self.y = self.x-self.vector.norm().x*0.1, self.y-self.vector.norm().y*0.1
-            self.math_reflected_before = True
-            if abs(self.vector.cos(surface)) > 0.7:
+            surface = Vector.make_vector(Vector,a,b)
+            self.painter.setPen(qg.QPen(qc.Qt.red, 4, qc.Qt.SolidLine))
+            self.painter.drawLine(a[0], a[1], b[0], b[1])
+
+            cos = self.vector.cos(surface)
+            if cos < 0:
+                # prbbl not really needed :)
+                surface = surface * (-1)
+            if abs(cos) > 0.7:
+                # angle is not enough to reflect, so just project it
+                # may opinion: if we'll always reflect a vector, point will "shake"
+                #print("project")
+                # set actual coordinates to a cross point
+                self.x, self.y = at[0], at[1]
                 self.vector = self.vector.proj_on(surface)
+                self.vector += self.g.proj_on(surface) * self.time_speed
+                # normal vector to surface:
+                # warning # reflection depends on self.vector.x
+                if surface.x > 0:
+                    norm = Vector(-surface.y, surface.x)
+                    norm = norm.norm() * 3
+                else:
+                    norm = Vector(surface.y, -surface.x)
+                    norm = norm.norm() * 3
+                self.x, self.y = self.x - norm.x, self.y - norm.y
+
             else:
+                print("reflect")
+                self.x, self.y = at[0], at[1]
+                #print(self.vector)
                 self.vector = self.vector.reflect(surface)*0.5
-            #self.vector = self.vector.reflect(surface) * abs(self.vector.cos(surface))#0.5
-            #print(self.hit_type)
-            if self.special != "calm":
-                if self.hit_type == "hit_floor":
-                    self.y -= self.vector.y*0.2
-                    if self.math_reflected_before:
-                        self.vector.y -=1
-                self.vector += self.g.proj_on(surface) * (t * self.time_speed)
-                # TODO: check new intersection
+                #print("reflected: ",self.vector)
+                # normal vector to surface:
+                # warning # reflection depends on self.vector.x
+                if surface.x > 0:
+                    norm = Vector(-surface.y, surface.x)
+                    norm = norm.norm() * 3
+                else:
+                    norm = Vector(surface.y, -surface.x)
+                    norm = norm.norm() * 3
+                self.x, self.y = self.x - norm.x, self.y - norm.y
+            #print(at, surface, path_type)
+            #print(self.vector.cos(surface))
 
-                crossing = self.intersection(self.x, self.y, self.x + self.vector.x * 1.2, self.y + self.vector.y * 1.2)
-                while crossing:
-                    at, surface, dummy = crossing
-                    print(self.vector)
-                    print(f"x,y{self.x,self.y}, at:{at[0],at[1]}")
-                    vector = Vector.make_vector(Vector,[self.x,self.y],[at[0],at[1]])
-                    self.vector = self.vector.proj_on(vector)
-                    self.vector.y -= 1
-                    print(self.vector)
-                    crossing = self.intersection(self.x, self.y, self.x + self.vector.x * 1.2,
-                                                 self.y + self.vector.y * 1.2)
-                    at, surface, dummy = crossing
-                    if (abs(at[0] - self.x) < 0.1 and abs(at[1] - self.y) < 0.1) or (abs(self.x) >= self.pane.width() and abs(self.y) >= self.pane.height()) :
-                        crossing = False
-
-                """while crossing:
-                    print("second crossing",self.hit_type, self.vector, crossing)
-                    at, surface, dummy = crossing
-                    if self.hit_type == "hit_floor":
-                        self.vector.y -= 1
-                    else:
-                        self.vector.y += 1
-
-                    crossing = self.intersection(self.x, self.y, self.x + self.vector.x * 1.2,
-                                                 self.y + self.vector.y * 1.2)
-                    if abs(at[0]-self.x) < 0.1 and abs(at[1]-self.y) < 0.1:
-                        crossing = False
-
-                    print(f"abs(at[0]-self.x){abs(at[0]-self.x)} and abs(at[1]-self.y){abs(at[1]-self.y)}")
-
-                    at, surface, self.special = crossing
-                    if self.special == "calm":
-                        self.vector = Vector(0, 0)
-                    # print(at[0],at[1],surface, self.special, self.vector)
-                    # TODO: depends on hit_type?
-                    if self.vector.y > 0:
-                        self.hit_type = "hit_floor"
-                    else:
-                        self.hit_type = "hit_roof"
-                    self.x, self.y = at[0], at[1]"""
-
-                self.x += self.vector.x
-                self.y += self.vector.y
         else:
-            self.math_reflected_before = False
-            self.vector += self.g * (t * self.time_speed)
+            self.x, self.y = self.x + self.vector.x, self.y + self.vector.y
+            self.vector += self.g * self.time_speed #* t
 
-        if self.special == "":
-            self.x += self.vector.x
-            self.y += self.vector.y
-
-
-
-
-        """
-        #  am I crossing smw?
-        indx_a = self.closest_node([self.x, self.y])
-        if abs(self.vector)< 10:
-            indx_b = self.closest_node([self.x+self.vector.norm().x*10, self.y+self.vector.norm().y*10])
-        else:
-            indx_b = self.closest_node([self.x + self.vector.x, self.y + self.vector.y])
-
-        if indx_a == indx_b:
-            if indx_a > 0:
-                indx_a -= 1
-            else:
-                indx_b += 1
-        else:
-            # expand selection
-            if indx_a>indx_b:
-                indx_a += 2
-                indx_b -= 2
-            else:
-                indx_a -= 2
-                indx_b += 2
-        if indx_b >= len(self.track):
-            indx_b = len(self.track)-1
-        if indx_a >= len(self.track):
-            indx_a = len(self.track)-1
-
-
-        collision = self.exact_intersection(indx_a, indx_b)
-        #  show support points
-        self.painter.setPen(qg.QPen(qc.Qt.darkGreen, 3, qc.Qt.SolidLine))
-        self.painter.drawLine(self.track[indx_a][0],self.track[indx_a][1],self.track[indx_b][0],self.track[indx_b][1])
-        if collision:
-            self.painter.setPen(qg.QPen(qc.Qt.darkMagenta, 30, qc.Qt.SolidLine))
-            self.painter.drawPoint(collision[0], collision[1])
-        if collision and self.map.pixel(collision[0], collision[1]) != 0:
-
-            surface = Vector.make_vector(Vector,self.track[indx_a], self.track[indx_b])
-            if self.vector.y > 0:
-                # hit floor
-                self.y -= 1
-            self.vector = self.vector.proj_on(surface)
-            print("collision at: ",collision)
-
-        self.vector += self.g * (t * self.time_speed)"""
-
-
-    def recursion(self,t):
-        crossing = self.intersection(self.x, self.y, self.x + self.vector.x * 1.2, self.y + self.vector.y * 1.2)
-        if crossing:
-            at, surface, self.special = crossing
-            if self.special == "calm":
-                self.vector = Vector(0, 0)
-            # print(at[0],at[1],surface, self.special, self.vector)
-            # TODO: depends on hit_type?
-            if self.vector.y > 0:
-                self.hit_type = "hit_floor"
-            else:
-                self.hit_type = "hit_roof"
-            self.x, self.y = at[0], at[1]
-            if not self.math_reflected_before:
-                # print("correction")
-                self.x, self.y = self.x - self.vector.norm().x * 0.1, self.y - self.vector.norm().y * 0.1
-            self.math_reflected_before = True
-            if abs(self.vector.cos(surface)) > 0.7:
-                self.vector = self.vector.proj_on(surface)
-            else:
-                self.vector = self.vector.reflect(surface) * 0.5
-            # self.vector = self.vector.reflect(surface) * abs(self.vector.cos(surface))#0.5
-            if self.special == "slide":
-                if self.hit_type == "hit_floor":
-                    self.y -= 1
-                self.vector += self.g.proj_on(surface) * (t * self.time_speed)
-                # TODO: check new intersection
-                self.x += self.vector.x
-                self.y += self.vector.y
-        else:
-            self.math_reflected_before = False
-            self.vector += self.g * (t * self.time_speed)
-
-        if self.special == "":
-            self.x += self.vector.x
-            self.y += self.vector.y
-
-
-    def closest_node(self, node):
-        closest_index = distance.cdist([node], self.track).argmin()
-        return closest_index
     def closest_node2(self, node, where):
         closest_index = distance.cdist([node], where).argmin()
         return closest_index
-
-    def exact_intersection(self, i, j):
-        x1, y1 = self.x, self.y
-        x2, y2 = self.x+self.vector.x, self.y+self.vector.y
-        if abs(self.vector) < 10:
-            x2, y2 = self.x + self.vector.norm().x*10, self.y + self.vector.norm().y*10
-
-        if i >= len(self.track) - 1 or i == 0 or j >= len(self.track) - 1 or j == 0:
-            return False
-
-        x3, y3 = self.track[i][0], self.track[i][1]
-        x4, y4 = self.track[j][0], self.track[j][1]
-
-        denominator = ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1))
-        if denominator == 0:
-            return False
-
-        ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denominator
-        ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denominator
-
-        if ua < 0 or ua > 1 or ub < 0 or ub > 1:
-            return False
-
-        x = x1 + ua * (x2 - x1)
-        y = y1 + ua * (y2 - y1)
-        return [x, y]
 
     def intersection(self, x1, y1, x2, y2):
         x_correction = 0
@@ -488,3 +343,91 @@ class Player:
         #self.track = []
         #for i in range(len(self.cvs)):
             #self.pane.bezier(self.cvs[i])
+
+    def intersection_by_plotted(self):
+        amount = len(self.paths.list_of_paths)
+        for n in range(amount):
+            res = self.intersection_with_array(self.paths.list_of_paths[n])
+            if res:
+                return res, self.paths.list_of_paths[n].path_type
+        return False
+
+    def intersection_with_array(self, arr):
+        arr = arr.plotted_points
+        player = [self.x, self.y]
+        player_next = [self.x + self.vector.x, self.y + self.vector.y]
+        temp_arr = arr
+        if len(arr)>1:
+            p1_i = self.closest_node2(player, arr)
+            temp_arr = np.delete(temp_arr, p1_i, axis=0)
+            p2_i = self.closest_node2(player_next, temp_arr)
+            if p2_i >= p1_i:
+                p2_i += 1
+            # checking cos
+
+            x1,y1 = player[0], player[1]
+            x2,y2 = player_next[0], player_next[1]
+            x3,y3 = arr[p1_i][0],arr[p1_i][1]
+            x4,y4 = arr[p2_i][0],arr[p2_i][1]
+            #self.painter.setPen(qg.QPen(qc.Qt.white, 3, qc.Qt.SolidLine))
+            #self.painter.drawPoint(x3, y3)
+            #self.painter.drawPoint(x4, y4)
+
+            x_max = x3 if x3 > x4 else x4
+            x_min = x4 if x3 > x4 else x3
+            dx = x_max-x_min
+            x_max, x_min = x_max+dx, x_min-dx
+
+            y_max = y3 if y3 > y4 else y4
+            y_min = y4 if y3 > y4 else y3
+            dy = y_max-y_min
+            y_max,y_min = y_max+dy,y_min-dy
+
+            X = [False,False]
+            X[0] =((x2*y1-x1*y2)*(x4-x3)-(x4*y3-x3*y4)*(x2-x1))/((x2-x1)*(y4-y3)-(x4-x3)*(y2-y1))
+            X[1] =((x2*y1-x1*y2)*(y4-y3)-(x4*y3-x3*y4)*(y2-y1))/((x2-x1)*(y4-y3)-(x4-x3)*(y2-y1))
+
+            abstand = Vector.make_vector(Vector,player,X)
+            #print(self.vector * abstand, " |a|:",abs(abstand), " |v|:", abs(self.vector), (self.vector * abstand >= 0 and abs(abstand) <= abs(self.vector* 1.2)),
+                  #X[0]>=x_min and X[0]<=x_max and X[1] >=y_min and X[1]<=y_max)
+            # checks if cross point enough close to player
+            if self.vector * abstand >= 0 and abs(abstand) <= abs(self.vector * 1.2):
+                # checks if cross point between a, b
+                #print(f"X:{X}, intervals: x:[{x_min,x_max}], y:[{y_min,y_max}]")
+                if X[0]>=x_min and X[0]<=x_max and X[1] >=y_min and X[1]<=y_max:
+                    aa = Vector.make_vector(Vector, [self.x, self.y], arr[p1_i])
+                    bb = Vector.make_vector(Vector, [self.x, self.y], arr[p2_i])
+                    if self.vector.cos(aa) * self.vector.cos(bb) > 0:
+                        print("COSINUS - check not passed!")
+                        #return False
+                    return X, arr[p1_i], arr[p2_i]
+            return False
+
+    def intersection_with_array_test(self, point, speed, arr):
+        #arr = arr.plotted_points
+        player = point
+        player_next = [player[0] + speed.x, player[1] + speed.y]
+        temp_arr = arr
+        if len(arr)>1:
+            p1_i = self.closest_node2(player, arr)
+            #print(temp_arr)
+            temp_arr = np.delete(temp_arr, p1_i, axis=0)
+            #print(temp_arr)
+            p2_i = self.closest_node2(player, temp_arr)
+            #print(arr[p1_i] , temp_arr[p2_i])
+            if p2_i >= p1_i:
+                p2_i += 1
+
+            x1,y1 = player[0], player[1]
+            x2,y2 = player_next[0], player_next[1]
+            x3,y3 = arr[p1_i][0],arr[p1_i][1]
+            x4,y4 = arr[p2_i][0],arr[p2_i][1]
+            X = [False,False]
+            X[0] =((x2*y1-x1*y2)*(x4-x3)-(x4*y3-x3*y4)*(x2-x1))/((x2-x1)*(y4-y3)-(x4-x3)*(y2-y1))
+            X[1] =((x2*y1-x1*y2)*(y4-y3)-(x4*y3-x3*y4)*(y2-y1))/((x2-x1)*(y4-y3)-(x4-x3)*(y2-y1))
+
+            abstand = Vector.make_vector(Vector,player,X)
+            #print(self.vector * abstand, " |a|:",abs(abstand), " |v|:",abs(self.vector), (self.vector * abstand >= 0 and abs(abstand) <= abs(self.vector)))
+            if speed * abstand >= 0 and abs(abstand) <= abs(speed):
+                return X, arr[p1_i], arr[p2_i]
+            return False

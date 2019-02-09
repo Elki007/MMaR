@@ -1,5 +1,4 @@
 import numpy as np
-import scipy.interpolate as si
 import sys
 
 import PyQt5.QtWidgets as qw
