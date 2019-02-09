@@ -194,7 +194,7 @@ class GuiWidget(qw.QWidget):
         """ to move everything back to the start position """
         self.pane.move_to_center()
 
-        #TODO: Wieso wird Pane erst nach den 2 Sekunden sichtbar aktualisiert und nicht mit update()-Aufruf?
+        # TODO: Wieso wird Pane erst nach den 2 Sek aktualisiert und nicht mit dem internen update()-Aufruf?
         # Wie lässt sich das ändern?
         #time.sleep(2)
         #print("DEBUG: Haiho")

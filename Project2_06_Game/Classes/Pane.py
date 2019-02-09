@@ -91,8 +91,8 @@ class Pane(qw.QLabel):
         self.fill_all_default()
         self.set_all_painters()
 
-        self.update()
         self.plot()
+        self.update()
 
     def fill_all_default(self):
         self.ebene_bg.fill(qg.QColor(0, 0, 0))
