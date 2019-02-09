@@ -474,7 +474,6 @@ class Pane(qw.QLabel):
         # if left mouse button is double clicked
         if event.buttons() == qc.Qt.LeftButton:
             if self.editMode:
-                #TODO: Nicht hier activate -> nur einmal
                 self.activate_nearest_path()
 
         if len(self.paths) > 0 and not point_found:
