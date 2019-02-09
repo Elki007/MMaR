@@ -22,7 +22,6 @@ class Path:
         self.thickness = thickness
         self.form = form  # not implemented yet -> "bezier", "circle", "line"
         self.bounding_box = self.bounding_box_initialize()
-
         self.plotted_points = np.ndarray([])  # to locate nearest points, maybe for intersection with player vector?
 
         self.cvs = cvs  # control points
@@ -72,12 +71,17 @@ class Path:
     def bounding_box_initialize():
         return np.zeros((4, 2))
 
-    def bounding_box_refresh(self):
-        if len(self.cvs) > 0:
-            min, max = np.amin(self.cvs, 0), np.amax(self.cvs, 0)
+    def bounding_box_refresh(self, move_bbox=False, moved_point=None, position=None):
+        if move_bbox:
+            self.bounding_box[moved_point] = position
+        else:
+            if len(self.cvs) > 0:
+                min, max = np.amin(self.cvs, 0), np.amax(self.cvs, 0)
 
-            self.bounding_box = np.r_[min[0], min[1], max[0], min[1],
-                                      max[0], max[1], min[0], max[1]].reshape(4, 2)
+                self.bounding_box = np.r_[min[0], min[1],
+                                          max[0], min[1],
+                                          max[0], max[1],
+                                          min[0], max[1]].reshape(4, 2)
 
 
 class GroupOfPaths:
