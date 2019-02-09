@@ -1,7 +1,7 @@
 import math
 class Vector:
 
-    def __init__(self, x, y, z):
+    def __init__(self, x, y, z=0):
         self.x = x
         self.y = y
         self.z = z
@@ -42,8 +42,9 @@ class Vector:
             return other * (top/bottom)
 
     def norm(self):
-        return Vector(self.x/abs(self), self.y/abs(self), self.z/abs(self))
-
+        if abs(self) != 0:
+            return Vector(self.x/abs(self), self.y/abs(self), self.z/abs(self))
+        return self
 
     def __abs__(self):
         return math.sqrt(self.x * self.x + self.y *self.y + self.z *self.z)
@@ -66,10 +67,10 @@ class Vector:
     def reflect(self, surface):
         if (type(self) == type(surface)):
             n = surface.rotate(90).norm()
-            print(n*surface)
+            #print(n*surface)
             temp = self*n
             r = self - n * 2 * temp
-            print(r)
+            #print(r)
             return r
 
 

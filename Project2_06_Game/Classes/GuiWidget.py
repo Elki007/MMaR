@@ -20,7 +20,7 @@ class GuiWidget(qw.QWidget):
         qw.QWidget.__init__(self, parent)
         self.main_window = parent  # Main Window
         self.pane = Pane(self)
-        self.player = Player(self.pane.width()//2, 0, self.pane)
+        self.player = Player(self.pane.width()//2, 0, self.pane, self)
         self.run = True
         self.forward = True
 
@@ -158,7 +158,7 @@ class GuiWidget(qw.QWidget):
         self.timer.start(10)
 
         self.timer_4_game = qc.QTimer()
-        self.timer_4_game.setInterval(100)
+        self.timer_4_game.setInterval(10)
         self.timer_4_game.setSingleShot(True)
         self.timer_4_game.timeout.connect(self.game_loop)
 
@@ -215,7 +215,7 @@ class GuiWidget(qw.QWidget):
 
     # starts endless while with the game
     def on_click_game(self):
-        self.player = Player(self.pane.width()//2, 0, self.pane)
+        self.player = Player(20, 0, self.pane, self) #self.pane.width()//2
         self.b_show_cv.setChecked(False)
         self.b_game.setText("Restart")
         #self.on_click_show_cv(self.b_show_cv.checkState())
