@@ -4,6 +4,7 @@ import PyQt5.QtGui as qg
 import math
 import time
 from Vector import Vector
+from Explosion import Explosion
 import numpy as np
 from scipy.spatial import distance
 
@@ -27,6 +28,7 @@ class Player:
         self.start = time.time()
         self.time_speed = 0.01  # 0.01 <=> 100-times slower
         self.scale = 1
+        self.explosions = []
         #print(type(self.paths.list_of_paths), len(self.paths.list_of_paths), self.paths.list_of_paths[0].plotted_points)
         #print(self.intersection_with_array_test([4,1.5],Vector(0,-2.5),[[0,4],[3,1],[5,2]]))
 
@@ -138,6 +140,10 @@ class Player:
         self.painter.setPen(qg.QPen(qc.Qt.green, 2, qc.Qt.SolidLine))
         self.painter.drawLine(self.x, self.y, self.x+self.vector.x, self.y+self.vector.y)
         self.draw_player()
+        for i in range(len(self.explosions) - 1, -1, -1):
+            self.explosions[i].paint()
+            if self.explosions[i].destruct:
+                del self.explosions[i]
 
     def next(self):
         t = time.time() - self.start
@@ -241,6 +247,7 @@ class Player:
                 #reflecting part
                 #print("reflecting")
                 self.x, self.y = at[0], at[1]
+                self.explosions.append(Explosion(self))
                 before = self.vector
                 self.vector = self.vector.reflect(surface)*0.3
                 if path_type == "speed up":
