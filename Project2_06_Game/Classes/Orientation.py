@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.spatial import distance
+from Vector import Vector
 
 
 class Orientation:
@@ -20,6 +21,7 @@ class Orientation:
         self.trace_zoom = 1
         self.original_current_cv = None
         self.point_of_zoom = None
+        self.g = Vector(0, 9.81, 0)  # the gravity acceleration
 
     def get_click(self):
         # coordinates of a mouse click
@@ -52,9 +54,11 @@ class Orientation:
 
     def set_trace_zoom_in(self):
         self.trace_zoom *= (1 + self.zoom_factor)
+        self.g *= (1 + self.zoom_factor)
 
     def set_trace_zoom_out(self):
         self.trace_zoom /= (1 + self.zoom_factor)
+        self.g /= (1 + self.zoom_factor)
 
     def set_trace_movement_while_zoom_in(self):
         self.trace_movement = self.point_of_zoom + ((self.trace_movement - self.point_of_zoom) * (1 + self.zoom_factor))
@@ -62,16 +66,21 @@ class Orientation:
     def set_trace_movement_while_zoom_out(self):
         self.trace_movement = self.point_of_zoom + ((self.trace_movement - self.point_of_zoom) / (1 + self.zoom_factor))
 
+    def actualize_player_location(self, player):
+        pass
+
     def actualize_click(self):
         self.click_pos = self.move_pos
 
     def check_click_on_point(self, path, point):
         return (self.click_pos <= point + path.cv_size).all() and (self.click_pos >= point - path.cv_size).all()
 
-    def move_points_and_screen(self, all_paths):
+    def move_points_and_screen(self, all_paths, player):
         self.trace_movement += self.move_pos - self.click_pos
         for i in range(len(all_paths)):
             all_paths[i] += self.get_movement()  # if it exist, change pos of all cv_paths
+        if player is not None:
+            player.x, player.y = np.array([player.x, player.y]) + self.get_movement()
         self.click_pos = self.move_pos
 
     def reset_movement(self):
@@ -86,15 +95,15 @@ class Orientation:
         if self.trace_zoom > 1:
             for i in range(len(all_paths)):
                 for j in range(len(all_paths[i])):
-                    tmp_vector = all_paths[i][j]
-                    all_paths[i][j] = tmp_vector / self.trace_zoom
+                    all_paths[i][j] = all_paths[i][j] / self.trace_zoom
             self.trace_zoom /= self.trace_zoom
+            self.g /= self.g.y
         else:
             for i in range(len(all_paths)):
                 for j in range(len(all_paths[i])):
-                    tmp_vector = all_paths[i][j]
-                    all_paths[i][j] = tmp_vector / self.trace_zoom
+                    all_paths[i][j] = all_paths[i][j] / self.trace_zoom
             self.trace_zoom /= self.trace_zoom
+            self.g /= self.g.y
 
     def calculate_angle(self, vector_one, vector_two):
         # calculates angle in rad
@@ -155,11 +164,15 @@ class Orientation:
 
         self.click_pos = self.move_pos
 
-    def calculate_zoom_translation(self, cv_list, zoom_in=True):
+    def calculate_zoom_translation(self, cv_list, player, zoom_in=True):
         """ calculates zoom (in or out) for a list of points """
         for i in range(len(cv_list)):
-            tmp_vector = cv_list[i] - self.point_of_zoom
             if zoom_in:
-                cv_list[i] = self.point_of_zoom + tmp_vector * (1 + self.zoom_factor)
+                cv_list[i] = self.point_of_zoom + (cv_list[i] - self.point_of_zoom) * (1 + self.zoom_factor)
             else:
-                cv_list[i] = self.point_of_zoom + tmp_vector / (1 + self.zoom_factor)
+                cv_list[i] = self.point_of_zoom + (cv_list[i] - self.point_of_zoom) / (1 + self.zoom_factor)
+        if player is not None:
+            if zoom_in:
+                player.x, player.y = self.point_of_zoom + (np.array([player.x, player.y]) - self.point_of_zoom) * (1 + self.zoom_factor)
+            else:
+                player.x, player.y = self.point_of_zoom + (np.array([player.x, player.y]) - self.point_of_zoom) / (1 + self.zoom_factor)

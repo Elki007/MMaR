@@ -1,4 +1,6 @@
 import math
+
+
 class Vector:
 
     def __init__(self, x, y, z=0):
@@ -26,6 +28,35 @@ class Vector:
         else:
             #print("dealing with numbers")
             return Vector(self.x * other, self.y * other, self.z * other)
+
+    def __imul__(self, number):
+        if isinstance(number, (int, float)):
+            self.x *= number
+            self.y *= number
+            self.z *= number
+            return self
+        else:
+            raise ValueError(f"You used {type(number)} instead int or float.")
+
+    def __truediv__(self, number):
+        if isinstance(number, (int, float)):
+            if number == 0:
+                print("Pay Attention, you would've divided through 0!")
+            return Vector(self.x / number, self.y / number, self.z / number)
+        else:
+            raise ValueError(f"You used {type(number)} instead int or float.")
+
+    def __itruediv__(self, number):
+        if isinstance(number, (int, float)):
+            if number != 0:
+                self.x /= number
+                self.y /= number
+                self.z /= number
+            else:
+                print("Pay Attention, you would've divided through 0!")
+            return self
+        else:
+            raise ValueError(f"You used {type(number)} instead int or float.")
 
     def proj_on_x(self):
         return Vector(self.x,0,0)
@@ -72,7 +103,6 @@ class Vector:
             r = self - n * 2 * temp
             #print(r)
             return r
-
 
     def __pow__(self, other):
         return Vector(self.y * other.z - self.z * other.y, self.z * other.x - self.x * other.z,

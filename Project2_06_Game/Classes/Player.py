@@ -9,7 +9,9 @@ from scipy.spatial import distance
 
 
 class Player:
-    def __init__(self, x, y, pane, gui):
+    def __init__(self, parent, x, y, pane, gui):
+        super().__init__()
+        self.parent = parent  # App - Main window
         self.gui = gui
         self.x = x
         self.y = y
@@ -19,7 +21,7 @@ class Player:
         self.paths = pane.paths
         self.vector = Vector(0,1,0)
         self.color = qc.Qt.red
-        self.g = Vector(0,9.8,0)
+        self.g = self.parent.pane.orien.g
         self.start = time.time()
         self.time_speed = 0.01  # 0.01 <=> 100-times slower
         #print(type(self.paths.list_of_paths), len(self.paths.list_of_paths), self.paths.list_of_paths[0].plotted_points)

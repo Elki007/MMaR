@@ -70,6 +70,9 @@ class Pane(qw.QLabel):
 
         self.orien = Orientation()
 
+        # since attribute player does not exist in the beginning in WidgetGui -> it's this way around
+        self.player = None
+
         self.update()
 
     def resolution_of_surfaces(self):
@@ -170,6 +173,10 @@ class Pane(qw.QLabel):
             self.draw_bounding_box(active_index)
 
         self.fill_layers()
+
+    def player_created(self, player):
+        """ If Player object was created in GuiWidget, it will be referenced in Pane """
+        self.player = player
 
     def fill_layers(self):
         self.ebene_total.fill(qg.QColor(0, 0, 0, 0))
@@ -448,8 +455,7 @@ class Pane(qw.QLabel):
 
             # if both buttons are on hold, drag cv and position of point
             elif (event.buttons() & qc.Qt.LeftButton) and (event.buttons() & qc.Qt.RightButton):
-                self.orien.move_points_and_screen(self.paths)
-                self.move_everything()
+                self.orien.move_points_and_screen(self.paths, self.player)
 
         elif self.move_bbox:
             # if (only?) left mouse button is on hold, drag cv to mouse position
@@ -477,8 +483,7 @@ class Pane(qw.QLabel):
                     self.move_specific_path(index)
                     self.orien.actualize_click()
                 else:
-                    self.orien.move_points_and_screen(self.paths)
-                    self.move_everything()
+                    self.orien.move_points_and_screen(self.paths, self.player)
             # change both if both buttons are pressed (if there is a last cv)
             elif (event.buttons() & qc.Qt.LeftButton) and (event.buttons() & qc.Qt.RightButton):
                 self.paths[-1].append_cvs(self.orien.get_click())
@@ -486,7 +491,6 @@ class Pane(qw.QLabel):
                 self.move_cv = True
 
                 self.orien.move_points_and_screen(self.paths)
-                self.move_everything()
 
         self.plot()
         self.update()
@@ -527,7 +531,7 @@ class Pane(qw.QLabel):
         if event.angleDelta().y() > 0:
             # calculate cvs
             for i in range(len(self.paths)):
-                self.orien.calculate_zoom_translation(self.paths[i])
+                self.orien.calculate_zoom_translation(self.paths[i], self.player)
 
             self.orien.set_trace_zoom_in()
 
@@ -537,7 +541,7 @@ class Pane(qw.QLabel):
         # to zoom out
         else:
             for i in range(len(self.paths)):
-                self.orien.calculate_zoom_translation(self.paths[i], zoom_in=False)
+                self.orien.calculate_zoom_translation(self.paths[i], self.player, zoom_in=False)
             self.orien.set_trace_zoom_out()
 
             # change of track_movement
@@ -554,10 +558,6 @@ class Pane(qw.QLabel):
         """ moves the most recent cv of given path[index] """
         self.paths[index][-1] = self.orien.get_move()  # change last cv of last cv_path
 
-    def move_everything(self):
-        """ moves every cv of each path """
-        pass
-
     def move_to_center(self):
         """ Move everything to center (depends on self.track_movement and self.track_zoom """
         self.orien.move_to_center(self.paths)
@@ -572,7 +572,7 @@ class Pane(qw.QLabel):
             x, y = self.orien.get_trace_movement()
             return f"Position: ({int(x)},{int(y)})"
         elif display == "zoom":
-            return f"Zoom: {round(self.orien.get_trace_zoom(), 2)}"
+            return f"Zoom: {round(self.orien.get_trace_zoom(), 4)}"
 
     def create_new_path(self, cm_type):
         """ creates new path with cm_type(normal/fast/slow) """
