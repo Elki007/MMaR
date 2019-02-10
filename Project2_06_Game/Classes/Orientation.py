@@ -164,13 +164,16 @@ class Orientation:
 
         self.click_pos = self.move_pos
 
-    def calculate_zoom_translation(self, cv_list, player, zoom_in=True):
+    def calculate_zoom_translation(self, cv_list, zoom_in=True):
         """ calculates zoom (in or out) for a list of points """
         for i in range(len(cv_list)):
             if zoom_in:
                 cv_list[i] = self.point_of_zoom + (cv_list[i] - self.point_of_zoom) * (1 + self.zoom_factor)
             else:
                 cv_list[i] = self.point_of_zoom + (cv_list[i] - self.point_of_zoom) / (1 + self.zoom_factor)
+
+    def calculate_zoom_translation_player(self, player, zoom_in=True):
+        """ calculates zoom (in or out) for a player if there's one """
         if player is not None:
             if zoom_in:
                 player.x, player.y = self.point_of_zoom + (np.array([player.x, player.y]) - self.point_of_zoom) * (1 + self.zoom_factor)
@@ -178,4 +181,3 @@ class Orientation:
             else:
                 player.x, player.y = self.point_of_zoom + (np.array([player.x, player.y]) - self.point_of_zoom) / (1 + self.zoom_factor)
                 player.vector /= (1 + self.zoom_factor)
-

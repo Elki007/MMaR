@@ -172,6 +172,8 @@ class Pane(qw.QLabel):
             # draws points and lines of bounding box
             self.draw_bounding_box(active_index)
 
+        if self.player is not None:
+            self.player.show()
         self.fill_layers()
 
     def player_created(self, player):
@@ -531,7 +533,8 @@ class Pane(qw.QLabel):
         if event.angleDelta().y() > 0:
             # calculate cvs
             for i in range(len(self.paths)):
-                self.orien.calculate_zoom_translation(self.paths[i], self.player)
+                self.orien.calculate_zoom_translation(self.paths[i])
+            self.orien.calculate_zoom_translation_player(self.player)
 
             self.orien.set_trace_zoom_in()
 
@@ -541,7 +544,8 @@ class Pane(qw.QLabel):
         # to zoom out
         else:
             for i in range(len(self.paths)):
-                self.orien.calculate_zoom_translation(self.paths[i], self.player, zoom_in=False)
+                self.orien.calculate_zoom_translation(self.paths[i], zoom_in=False)
+            self.orien.calculate_zoom_translation_player(self.player, zoom_in=False)
             self.orien.set_trace_zoom_out()
 
             # change of track_movement
