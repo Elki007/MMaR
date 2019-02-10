@@ -174,5 +174,8 @@ class Orientation:
         if player is not None:
             if zoom_in:
                 player.x, player.y = self.point_of_zoom + (np.array([player.x, player.y]) - self.point_of_zoom) * (1 + self.zoom_factor)
+                player.vector *= (1 + self.zoom_factor)
             else:
                 player.x, player.y = self.point_of_zoom + (np.array([player.x, player.y]) - self.point_of_zoom) / (1 + self.zoom_factor)
+                player.vector /= (1 + self.zoom_factor)
+
