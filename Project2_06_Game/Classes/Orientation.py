@@ -5,6 +5,8 @@ from Vector import Vector
 
 class Orientation:
 
+    GRAVITY_ACCELERATION = 9.81
+
     def __init__(self):
         # x,y-coordinates from click (to trace movement of pressed mouse)
         self.click_pos = np.array([0, 0])  # former: click_x_y
@@ -21,7 +23,7 @@ class Orientation:
         self.trace_zoom = 1
         self.original_current_cv = None
         self.point_of_zoom = None
-        self.g = Vector(0, 9.81, 0)  # the gravity acceleration
+        self.g = Vector(0, self.GRAVITY_ACCELERATION, 0)  # the gravity acceleration
 
     def get_click(self):
         # coordinates of a mouse click
@@ -106,7 +108,7 @@ class Orientation:
             player.x, player.y = (np.array([player.x, player.y]) / self.trace_zoom)
             player.vector /= self.trace_zoom
         self.trace_zoom /= self.trace_zoom
-        self.g /= self.g.y
+        self.g = Vector(0, self.GRAVITY_ACCELERATION, 0)
 
 
     def calculate_angle(self, vector_one, vector_two):
