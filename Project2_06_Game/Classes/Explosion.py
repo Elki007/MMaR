@@ -11,7 +11,7 @@ class Explosion:
         ###make smoke depend on current gun
         self.amount = random.randint(10, 50)
 
-        self.timer = 100
+        self.timer = 300
         self.destruct = False
         self.smoke = []
         self.parts = []

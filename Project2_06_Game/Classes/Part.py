@@ -10,7 +10,7 @@ class Part:
         self.painter = player.painter
         self.color = qg.QColor(255-random.randint(0,50), 255-random.randint(0,50), 255-random.randint(0,50))
 
-        self.gravity = player.g
+        self.gravity = player.vector * 0.1
         self.part_vector = [0, 0]
 
         self.x_part = self.parent.x
