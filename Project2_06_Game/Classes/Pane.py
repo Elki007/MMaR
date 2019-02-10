@@ -68,16 +68,7 @@ class Pane(qw.QLabel):
         self.move_bbox = False
         self.moved_bbox_point = None
 
-        #NEW
         self.orien = Orientation()
-        #OLD
-        # variables for clicks, movement and zoom
-        self.click_x_y = np.array([0, 0])  # x,y-coordinates from click (to track movement of pressed mouse)
-        self.track_movement = np.array([0, 0])  # difference of original position since beginning (tracks movement)
-        self.zoom = 0
-        self.zoom_factor = 0.05
-        self.track_zoom = 1
-        self.point_of_zoom = None
 
         self.update()
 
@@ -250,10 +241,7 @@ class Pane(qw.QLabel):
         self.painter_cv.drawPath(self.paths.qpath_bounding_box)
 
     def draw_bounding_box_single(self, index):
-        #NEW
-        #self.paths[index].bounding_box_refresh(self.move_bbox, self.moved_bbox_point, self.orien.get_click())
-        #OLD
-        self.paths[index].bounding_box_refresh(self.move_bbox, self.moved_bbox_point, self.click_x_y)
+        self.paths[index].bounding_box_refresh(self.move_bbox, self.moved_bbox_point, self.orien.get_click())
         self.painter_cv.setPen(qg.QPen(qc.Qt.white, self.paths[index].cv_size, qc.Qt.SolidLine))
 
         self.paths.draw_moveTo_bounding_box(*self.paths[index].bounding_box[3])
@@ -361,10 +349,7 @@ class Pane(qw.QLabel):
         if not self.paths.isempty():
             for i in range(len(self.paths)):
                 tmp_tree = cKDTree(self.paths[i].plotted_points)
-                #NEW
-                #dist, index = tmp_tree.query(self.orien.get_click())
-                #OLD
-                dist, index = tmp_tree.query(self.click_x_y)
+                dist, index = tmp_tree.query(self.orien.get_click())
                 if path_index == [None]:
                     path_index = [i, dist, index]
                 else:
@@ -377,15 +362,9 @@ class Pane(qw.QLabel):
     def set_new_cv(self, active_path=False):
         if active_path:
             index = 0 if self.paths.active_path is None else self.paths.active_path
-            #NEW
-            #self.paths[index].append_cvs(self.orien.get_click())
-            #OLD
-            self.paths[index].append_cvs(self.click_x_y)
+            self.paths[index].append_cvs(self.orien.get_click())
         else:
-            #NEW
-            #self.paths[-1].append_cvs(self.orien.get_click())
-            #OLD
-            self.paths[-1].append_cvs(self.click_x_y)
+            self.paths[-1].append_cvs(self.orien.get_click())
 
     def find_clicked_point(self, active_path=False):
         if active_path:
@@ -393,20 +372,14 @@ class Pane(qw.QLabel):
 
             for index_point, each_point in enumerate(self.paths[index].bounding_box):
                 # calculate if the mouse click is on the bounding position
-                #NEW
-                #if self.orien.check_click_on_point(self.paths[index], each_point):
-                #OLD
-                if (self.click_x_y <= each_point + self.paths[index].cv_size).all() and (self.click_x_y >= each_point - self.paths[index].cv_size).all():
+                if self.orien.check_click_on_point(self.paths[index], each_point):
                     self.move_bbox = True
                     self.moved_bbox_point = index_point
                     return True
 
             for index_cv, each_cv in enumerate(self.paths[index]):
                 # calculate if the mouse click is on the cv position
-                #NEW
-                #if self.orien.check_click_on_point(self.paths[index], each_cv):
-                #OLD
-                if (self.click_x_y <= each_cv + self.paths[index].cv_size).all() and (self.click_x_y >= each_cv - self.paths[index].cv_size).all():
+                if self.orien.check_click_on_point(self.paths[index], each_cv):
                     self.move_cv = True
                     self.moved_path = index
                     self.moved_cv = index_cv
@@ -417,10 +390,7 @@ class Pane(qw.QLabel):
             for index_path, each_path in enumerate(self.paths):
                 for index_cv, each_cv in enumerate(each_path):
                     # calculate if the mouse click is on the cv position
-                    #NEW
-                    #if self.orien.check_click_on_point(each_path, each_cv):
-                    #OLD
-                    if (self.click_x_y <= each_cv + each_path.cv_size).all() and (self.click_x_y >= each_cv - each_path.cv_size).all():
+                    if self.orien.check_click_on_point(each_path, each_cv):
                         self.move_cv = True
                         self.moved_path = index_path
                         self.moved_cv = index_cv
@@ -428,10 +398,7 @@ class Pane(qw.QLabel):
 
     def mousePressEvent(self, event):
         """ actions that happen, if mouse button will be clicked """
-        #NEW
         self.orien.set_click(event)
-        #OLD
-        self.click_x_y = np.array([event.pos().x(), event.pos().y()])
 
         # if left mouse button is clicked
         if event.buttons() == qc.Qt.LeftButton:
@@ -469,42 +436,26 @@ class Pane(qw.QLabel):
         left button: change last placed cv (dynamic view of line)
         right button: move everything, tracked by self.track_movement
         """
-        #TODO: Some structure and maybe a plan
 
-        #NEW
         self.orien.set_move(event)
-        #OLD
-        tmp_x_y = np.array([event.pos().x(), event.pos().y()])
 
         # if click began on cv
         if self.move_cv:
             # if (only?) left mouse button is on hold, drag cv to mouse position
             if event.buttons() == qc.Qt.LeftButton:
                 if self.moved_path is not None and self.moved_path >= 0:
-                    #NEW
-                    #self.paths[self.moved_path][self.moved_cv] = self.orien.get_move()
-                    #OLD
-                    self.paths[self.moved_path][self.moved_cv] = tmp_x_y
+                    self.paths[self.moved_path][self.moved_cv] = self.orien.get_move()
 
             # if both buttons are on hold, drag cv and position of point
             elif (event.buttons() & qc.Qt.LeftButton) and (event.buttons() & qc.Qt.RightButton):
-                #NEW
-                #self.orien.move_points_and_screen()
-                #self.move_everything()
-                #OLD
-                self.track_movement += tmp_x_y - self.click_x_y
-                self.move_everything(tmp_x_y)
-                self.click_x_y = tmp_x_y
+                self.orien.move_points_and_screen(self.paths)
+                self.move_everything()
 
         elif self.move_bbox:
             # if (only?) left mouse button is on hold, drag cv to mouse position
             if event.buttons() == qc.Qt.LeftButton:
                 # calculate with given active path and clicked bbox point
-                #NEW
-                #self.orien.calculate_bbox_coordinates(self.paths[self.paths.active_path], self.moved_bbox_point)
-                #OLD
-                self.orien.calculate_bbox_coordinates(self.paths[self.paths.active_path], self.moved_bbox_point, tmp_x_y)
-                self.click_x_y = tmp_x_y
+                self.orien.calculate_bbox_coordinates(self.paths[self.paths.active_path], self.moved_bbox_point)
 
             # if both buttons are on hold, do.. nothing?
             elif (event.buttons() & qc.Qt.LeftButton) and (event.buttons() & qc.Qt.RightButton):
@@ -518,52 +469,27 @@ class Pane(qw.QLabel):
             # left mouse button on hold: change last placed cv if there is one
             if event.buttons() == qc.Qt.LeftButton and len(self.paths[index]) > 0:
                 if not self.editMode or (self.editMode and self.paths.active_path is not None):
-                    #NEW
-                    #self.move_last_cv(index)
-                    #OLD
-                    self.move_last_cv(tmp_x_y, index)
+                    self.move_last_cv(index)
 
             # right mouse button on hold: change position of everything
             elif event.buttons() == qc.Qt.RightButton:
                 if self.editMode and self.paths.active_path is not None:
-                    self.move_specific_path(tmp_x_y, index)
-                    #NEW
-                    #self.orien.actualize_click()
-                    #OLD
-                    self.click_x_y = tmp_x_y
+                    self.move_specific_path(index)
+                    self.orien.actualize_click()
                 else:
-                    #NEW
-                    #self.orien.move_points_and_screen()
-                    #self.move_everything()
-                    #OLD
-                    self.track_movement += tmp_x_y - self.click_x_y
-                    self.move_everything(tmp_x_y)
-                    self.click_x_y = tmp_x_y
+                    self.orien.move_points_and_screen(self.paths)
+                    self.move_everything()
             # change both if both buttons are pressed (if there is a last cv)
             elif (event.buttons() & qc.Qt.LeftButton) and (event.buttons() & qc.Qt.RightButton):
-                #NEW
-                #self.paths[-1].append_cvs(self.orien.get_click())
-                #OLD
-                self.paths[-1].append_cvs(self.click_x_y)
+                self.paths[-1].append_cvs(self.orien.get_click())
 
                 self.move_cv = True
 
-                #NEW
-                #self.orien.move_points_and_screen()
-                #self.move_everything()
-                #OLD
-                self.track_movement += tmp_x_y - self.click_x_y
-                self.move_everything(tmp_x_y)
-                self.click_x_y = tmp_x_y
+                self.orien.move_points_and_screen(self.paths)
+                self.move_everything()
 
         self.plot()
         self.update()
-
-    @staticmethod
-    def angle(vector_one, vector_two):
-        ang1 = np.arctan2(*vector_one)
-        ang2 = np.arctan2(*vector_two)
-        return (ang2-ang1) % (2*np.pi)
 
     def mouseDoubleClickEvent(self, event):
         """ delete through double click - only one at once """
@@ -590,114 +516,51 @@ class Pane(qw.QLabel):
         self.update()
 
     def click_on_cv(self, path, cv):
-        #NEW
-        #return self.orien.check_click_on_point(path, cv)
-        #OLD
-        return (self.click_x_y <= cv + path.cv_size).all() and (self.click_x_y >= cv - path.cv_size).all()
+        return self.orien.check_click_on_point(path, cv)
 
     def wheelEvent(self, event):
         """ Implements zoom through mouse wheel """
-        #NEW
         # set point of zoom and direction (in/out)
         self.orien.set_zoom_settings(event)
-        #OLD
-        self.point_of_zoom = np.array([event.pos().x(), event.pos().y()])
-        self.zoom += event.angleDelta().y()//120
 
         # to zoom in/scroll up
         if event.angleDelta().y() > 0:
             # calculate cvs
             for i in range(len(self.paths)):
-                #NEW
-                # self.orien.calculate_zoom_translation(self.paths[i])
-                self.orien.calculate_zoom_translation(self.paths[i], self.point_of_zoom, self.zoom_factor)
+                self.orien.calculate_zoom_translation(self.paths[i])
 
-            #NEW
-            #self.orien.set_trace_zoom_in()
-            #OLD
-            self.track_zoom *= (1 + self.zoom_factor)
+            self.orien.set_trace_zoom_in()
 
             # change of track_movement
-            #NEW
-            #self.orien.set_trace_movement_while_zoom_in()
-            #OLD
-            self.track_movement = self.point_of_zoom + (self.track_movement - self.point_of_zoom * (1 + self.zoom_factor))
+            self.orien.set_trace_movement_while_zoom_in()
 
         # to zoom out
         else:
             for i in range(len(self.paths)):
-                #NEW
-                #self.calculate_zoom_translation(self.paths[i], zoom_in=False)
-                self.calculate_zoom_translation(self.paths[i], self.point_of_zoom, self.zoom_factor, zoom_in=False)
-
-            #NEW
-            #self.orien.set_trace_zoom_out()
-            #OLD
-            self.track_zoom /= (1 + self.zoom_factor)
+                self.orien.calculate_zoom_translation(self.paths[i], zoom_in=False)
+            self.orien.set_trace_zoom_out()
 
             # change of track_movement
-            #NEW
-            #self.orien.set_trace_movement_while_zoom_in()
-            #OLD
-            tmp_vector = self.track_movement - self.point_of_zoom
-            self.track_movement = self.point_of_zoom + (tmp_vector / (1 + self.zoom_factor))
+            self.orien.set_trace_movement_while_zoom_out()
 
         self.plot()
         self.update()
 
-    @staticmethod
-    def calculate_zoom_translation(cv_list, reference_point, zoom_factor, zoom_in=True):
-        """ calculates zoom (in or out) for a list of points """
-        for i in range(len(cv_list)):
-            tmp_vector = cv_list[i] - reference_point
-            if zoom_in:
-                cv_list[i] = reference_point + tmp_vector * (1 + zoom_factor)
-            else:
-                cv_list[i] = reference_point + tmp_vector / (1 + zoom_factor)
-
-    def move_specific_path(self, tmp_x_y, index):
+    def move_specific_path(self, index):
         """ moves a specific chosen path """
-        #NEW
-        #self.paths[index] += self.orien.get_movement()  # if it exist, change pos of all cv_paths
-        #OLD
-        self.paths[index] += tmp_x_y - self.click_x_y  # if it exist, change pos of all cv_paths
+        self.paths[index] += self.orien.get_movement()  # if it exist, change pos of all cv_paths
 
-    def move_last_cv(self, tmp_x_y, index):
+    def move_last_cv(self, index):
         """ moves the most recent cv of given path[index] """
-        #NEW
-        #self.paths[index][-1] = self.orien.get_move()  # change last cv of last cv_path
-        #OLD
-        self.paths[index][-1] = tmp_x_y  # change last cv of last cv_path
+        self.paths[index][-1] = self.orien.get_move()  # change last cv of last cv_path
 
-    def move_everything(self, tmp_x_y):
+    def move_everything(self):
         """ moves every cv of each path """
-        for i in range(len(self.paths)):
-            #NEW
-            #self.paths[i] += self.orien.get_movement()
-            #OLD
-            self.paths[i] += tmp_x_y - self.click_x_y  # if it exist, change pos of all cv_paths
+        pass
 
     def move_to_center(self):
         """ Move everything to center (depends on self.track_movement and self.track_zoom """
-        #NEW
-        #self.orien.move_to_center(self.paths)
-        #OLD
-        for i in range(len(self.paths)):
-            self.paths[i] -= self.track_movement
-        self.track_movement -= self.track_movement
-
-        if self.track_zoom > 1:
-            for i in range(len(self.paths)):
-                for j in range(len(self.paths[i])):
-                    tmp_vector = self.paths[i][j]
-                    self.paths[i][j] = tmp_vector / self.track_zoom
-            self.track_zoom /= self.track_zoom
-        else:
-            for i in range(len(self.paths)):
-                for j in range(len(self.paths[i])):
-                    tmp_vector = self.paths[i][j]
-                    self.paths[i][j] = tmp_vector / self.track_zoom
-            self.track_zoom /= self.track_zoom
+        self.orien.move_to_center(self.paths)
 
         self.plot()
         self.update()
@@ -706,16 +569,10 @@ class Pane(qw.QLabel):
         """ returns string to display movement/position and zoom """
         # used in GuiWidget -> update_gui()
         if display == "position":
-            #NEW
-            #x, y = self.orien.get_trace_movement()
-            #return f"Position: ({int(x)},{int(y)})"
-            #OLD
-            return f"Position: ({int(self.track_movement[0])},{int(self.track_movement[1])})"
+            x, y = self.orien.get_trace_movement()
+            return f"Position: ({int(x)},{int(y)})"
         elif display == "zoom":
-            #NEW
-            #return f"Zoom: {round(self.orien.get_trace_zoom(), 2)}"
-            #OLD
-            return f"Zoom: {round(self.track_zoom, 2)}"
+            return f"Zoom: {round(self.orien.get_trace_zoom(), 2)}"
 
     def create_new_path(self, cm_type):
         """ creates new path with cm_type(normal/fast/slow) """

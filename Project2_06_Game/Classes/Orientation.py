@@ -68,28 +68,32 @@ class Orientation:
     def check_click_on_point(self, path, point):
         return (self.click_pos <= point + path.cv_size).all() and (self.click_pos >= point - path.cv_size).all()
 
-    def move_points_and_screen(self):
+    def move_points_and_screen(self, all_paths):
         self.trace_movement += self.move_pos - self.click_pos
+        for i in range(len(all_paths)):
+            all_paths[i] += self.get_movement()  # if it exist, change pos of all cv_paths
         self.click_pos = self.move_pos
 
     def reset_movement(self):
-        self.trace_movement = 0
+        self.trace_movement -= self.trace_movement
 
     def move_to_center(self, all_paths):
         for i in range(len(all_paths)):
             all_paths[i] -= self.trace_movement
 
-        self.trace_movement = 0
+        self.trace_movement -= self.trace_movement
 
         if self.trace_zoom > 1:
             for i in range(len(all_paths)):
                 for j in range(len(all_paths[i])):
-                    all_paths[i][j] = all_paths[i][j] / self.trace_zoom
+                    tmp_vector = all_paths[i][j]
+                    all_paths[i][j] = tmp_vector / self.trace_zoom
             self.trace_zoom /= self.trace_zoom
         else:
             for i in range(len(all_paths)):
                 for j in range(len(all_paths[i])):
-                    all_paths[i][j] = all_paths[i][j] / self.trace_zoom
+                    tmp_vector = all_paths[i][j]
+                    all_paths[i][j] = tmp_vector / self.trace_zoom
             self.trace_zoom /= self.trace_zoom
 
     def calculate_angle(self, vector_one, vector_two):
@@ -98,7 +102,7 @@ class Orientation:
         ang2 = np.arctan2(*vector_two)
         self.angle = (ang2-ang1) % (2*np.pi)
 
-    def calculate_bbox_coordinates(self, active_path, moved_point, tmp_x_y):
+    def calculate_bbox_coordinates(self, active_path, moved_point):
         # TODO: HÄSSLICH! Geht auch mit Matrizenmultiplikation, funktioniert aber noch nicht ganz
         bbox = active_path.bounding_box
 
@@ -106,11 +110,11 @@ class Orientation:
         box_point = bbox[moved_point]
         related_point = bbox[moved_point-1]  # for other points to move too
         norm_length = distance.euclidean(box_center, related_point)
-        length = distance.euclidean(tmp_x_y, box_center)
+        length = distance.euclidean(self.move_pos, box_center)
 
         relative_length = length/norm_length
 
-        vector_one = tmp_x_y-box_center
+        vector_one = self.move_pos-box_center
         vector_two = box_point-box_center
         self.calculate_angle(vector_two, vector_one)
 
@@ -149,14 +153,13 @@ class Orientation:
 
             active_path.bounding_box[i] = box_center + (np.array([xx, yy]) * punkt_laenge * relative_length)
 
-        self.click_pos = tmp_x_y
+        self.click_pos = self.move_pos
 
-    @staticmethod
-    def calculate_zoom_translation(cv_list, reference_point, zoom_factor, zoom_in=True):
+    def calculate_zoom_translation(self, cv_list, zoom_in=True):
         """ calculates zoom (in or out) for a list of points """
         for i in range(len(cv_list)):
-            tmp_vector = cv_list[i] - reference_point
+            tmp_vector = cv_list[i] - self.point_of_zoom
             if zoom_in:
-                cv_list[i] = reference_point + tmp_vector * (1 + zoom_factor)
+                cv_list[i] = self.point_of_zoom + tmp_vector * (1 + self.zoom_factor)
             else:
-                cv_list[i] = reference_point + tmp_vector / (1 + zoom_factor)
+                cv_list[i] = self.point_of_zoom + tmp_vector / (1 + self.zoom_factor)
