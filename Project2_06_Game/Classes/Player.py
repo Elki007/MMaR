@@ -431,8 +431,17 @@ class Player:
             extra_points = 0
             p2_i = self.closest_node2(player_next, temp_arr)
             while arr[p1_i][0] == temp_arr[p2_i][0] and arr[p1_i][1] == temp_arr[p2_i][1]:
-                temp_arr = np.delete(temp_arr, p1_i, axis=0)
+                temp_arr = np.delete(temp_arr, p2_i, axis=0)
                 extra_points += 1
+            abst1 = Vector.make_vector(Vector,player,temp_arr[p2_i])
+
+            # make sure that another point > self.vector
+            while abs(abst1) < abs(self.vector):
+                temp_arr = np.delete(temp_arr, p2_i, axis=0)
+                extra_points += 1
+                p2_i = self.closest_node2(player_next, temp_arr)
+                abst1 = Vector.make_vector(Vector, player, temp_arr[p2_i])
+
             if p2_i >= p1_i:
                 p2_i += 1+extra_points
 
@@ -446,9 +455,9 @@ class Player:
             x3,y3 = arr[p1_i][0],arr[p1_i][1]
             x4,y4 = arr[p2_i][0],arr[p2_i][1]
             # show found points at B.k
-            #self.painter.setPen(qg.QPen(qc.Qt.blue, 4, qc.Qt.SolidLine))
-            #self.painter.drawPoint(x3, y3)
-            #self.painter.drawPoint(x4, y4)
+            self.painter.setPen(qg.QPen(qc.Qt.blue, 4, qc.Qt.SolidLine))
+            self.painter.drawPoint(x3, y3)
+            self.painter.drawPoint(x4, y4)
             #print(arr[p1_i], arr[p2_i])
 
             x_max = x3 if x3 > x4 else x4
