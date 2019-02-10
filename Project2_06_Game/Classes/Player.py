@@ -19,12 +19,111 @@ class Player:
         self.painter = pane.painter_schlitten
         self.paths = pane.paths
         self.vector = Vector(0,1,0)
+        self.ground = Vector(1,0,0)
         self.color = qc.Qt.red
         self.g = self.parent.pane.orien.g
+        self.hit_type = ""
+        self.norm = Vector(0,-1)
         self.start = time.time()
         self.time_speed = 0.01  # 0.01 <=> 100-times slower
+        self.scale = 1
         #print(type(self.paths.list_of_paths), len(self.paths.list_of_paths), self.paths.list_of_paths[0].plotted_points)
         #print(self.intersection_with_array_test([4,1.5],Vector(0,-2.5),[[0,4],[3,1],[5,2]]))
+
+    def draw_player(self):
+        ground = self.ground
+        if ground.x > 0 and ground.y > 0:
+            surface_quarter = 1
+        elif ground.x < 0 and ground.y > 0:
+            surface_quarter = 2
+        elif ground.x < 0 and ground.y < 0:
+            surface_quarter = 3
+        else:
+            surface_quarter = 4
+
+        if self.hit_type == "hit_floor":
+            if surface_quarter == 1 or surface_quarter == 4:
+                self.norm = Vector(ground.y, -ground.x)
+            else:
+                self.norm = Vector(-ground.y, ground.x)
+        elif self.hit_type == "hit_roof":
+            if surface_quarter == 1 or surface_quarter == 4:
+                self.norm = Vector(-ground.y, ground.x)
+            else:
+                self.norm = Vector(ground.y, -ground.x)
+
+        if self.hit_type == "hit_floor":
+            if surface_quarter == 2 or surface_quarter == 3:
+                ground *= (-1)
+        elif self.hit_type == "hit_roof":
+            if self.vector.x>0:
+                #print(">0")
+                ground *= (-1)
+            #else:
+                #print("<=0")
+        norm = self.norm.norm()
+        scale = self.pane.orien.get_trace_zoom()
+        ground = ground.norm()
+        thickness = 2
+        if scale >1:
+            thickness += scale/3
+
+        g2 = Vector(ground.x, ground.y)
+        path = qg.QPainterPath()
+        #print(ground, g2, ground.angle(g2))
+        pos = Vector(self.x, self.y)
+        start = pos + ground*8*scale
+        path.moveTo(start.x, start.y)
+        path.lineTo(start.x, start.y)
+        pos -= ground*8*scale
+        path.lineTo(pos.x, pos.y)
+        pos += norm*6*scale
+        path.lineTo(pos.x, pos.y)
+        pos += ground*25*scale
+        path.lineTo(pos.x, pos.y)
+        pos = start
+        path.lineTo(pos.x, pos.y)
+        self.painter.setPen(qg.QPen(qc.Qt.darkMagenta, thickness, qc.Qt.SolidLine))
+        self.painter.drawPath(path)
+        path = qg.QPainterPath()
+        pos = Vector(self.x, self.y)
+        pos += norm*4*scale
+        path.moveTo(pos.x,pos.y)
+        path.lineTo(pos.x,pos.y)
+        pos += ground*6*scale
+        path.lineTo(pos.x,pos.y)
+        pos -= ground*8*scale
+        path.lineTo(pos.x,pos.y)
+        pos += norm*8*scale
+        path.lineTo(pos.x, pos.y)
+
+        self.painter.setPen(qg.QPen(qc.Qt.red, thickness, qc.Qt.SolidLine))
+        self.painter.drawPath(path)
+        self.painter.setPen(qg.QPen(qc.Qt.red, 2*thickness, qc.Qt.SolidLine))
+        #self.painter.setBrush(qc.Qt.red)
+        self.painter.drawEllipse(qc.QPoint(pos.x,pos.y), scale,scale)
+        self.painter.drawEllipse(qc.QPoint(pos.x,pos.y), scale/2,scale/2)
+
+        #x, y = self.x + (ground.norm()*20).x, self.y + (ground.norm()*20).y
+        #path.lineTo(x,y)
+
+
+        """img_scale = 30
+        p_img = qg.QImage("tank.png")
+        p_pixmap = qg.QPixmap.fromImage(p_img)
+        #p_pixmap = p_pixmap.scaledToWidth(img_scale)
+        self.painter.drawPixmap(self.x, self.y, p_pixmap)
+
+        #self.tank_rotation = round(90 - math.acos(self.vector.y) / math.pi * 180)
+        tank_rotation = 45
+
+        # print(self.rotation)
+        p_transform = qg.QTransform().rotate(tank_rotation)
+        p_pixmap = p_pixmap.transformed(p_transform, qc.Qt.SmoothTransformation)
+        tank_height_rotated = p_pixmap.height()
+        tank_width_rotated = p_pixmap.width()
+        #self.painter.drawPixmap(self.x, self.y, p_pixmap)"""
+
 
     def show(self):
         '''
@@ -38,6 +137,7 @@ class Player:
         #  draw vector
         self.painter.setPen(qg.QPen(qc.Qt.green, 2, qc.Qt.SolidLine))
         self.painter.drawLine(self.x, self.y, self.x+self.vector.x, self.y+self.vector.y)
+        self.draw_player()
 
     def next(self):
         t = time.time() - self.start
@@ -56,10 +156,12 @@ class Player:
             self.painter.drawLine(a[0], a[1], b[0], b[1])
 
             cos = self.vector.cos(surface)
+            self.ground = surface
             if cos < 0:
                 # prbbl not really needed :)
                 #print("Surface correction")
                 surface = surface * (-1)
+                self.ground = surface
 
             if surface.x>0 and surface.y>0:
                 surface_quarter = 1
@@ -81,9 +183,9 @@ class Player:
             # another try:
             m = (a[1]-b[1])/(a[0]-b[0])
             if self.y > m*self.x + (a[1]-m*a[0]):
-                hit_type = "hit_roof"
+                self.hit_type = "hit_roof"
             else:
-                hit_type = "hit_floor"
+                self.hit_type = "hit_floor"
 
             #print("hit:", hit_type, surface_quarter)
 
@@ -122,7 +224,7 @@ class Player:
 
                 # normal vector to surface:
                 # warning # reflection depends on self.vector.x
-                if hit_type == "hit_floor":
+                if self.hit_type == "hit_floor":
                     if surface_quarter == 1 or surface_quarter == 4:
                         norm = Vector(surface.y, -surface.x)
                     else:
@@ -149,7 +251,7 @@ class Player:
                 after = self.vector*2
                 # normal vector to surface:
                 # warning # reflection depends on self.vector.x and hit_floor/roof ?
-                if hit_type == "hit_floor":
+                if self.hit_type == "hit_floor":
                     if surface_quarter == 1 or surface_quarter == 4:
                         norm = Vector(surface.y, -surface.x)
                     else:
@@ -163,12 +265,13 @@ class Player:
                 norm = norm.norm() * 3
                 self.x, self.y = self.x + norm.x, self.y + norm.y
                 # check if stopped
-                if hit_type == "hit_floor" and before.cos(after) < -0.999 and self.vector.x*2 < 0.001:
+                if self.hit_type == "hit_floor" and before.cos(after) < -0.999 and self.vector.x*2 < 0.001:
                     print("calm")
                     self.vector = Vector(0, 0)
                     self.g = Vector(0, 0)
         else:
             # free fall part
+            self.hit_type = ""
             self.x, self.y = self.x + self.vector.x, self.y + self.vector.y
             self.vector += self.g * self.time_speed  # *  t
 

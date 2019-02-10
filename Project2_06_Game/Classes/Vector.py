@@ -1,4 +1,5 @@
 import math
+import numpy as np
 
 
 class Vector:
@@ -94,6 +95,11 @@ class Vector:
         sn = math.sin(theta)
 
         return Vector(self.x*cs-self.y*sn,self.x*sn+self.y*cs,0)
+
+    def angle(self, other):
+        ang1 = np.arctan2(self.x,other.x)
+        ang2 = np.arctan2(self.y,other.y)
+        return (ang2-ang1)%(2*np.pi)
 
     def reflect(self, surface):
         if (type(self) == type(surface)):
