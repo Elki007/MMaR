@@ -25,7 +25,7 @@ class Path:
         self.plotted_points = np.ndarray([])  # to locate nearest points, maybe for intersection with player vector?
 
         self.cvs = cvs  # control points
-        self.cv_size = cv_size  # unterschiedliche Punkte, unterschiedliche Größe?
+        self.cv_size = cv_size  # cv_size is size of cv AND bounding box points
 
     def changed_style(self, text):
         self.path_type = text
