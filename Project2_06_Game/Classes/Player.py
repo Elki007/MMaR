@@ -43,12 +43,6 @@ class Player:
 
         intersection = self.intersection_by_plotted()
         if intersection:
-            if self.vector.y > 0:
-                hit_type = "hit_floor"
-            elif self.vector.y < 0:
-                hit_type = "hit_roof"
-            else:
-                print("VECTOR Y = 0")
             dummy, path_type = intersection
             at, a, b = dummy
             aa = Vector.make_vector(Vector, [self.x, self.y], a)
@@ -63,46 +57,87 @@ class Player:
             cos = self.vector.cos(surface)
             if cos < 0:
                 # prbbl not really needed :)
+                #print("Surface correction")
                 surface = surface * (-1)
+
+            if surface.x>0 and surface.y>0:
+                surface_quarter = 1
+            elif surface.x<0 and surface.y>0:
+                surface_quarter = 2
+            elif surface.x<0 and surface.y<0:
+                surface_quarter = 3
+            else:
+                surface_quarter = 4
+
+            # was player below / above the line:
+            #p1 = a if a[0] > b[0] else b
+            #p2 = b if a[0] > b[0] else a
+            # line equation:
+            #p1 = a
+            #p2 = [a[0] + surface.x, a[1] + surface.y]
+            #det = (p1[0]-self.x)*(p2[1]-self.y)-(p1[1]-self.y)*(p2[0]-self.x)
+            #print(det)
+            # another try:
+            m = (a[1]-b[1])/(a[0]-b[0])
+            if self.y > m*self.x + (a[1]-m*a[0]):
+                hit_type = "hit_roof"
+            else:
+                hit_type = "hit_floor"
+
+            print("hit:", hit_type, surface_quarter)
+
             if abs(cos) > 0.7:
                 # angle is not enough to reflect, so just project it
                 # may opinion: if we'll always reflect a vector, point will "shake"
-                #print("project")
                 # set actual coordinates to a cross point
                 self.x, self.y = at[0], at[1]
                 self.vector = self.vector.proj_on(surface)
                 self.vector += self.g.proj_on(surface) * self.time_speed
                 # normal vector to surface:
                 # warning # reflection depends on self.vector.x
-                if surface.x > 0:
-                    norm = Vector(-surface.y, surface.x)
-                    norm = norm.norm() * 3
+                if hit_type == "hit_floor":
+                    if surface_quarter == 1 or surface_quarter == 4:
+                        norm = Vector(surface.y, -surface.x)
+                    else:
+                        norm = Vector(-surface.y, surface.x)
                 else:
-                    norm = Vector(surface.y, -surface.x)
-                    norm = norm.norm() * 3
-                self.x, self.y = self.x - norm.x, self.y - norm.y
+                    if surface_quarter == 1 or surface_quarter == 4:
+                        norm = Vector(-surface.y, surface.x)
+                    else:
+                        norm = Vector(surface.y, -surface.x)
+                norm = norm.norm() * 3
+                self.x, self.y = self.x + norm.x, self.y + norm.y
 
             else:
-                print("reflect")
+                #reflecting part
                 self.x, self.y = at[0], at[1]
-                #print(self.vector)
+                before = self.vector
                 self.vector = self.vector.reflect(surface)*0.5
-                #print("reflected: ",self.vector)
+                after = self.vector*2
                 # normal vector to surface:
-                # warning # reflection depends on self.vector.x
-                if surface.x > 0:
-                    norm = Vector(-surface.y, surface.x)
-                    norm = norm.norm() * 3
+                # warning # reflection depends on self.vector.x and hit_floor/roof ?
+                if hit_type == "hit_floor":
+                    if surface_quarter == 1 or surface_quarter == 4:
+                        norm = Vector(surface.y, -surface.x)
+                    else:
+                        norm = Vector(-surface.y, surface.x)
                 else:
-                    norm = Vector(surface.y, -surface.x)
-                    norm = norm.norm() * 3
-                self.x, self.y = self.x - norm.x, self.y - norm.y
-            #print(at, surface, path_type)
-            #print(self.vector.cos(surface))
+                    if surface_quarter == 1 or surface_quarter == 4:
+                        norm = Vector(-surface.y, surface.x)
+                    else:
+                        norm = Vector(surface.y, -surface.x)
 
+                norm = norm.norm() * 3
+                self.x, self.y = self.x + norm.x, self.y + norm.y
+                # check if stopped
+                if hit_type == "hit_floor" and before.cos(after)< -0.999 and self.vector.x*2 < 0.001:
+                    print("calm")
+                    self.vector = Vector(0, 0)
+                    self.g = Vector(0, 0)
         else:
+            # free fall part
             self.x, self.y = self.x + self.vector.x, self.y + self.vector.y
-            self.vector += self.g * self.time_speed #* t
+            self.vector += self.g * self.time_speed  # *  t
 
     def closest_node2(self, node, where):
         closest_index = distance.cdist([node], where).argmin()
@@ -397,8 +432,8 @@ class Player:
                 if X[0]>=x_min and X[0]<=x_max and X[1] >=y_min and X[1]<=y_max:
                     aa = Vector.make_vector(Vector, [self.x, self.y], arr[p1_i])
                     bb = Vector.make_vector(Vector, [self.x, self.y], arr[p2_i])
-                    if self.vector.cos(aa) * self.vector.cos(bb) > 0:
-                        print("COSINUS - check not passed!")
+                    #if self.vector.cos(aa) * self.vector.cos(bb) > 0:
+                        #print("COSINUS - check not passed!")
                         #return False
                     return X, arr[p1_i], arr[p2_i]
             return False
