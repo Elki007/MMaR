@@ -23,7 +23,7 @@ class Player:
         self.start = time.time()
         self.time_speed = 0.01  # 0.01 <=> 100-times slower
         #print(type(self.paths.list_of_paths), len(self.paths.list_of_paths), self.paths.list_of_paths[0].plotted_points)
-        print(self.intersection_with_array_test([4,1.5],Vector(0,-2.5),[[0,4],[3,1],[5,2]]))
+        #print(self.intersection_with_array_test([4,1.5],Vector(0,-2.5),[[0,4],[3,1],[5,2]]))
 
     def show(self):
         '''
@@ -84,15 +84,41 @@ class Player:
             else:
                 hit_type = "hit_floor"
 
-            print("hit:", hit_type, surface_quarter)
+            #print("hit:", hit_type, surface_quarter)
 
-            if abs(cos) > 0.7:
+            #print("tst", abs(cos), abs(self.vector))
+            if abs(cos) > 0.7 or abs(self.vector)<4:
+                #print("slide")
                 # angle is not enough to reflect, so just project it
                 # may opinion: if we'll always reflect a vector, point will "shake"
                 # set actual coordinates to a cross point
                 self.x, self.y = at[0], at[1]
-                self.vector = self.vector.proj_on(surface)
-                self.vector += self.g.proj_on(surface) * self.time_speed
+                #print(path_type)
+                if path_type == "speed up":
+                    if self.vector.proj_on(surface)*self.g > 0 :
+                        # acceleration
+                        #print("acc")
+                        self.vector = self.vector.proj_on(surface)
+                        self.vector += self.g.proj_on(surface) * 1.2 * self.time_speed
+                    else:
+                        # breaking
+                        #if self.vector.y > -2:
+                        #    self.vector *= 1.2
+                        self.vector = self.vector.proj_on(surface)
+                        #b = ((self.g * (-1)).proj_on(surface) * self.time_speed).norm()*0.5
+                        coeff = abs(Vector(1,0).cos(self.vector))
+                        #print("brk", self.vector, coeff)
+                        if abs(self.vector) < 10 / (2-coeff):
+                            self.vector += self.vector*coeff
+                        #print("after", abs(self.vector))
+                elif path_type == "slow down":
+                    self.vector = self.vector.proj_on(surface)
+                    self.vector += self.g.proj_on(surface) * self.time_speed
+                    self.vector *= 0.9
+                else:
+                    self.vector = self.vector.proj_on(surface)
+                    self.vector += self.g.proj_on(surface) * self.time_speed
+
                 # normal vector to surface:
                 # warning # reflection depends on self.vector.x
                 if hit_type == "hit_floor":
@@ -110,9 +136,15 @@ class Player:
 
             else:
                 #reflecting part
+                #print("reflecting")
                 self.x, self.y = at[0], at[1]
                 before = self.vector
-                self.vector = self.vector.reflect(surface)*0.5
+                self.vector = self.vector.reflect(surface)*0.3
+                if path_type == "speed up":
+                    self.vector *= 1.3
+                elif path_type == "slow down":
+                    self.vector *= 0.7
+
                 after = self.vector*2
                 # normal vector to surface:
                 # warning # reflection depends on self.vector.x and hit_floor/roof ?
@@ -130,7 +162,7 @@ class Player:
                 norm = norm.norm() * 3
                 self.x, self.y = self.x + norm.x, self.y + norm.y
                 # check if stopped
-                if hit_type == "hit_floor" and before.cos(after)< -0.999 and self.vector.x*2 < 0.001:
+                if hit_type == "hit_floor" and before.cos(after) < -0.999 and self.vector.x*2 < 0.001:
                     print("calm")
                     self.vector = Vector(0, 0)
                     self.g = Vector(0, 0)
@@ -144,6 +176,7 @@ class Player:
         return closest_index
 
     def intersection(self, x1, y1, x2, y2):
+        # old Version!!!
         x_correction = 0
         y_correction = 0
         special = ""
@@ -395,27 +428,37 @@ class Player:
         if len(arr)>1:
             p1_i = self.closest_node2(player, arr)
             temp_arr = np.delete(temp_arr, p1_i, axis=0)
+            extra_points = 0
             p2_i = self.closest_node2(player_next, temp_arr)
+            while arr[p1_i][0] == temp_arr[p2_i][0] and arr[p1_i][1] == temp_arr[p2_i][1]:
+                temp_arr = np.delete(temp_arr, p1_i, axis=0)
+                extra_points += 1
             if p2_i >= p1_i:
-                p2_i += 1
-            # checking cos
+                p2_i += 1+extra_points
+
+            #
+            if abs(p1_i-p2_i) > len(arr)-10: # difference in 10 is allowed
+                #print("first and last")
+                return False
 
             x1,y1 = player[0], player[1]
             x2,y2 = player_next[0], player_next[1]
             x3,y3 = arr[p1_i][0],arr[p1_i][1]
             x4,y4 = arr[p2_i][0],arr[p2_i][1]
-            #self.painter.setPen(qg.QPen(qc.Qt.white, 3, qc.Qt.SolidLine))
+            # show found points at B.k
+            #self.painter.setPen(qg.QPen(qc.Qt.blue, 4, qc.Qt.SolidLine))
             #self.painter.drawPoint(x3, y3)
             #self.painter.drawPoint(x4, y4)
+            #print(arr[p1_i], arr[p2_i])
 
             x_max = x3 if x3 > x4 else x4
             x_min = x4 if x3 > x4 else x3
-            dx = x_max-x_min
+            dx = x_max-x_min if x_max-x_min < 5 else 5
             x_max, x_min = x_max+dx, x_min-dx
 
             y_max = y3 if y3 > y4 else y4
             y_min = y4 if y3 > y4 else y3
-            dy = y_max-y_min
+            dy = y_max-y_min if y_max-y_min < 5 else 5
             y_max,y_min = y_max+dy,y_min-dy
 
             X = [False,False]
@@ -430,8 +473,10 @@ class Player:
                 # checks if cross point between a, b
                 #print(f"X:{X}, intervals: x:[{x_min,x_max}], y:[{y_min,y_max}]")
                 if X[0]>=x_min and X[0]<=x_max and X[1] >=y_min and X[1]<=y_max:
-                    aa = Vector.make_vector(Vector, [self.x, self.y], arr[p1_i])
-                    bb = Vector.make_vector(Vector, [self.x, self.y], arr[p2_i])
+                    self.painter.setPen(qg.QPen(qc.Qt.blue, 4, qc.Qt.SolidLine))
+                    self.painter.drawPoint(X[0], X[1])
+                    #aa = Vector.make_vector(Vector, [self.x, self.y], arr[p1_i])
+                    #bb = Vector.make_vector(Vector, [self.x, self.y], arr[p2_i])
                     #if self.vector.cos(aa) * self.vector.cos(bb) > 0:
                         #print("COSINUS - check not passed!")
                         #return False

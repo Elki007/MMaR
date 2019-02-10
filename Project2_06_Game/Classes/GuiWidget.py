@@ -193,7 +193,6 @@ class GuiWidget(qw.QWidget):
     def on_click_move_to_center(self):
         """ to move everything back to the start position """
         self.pane.move_to_center()
-
         # TODO: Wieso wird Pane erst nach den 2 Sek aktualisiert und nicht mit dem internen update()-Aufruf?
         # Wie lässt sich das ändern?
         #time.sleep(2)
@@ -215,7 +214,7 @@ class GuiWidget(qw.QWidget):
 
     # starts endless while with the game
     def on_click_game(self):
-        self.player = Player(20, 0, self.pane, self) #self.pane.width()//2
+        self.player = Player(20, 200, self.pane, self) #self.pane.width()//2
         self.b_show_cv.setChecked(False)
         self.b_game.setText("Restart")
         #self.on_click_show_cv(self.b_show_cv.checkState())
@@ -237,12 +236,13 @@ class GuiWidget(qw.QWidget):
 
     def on_click_play_pause(self):
         self.run = not self.run
-        print("hi", self.run)
         if self.run:
+            print("resume")
             self.player.track = self.pane.track
             styling_icon = qta.icon('fa5s.pause', color='black', color_active='orange')
             self.timer_4_game.start()
         else:
+            print("pause")
             styling_icon = qta.icon('fa5s.play', color='black', color_active='orange')
             self.timer_4_game.stop()
         self.b_pause.setIcon(styling_icon)
@@ -253,23 +253,6 @@ class GuiWidget(qw.QWidget):
         self.player.show()
         self.player.next()
         self.pane.update_game()
-        """self.forward = not self.forward
-        #print("hi", self.run)
-        if self.forward:
-            #self.player.track = self.pane.track
-            self.b_back.setText("backward")
-            #self.player.time_direction = 1
-            #self.player.g = self.player.g * (-1)
-            self.player.time_speed = 0.01
-            #styling_icon = qta.icon('fa5s.pause', color='black', color_active='orange')
-        else:
-            self.b_back.setText("forward")
-            #self.player.time_control_point = time.time()
-            #self.player.g = self.player.g * (-1)
-            self.player.time_speed = 0.001
-            #styling_icon = qta.icon('fa5s.play', color='black', color_active='orange')
-        #self.b_pause.setIcon(styling_icon)
-        #self.game_loop()"""
 
     def on_click_save(self):
         """ Saves all paths """
