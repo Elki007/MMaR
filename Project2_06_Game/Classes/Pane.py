@@ -564,7 +564,7 @@ class Pane(qw.QLabel):
 
     def move_to_center(self):
         """ Move everything to center (depends on self.track_movement and self.track_zoom """
-        self.orien.move_to_center(self.paths)
+        self.orien.move_to_center(self.paths, self.player)
 
         self.plot()
         self.update()

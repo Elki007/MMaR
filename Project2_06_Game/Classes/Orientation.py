@@ -42,6 +42,10 @@ class Orientation:
     def get_trace_zoom(self):
         return self.trace_zoom
 
+    def calculate_point_to_screen(self, x, y):
+        """ calculates a given point into the shown coordinates of pane """
+        return (x * self.trace_zoom) + self.trace_movement[0], (y * self.trace_zoom) + self.trace_movement[1]
+
     def set_click(self, event):
         self.click_pos = np.array([event.pos().x(), event.pos().y()])
 
@@ -86,24 +90,24 @@ class Orientation:
     def reset_movement(self):
         self.trace_movement -= self.trace_movement
 
-    def move_to_center(self, all_paths):
+    def move_to_center(self, all_paths, player):
         for i in range(len(all_paths)):
             all_paths[i] -= self.trace_movement
 
+        if player is not None:
+            player.x, player.y = np.array([player.x, player.y]) - self.trace_movement
+
         self.trace_movement -= self.trace_movement
 
-        if self.trace_zoom > 1:
-            for i in range(len(all_paths)):
-                for j in range(len(all_paths[i])):
-                    all_paths[i][j] = all_paths[i][j] / self.trace_zoom
-            self.trace_zoom /= self.trace_zoom
-            self.g /= self.g.y
-        else:
-            for i in range(len(all_paths)):
-                for j in range(len(all_paths[i])):
-                    all_paths[i][j] = all_paths[i][j] / self.trace_zoom
-            self.trace_zoom /= self.trace_zoom
-            self.g /= self.g.y
+        for i in range(len(all_paths)):
+            for j in range(len(all_paths[i])):
+                all_paths[i][j] = all_paths[i][j] / self.trace_zoom
+        if player is not None:
+            player.x, player.y = (np.array([player.x, player.y]) / self.trace_zoom)
+            player.vector /= self.trace_zoom
+        self.trace_zoom /= self.trace_zoom
+        self.g /= self.g.y
+
 
     def calculate_angle(self, vector_one, vector_two):
         # calculates angle in rad

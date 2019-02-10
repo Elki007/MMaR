@@ -13,8 +13,7 @@ class Player:
         super().__init__()
         self.parent = parent  # App - Main window
         self.gui = gui
-        self.x = x
-        self.y = y
+        self.x, self.y = self.parent.pane.orien.calculate_point_to_screen(x, y)
         self.pane = pane
         self.layer = pane.ebene_schlitten
         self.painter = pane.painter_schlitten
