@@ -25,7 +25,7 @@ class Player:
         self.color = qc.Qt.red
         self.g = self.parent.pane.orien.g
         self.hit_type = ""
-        self.norm = Vector(0,-1)
+        self.norm = self.parent.pane.orien.norm
         self.start = time.time()
         self.time_speed = 0.01  # 0.01 <=> 100-times slower
         self.t = 0
@@ -33,7 +33,8 @@ class Player:
         self.scale = 1
         self.explosions = []
 
-        self.dict[self.t] = self.x, self.y, self.vector,self.ground,self.norm,self.hit_type
+        self.dict[self.t] = self.x, self.y, self.vector,self.ground,self.norm,self.hit_type, \
+                            self.parent.pane.orien.trace_movement, self.parent.pane.orien.trace_zoom
 
         #print(type(self.paths.list_of_paths), len(self.paths.list_of_paths), self.paths.list_of_paths[0].plotted_points)
         #print(self.intersection_with_array_test([4,1.5],Vector(0,-2.5),[[0,4],[3,1],[5,2]]))
@@ -303,13 +304,18 @@ class Player:
             self.x, self.y = self.x + self.vector.x, self.y + self.vector.y
             self.vector += self.g * self.time_speed  # *  t
 
-        self.dict[self.t] = self.x, self.y, self.vector, self.ground, self.norm, self.hit_type
+        self.dict[self.t] = self.x, self.y, self.vector, self.ground, self.norm, self.hit_type, \
+                            self.parent.pane.orien.trace_movement, self.parent.pane.orien.trace_zoom
         self.t += +1
 
     def prev(self):
+        # TODO: Doppelte Tranformation fehlt
         if self.t > 0:
             self.t -=1
-        self.x, self.y, self.vector,self.ground,self.norm,self.hit_type = self.dict[self.t]
+        self.x, self.y, self.vector,self.ground,self.norm,self.hit_type, trace_movement, trace_zoom = self.dict[self.t]
+
+        player_pos = (np.array([self.x, self.y]) - trace_movement) / trace_zoom
+        self.x, self.y = self.parent.pane.orien.calculate_point_to_screen(*player_pos)
 
     def closest_node2(self, node, where):
         closest_index = distance.cdist([node], where).argmin()

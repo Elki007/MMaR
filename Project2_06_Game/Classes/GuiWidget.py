@@ -126,6 +126,11 @@ class GuiWidget(qw.QWidget):
         self.b_edit_mode.clicked.connect(lambda: self.on_click_edit_mode(self.b_edit_mode.checkState()))
         self.b_edit_mode.setChecked(False)
 
+        # tracking player position
+        self.b_show_tracking_player = qw.QCheckBox('Tracking Player', self)
+        self.b_show_tracking_player.clicked.connect(lambda: self.on_click_tracking_player(self.b_show_tracking_player.checkState()))
+        self.b_show_tracking_player.setChecked(False)
+
         # tracking position
         self.b_show_tracking_position = qw.QLabel(self.pane.display_tracking("position"))
         # tracking zoom
@@ -139,6 +144,7 @@ class GuiWidget(qw.QWidget):
         vbox_side_menu = qw.QVBoxLayout()  # side menu order
 
         hbox_time_menu = qw.QHBoxLayout()  # time menu
+
         mini_hbox_checkboxes = qw.QHBoxLayout()
         mini_hbox_checkboxes.addWidget(self.b_show_cv)
         mini_hbox_checkboxes.addWidget(self.b_edit_mode)
@@ -156,12 +162,15 @@ class GuiWidget(qw.QWidget):
         vbox_side_menu.addWidget(self.cm_type)
         vbox_side_menu.addWidget(cm_style)
         vbox_side_menu.addLayout(mini_hbox_checkboxes)
+        vbox_side_menu.addStretch(1)
         vbox_side_menu.addWidget(self.b_game)
+        vbox_side_menu.addWidget(self.b_show_tracking_player)
         vbox_side_menu.addLayout(hbox_time_menu)
+        vbox_side_menu.addStretch(1)
         vbox_side_menu.addWidget(b_save)
         vbox_side_menu.addWidget(b_load)
 
-        vbox_side_menu.addStretch(1)
+        vbox_side_menu.addStretch(10)
 
         vbox_side_menu.addWidget(b_move_to_center)
         vbox_side_menu.addWidget(self.b_show_tracking_zoom)
@@ -219,6 +228,10 @@ class GuiWidget(qw.QWidget):
             self.b_show_cv.setDisabled(False)
             self.on_click_show_cv(self.b_show_cv.checkState())
 
+    def on_click_tracking_player(self, value):
+        """ value = True or False """
+        self.pane.tracking_player(value)
+
     def on_click_move_to_center(self):
         """ to move everything back to the start position """
         self.pane.move_to_center()
@@ -261,7 +274,8 @@ class GuiWidget(qw.QWidget):
                 self.player.next()
             else:
                 self.player.prev()
-            self.pane.update_game()
+            #self.pane.update_game()  # test for tracking_player
+            self.pane.update()
             self.timer_4_game.start()
 
             #self.timer = qc.QTimer.singleShot(10, self.game_loop)
@@ -284,13 +298,15 @@ class GuiWidget(qw.QWidget):
         self.timer_4_game.stop()
         self.player.show()
         self.player.next()
-        self.pane.update_game()
+        #self.pane.update_game()  # test for tracking_player
+        self.pane.update()
 
     def on_click_step_backward(self):
         self.timer_4_game.stop()
         self.player.show()
         self.player.prev()
-        self.pane.update_game()
+        #self.pane.update_game()  # test for tracking_player
+        self.pane.update()
 
     def on_click_backward(self):
         #self.timer_4_game.stop()
@@ -306,14 +322,14 @@ class GuiWidget(qw.QWidget):
     def on_click_save(self):
         """ Saves all paths """
         save_paths = self.pane.save_all_paths()
-        np.save('something.npy', save_paths)
+        np.save('something_.npy', save_paths)
 
     def on_click_load(self):
         """ Load all saved paths """
         # TODO: Nur paths updated, bspw. self.pane.track fehlt
         # self.pane.track = []  # not reimplemented
 
-        load_paths = np.load('something.npy')
+        load_paths = np.load('something_.npy')
         self.pane.load_all_paths(load_paths)
 
     def update_gui(self):

@@ -6,6 +6,7 @@ from Vector import Vector
 class Orientation:
 
     GRAVITY_ACCELERATION = 9.81
+    NORM = -1
 
     def __init__(self):
         # x,y-coordinates from click (to trace movement of pressed mouse)
@@ -24,6 +25,7 @@ class Orientation:
         self.original_current_cv = None
         self.point_of_zoom = None
         self.g = Vector(0, self.GRAVITY_ACCELERATION, 0)  # the gravity acceleration
+        self.norm = Vector(0, -1)
 
     def get_click(self):
         # coordinates of a mouse click
@@ -61,19 +63,18 @@ class Orientation:
     def set_trace_zoom_in(self):
         self.trace_zoom *= (1 + self.zoom_factor)
         self.g *= (1 + self.zoom_factor)
+        self.norm *= (1 + self.zoom_factor)
 
     def set_trace_zoom_out(self):
         self.trace_zoom /= (1 + self.zoom_factor)
         self.g /= (1 + self.zoom_factor)
+        self.norm /= (1 + self.zoom_factor)
 
     def set_trace_movement_while_zoom_in(self):
         self.trace_movement = self.point_of_zoom + ((self.trace_movement - self.point_of_zoom) * (1 + self.zoom_factor))
 
     def set_trace_movement_while_zoom_out(self):
         self.trace_movement = self.point_of_zoom + ((self.trace_movement - self.point_of_zoom) / (1 + self.zoom_factor))
-
-    def actualize_player_location(self, player):
-        pass
 
     def actualize_click(self):
         self.click_pos = self.move_pos
@@ -92,6 +93,18 @@ class Orientation:
     def reset_movement(self):
         self.trace_movement -= self.trace_movement
 
+    def move_to_player(self, player, all_paths, width, height):
+        """ activated by checkmark in Gui at 'Tracking Player' """
+        player_pos = np.array([player.x, player.y])
+        self.trace_movement = self.trace_movement - player_pos + np.array([width/2, height/2])
+
+        for i in range(len(all_paths)):
+            all_paths[i] -= player_pos
+            all_paths[i] += np.array([width/2, height/2])
+
+        if player is not None:
+            player.x, player.y = player_pos - player_pos + np.array([width/2, height/2])
+
     def move_to_center(self, all_paths, player):
         for i in range(len(all_paths)):
             all_paths[i] -= self.trace_movement
@@ -104,12 +117,13 @@ class Orientation:
         for i in range(len(all_paths)):
             for j in range(len(all_paths[i])):
                 all_paths[i][j] = all_paths[i][j] / self.trace_zoom
+
         if player is not None:
             player.x, player.y = (np.array([player.x, player.y]) / self.trace_zoom)
             player.vector /= self.trace_zoom
         self.trace_zoom /= self.trace_zoom
         self.g = Vector(0, self.GRAVITY_ACCELERATION, 0)
-
+        self.norm = Vector(0, self.NORM)
 
     def calculate_angle(self, vector_one, vector_two):
         # calculates angle in rad

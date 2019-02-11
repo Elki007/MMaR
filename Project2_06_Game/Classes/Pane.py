@@ -59,6 +59,8 @@ class Pane(qw.QLabel):
 
         self.editMode = False
 
+        self.trackingPlayer = False
+
         # variables for drag and drops
         self.move_cv = False  # is a cv moved by mouse?
         self.moved_path = None
@@ -138,6 +140,11 @@ class Pane(qw.QLabel):
             self.paths.active_path = None
         self.update()
 
+    def tracking_player(self, value):
+        """ turns on/off edit mode """
+        self.trackingPlayer = value
+        self.update()
+
     def update_game(self):
         #self.update()
         #self.plot()
@@ -150,7 +157,11 @@ class Pane(qw.QLabel):
 
     def update(self):
         """ draws everything user wants to see """
-        #TODO: Unterscheidung zwischen update_calculate und upadate? (Um plot dazwischenzulegen)
+
+        if self.trackingPlayer and self.player is not None:
+            print("FEBUG!")
+            self.orien.move_to_player(self.player, self.paths, self.parent.width(), self.parent.height())
+            self.plot()  # TODO: muss hier dann noch einmal geplottet oder aber anders organisiert werden
 
         self.ebene_cv.fill(qg.QColor(0, 0, 0, 0))
 
@@ -174,6 +185,7 @@ class Pane(qw.QLabel):
 
         if self.player is not None:
             self.player.show()
+
         self.fill_layers()
 
     def player_created(self, player):
