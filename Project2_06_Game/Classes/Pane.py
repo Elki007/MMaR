@@ -89,6 +89,7 @@ class Pane(qw.QLabel):
         self.fill_all_default()
         self.set_all_painters()
 
+        self.update_player()
         self.plot()
         self.update()
 
@@ -119,17 +120,25 @@ class Pane(qw.QLabel):
         self.fill_all_default()
         self.set_all_painters()
         self.paths = GroupOfPaths(path=Path())  # TODO: Why [Interessant]: Wenn path=Path() weggelassen wird: Alter Path wird neu referenziert
+
+        self.update_player()
+        self.plot()
         self.update()
 
     def undo(self):
         """ removes last created point -> if it's the last point on path -> delete path """
         self.paths.delete(-1, -1)
+
+        self.update_player()
         self.plot()
         self.update()
 
     def show_cv(self, value):
         """ value = True or False -> if cv and lines will be displayed """
         self.showCV = value
+
+        self.update_player()
+        self.plot()
         self.update()
 
     def edit_mode(self, value):
@@ -138,11 +147,17 @@ class Pane(qw.QLabel):
         if not self.editMode:
             # back to original state
             self.paths.active_path = None
+
+        self.update_player()
+        self.plot()
         self.update()
 
     def tracking_player(self, value):
         """ turns on/off edit mode """
         self.trackingPlayer = value
+
+        self.update_player()
+        self.plot()
         self.update()
 
     def update_game(self):
@@ -155,13 +170,12 @@ class Pane(qw.QLabel):
         self.painter_total.drawPixmap(0, 0, self.ebene_schlitten)
         self.setPixmap(self.ebene_total)
 
+    def update_player(self):
+        if self.trackingPlayer and self.player is not None:
+            self.orien.move_to_player(self.player, self.paths, self.parent.width(), self.parent.height())
+
     def update(self):
         """ draws everything user wants to see """
-
-        if self.trackingPlayer and self.player is not None:
-            print("FEBUG!")
-            self.orien.move_to_player(self.player, self.paths, self.parent.width(), self.parent.height())
-            self.plot()  # TODO: muss hier dann noch einmal geplottet oder aber anders organisiert werden
 
         self.ebene_cv.fill(qg.QColor(0, 0, 0, 0))
 
@@ -434,6 +448,7 @@ class Pane(qw.QLabel):
                     # If not a point, set a point to latest path
                     self.set_new_cv()
 
+        self.update_player()
         self.plot()
         self.update()
 
@@ -448,6 +463,7 @@ class Pane(qw.QLabel):
             self.move_bbox = False
             self.moved_bbox_point = None
 
+            self.update_player()
             self.plot()
             self.update()
 
@@ -506,6 +522,7 @@ class Pane(qw.QLabel):
 
                 self.orien.move_points_and_screen(self.paths)
 
+        self.update_player()
         self.plot()
         self.update()
 
@@ -530,6 +547,7 @@ class Pane(qw.QLabel):
                 if point_found:
                     break
 
+        self.update_player()
         self.plot()
         self.update()
 
@@ -563,6 +581,7 @@ class Pane(qw.QLabel):
             # change of track_movement
             self.orien.set_trace_movement_while_zoom_out()
 
+        self.update_player()
         self.plot()
         self.update()
 
@@ -578,6 +597,7 @@ class Pane(qw.QLabel):
         """ Move everything to center (depends on self.track_movement and self.track_zoom """
         self.orien.move_to_center(self.paths, self.player)
 
+        self.update_player()
         self.plot()
         self.update()
 
@@ -606,5 +626,7 @@ class Pane(qw.QLabel):
         self.paths = GroupOfPaths(path=Path(*all_paths[0]))
         for i in range(1, len(all_paths)):
             self.paths.append(Path(*all_paths[i]))
+
+        self.update_player()
         self.plot()
         self.update()

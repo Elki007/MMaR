@@ -248,6 +248,8 @@ class GuiWidget(qw.QWidget):
     def on_click_type(self):
         text = self.cm_type.currentText()
         self.pane.change_path_style(text)
+
+        self.pane.update_player()
         self.pane.plot()
         self.pane.update()
 
@@ -274,7 +276,10 @@ class GuiWidget(qw.QWidget):
                 self.player.next()
             else:
                 self.player.prev()
-            #self.pane.update_game()  # test for tracking_player
+            #self.pane.update_game()  # test for tracking_player (has to be deactivated then)
+
+            self.pane.update_player()
+            self.pane.plot()    # TODO: Hier abhängig davon machen, ob Tracking aktiviert ist
             self.pane.update()
             self.timer_4_game.start()
 
@@ -322,14 +327,14 @@ class GuiWidget(qw.QWidget):
     def on_click_save(self):
         """ Saves all paths """
         save_paths = self.pane.save_all_paths()
-        np.save('something_.npy', save_paths)
+        np.save('something.npy', save_paths)
 
     def on_click_load(self):
         """ Load all saved paths """
         # TODO: Nur paths updated, bspw. self.pane.track fehlt
         # self.pane.track = []  # not reimplemented
 
-        load_paths = np.load('something_.npy')
+        load_paths = np.load('something.npy')
         self.pane.load_all_paths(load_paths)
 
     def update_gui(self):
