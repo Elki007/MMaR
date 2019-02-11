@@ -65,8 +65,9 @@ class Player:
             if surface_quarter == 2 or surface_quarter == 3:
                 ground *= (-1)
         elif self.hit_type == "hit_roof":
-            if self.vector.x>0:
-                #print(">0")
+            #if self.vector.x>0:
+            if surface_quarter == 1 or surface_quarter == 4:
+                print(">0")
                 ground *= (-1)
             #else:
                 #print("<=0")

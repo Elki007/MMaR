@@ -159,7 +159,7 @@ class Pane(qw.QLabel):
         """ draws everything user wants to see """
 
         if self.trackingPlayer and self.player is not None:
-            print("FEBUG!")
+            #print("FEBUG!")
             self.orien.move_to_player(self.player, self.paths, self.parent.width(), self.parent.height())
             self.plot()  # TODO: muss hier dann noch einmal geplottet oder aber anders organisiert werden
 
