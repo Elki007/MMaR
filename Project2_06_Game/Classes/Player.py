@@ -2,7 +2,7 @@ import PyQt5.QtWidgets as qw
 import PyQt5.QtCore as qc
 import PyQt5.QtGui as qg
 import math
-import time
+import time , random
 from Vector import Vector
 from Explosion import Explosion
 import numpy as np
@@ -20,6 +20,7 @@ class Player:
         self.painter = pane.painter_schlitten
         self.paths = pane.paths
         self.vector = Vector(0,1,0)
+        self.vector_back = Vector(0,-1,0)
         self.ground = Vector(1,0,0)
         self.color = qc.Qt.red
         self.g = self.parent.pane.orien.g
@@ -27,8 +28,13 @@ class Player:
         self.norm = Vector(0,-1)
         self.start = time.time()
         self.time_speed = 0.01  # 0.01 <=> 100-times slower
+        self.t = 0
+        self.dict = {}
         self.scale = 1
         self.explosions = []
+
+        self.dict[self.t] = self.x, self.y, self.vector,self.ground,self.norm,self.hit_type
+
         #print(type(self.paths.list_of_paths), len(self.paths.list_of_paths), self.paths.list_of_paths[0].plotted_points)
         #print(self.intersection_with_array_test([4,1.5],Vector(0,-2.5),[[0,4],[3,1],[5,2]]))
 
@@ -106,6 +112,23 @@ class Player:
         self.painter.drawEllipse(qc.QPoint(pos.x,pos.y), scale,scale)
         self.painter.drawEllipse(qc.QPoint(pos.x,pos.y), scale/2,scale/2)
 
+        v = self.vector.norm()
+        pos -= norm * 2 * scale
+        self.painter.setPen(qg.QPen(qc.Qt.green,  thickness, qc.Qt.SolidLine))
+        pos -= v * 3 * scale
+        pos_r = pos + norm * random.randint(int(-scale),int(scale))
+        self.painter.drawPoint(pos_r.x,pos_r.y)
+
+        self.painter.setPen(qg.QPen(qc.Qt.yellow,  thickness, qc.Qt.SolidLine))
+        pos -= v * 3 * scale
+        pos_r = pos + norm * random.randint(int(-scale), int(scale))
+        self.painter.drawPoint(pos_r.x,pos_r.y)
+
+        self.painter.setPen(qg.QPen(qc.Qt.red,  thickness, qc.Qt.SolidLine))
+        pos -= v * 3 * scale
+        pos_r = pos + norm * random.randint(int(-scale), int(scale))
+        self.painter.drawPoint(pos_r.x,pos_r.y)
+
         #x, y = self.x + (ground.norm()*20).x, self.y + (ground.norm()*20).y
         #path.lineTo(x,y)
 
@@ -126,7 +149,6 @@ class Player:
         tank_width_rotated = p_pixmap.width()
         #self.painter.drawPixmap(self.x, self.y, p_pixmap)"""
 
-
     def show(self):
         '''
         draws a player on special layer
@@ -146,9 +168,7 @@ class Player:
                 del self.explosions[i]
 
     def next(self):
-        t = time.time() - self.start
-
-        intersection = self.intersection_by_plotted()
+        intersection = self.intersection_by_plotted(self.vector)
         if intersection:
             dummy, path_type = intersection
             at, a, b = dummy
@@ -281,6 +301,14 @@ class Player:
             self.hit_type = ""
             self.x, self.y = self.x + self.vector.x, self.y + self.vector.y
             self.vector += self.g * self.time_speed  # *  t
+
+        self.dict[self.t] = self.x, self.y, self.vector, self.ground, self.norm, self.hit_type
+        self.t += +1
+
+    def prev(self):
+        if self.t > 0:
+            self.t -=1
+        self.x, self.y, self.vector,self.ground,self.norm,self.hit_type = self.dict[self.t]
 
     def closest_node2(self, node, where):
         closest_index = distance.cdist([node], where).argmin()
@@ -523,18 +551,18 @@ class Player:
         #for i in range(len(self.cvs)):
             #self.pane.bezier(self.cvs[i])
 
-    def intersection_by_plotted(self):
+    def intersection_by_plotted(self, vector):
         amount = len(self.paths.list_of_paths)
         for n in range(amount):
-            res = self.intersection_with_array(self.paths.list_of_paths[n])
+            res = self.intersection_with_array(self.paths.list_of_paths[n], vector)
             if res:
                 return res, self.paths.list_of_paths[n].path_type
         return False
 
-    def intersection_with_array(self, arr):
+    def intersection_with_array(self, arr,vector):
         arr = arr.plotted_points
         player = [self.x, self.y]
-        player_next = [self.x + self.vector.x, self.y + self.vector.y]
+        player_next = [self.x + vector.x, self.y + vector.y]
         temp_arr = arr
         if len(arr)>1:
             p1_i = self.closest_node2(player, arr)
@@ -547,7 +575,7 @@ class Player:
             abst1 = Vector.make_vector(Vector,player,temp_arr[p2_i])
 
             # make sure that another point > self.vector
-            while abs(abst1) < abs(self.vector):
+            while abs(abst1) < abs(vector):
                 temp_arr = np.delete(temp_arr, p2_i, axis=0)
                 extra_points += 1
                 p2_i = self.closest_node2(player_next, temp_arr)
@@ -589,7 +617,7 @@ class Player:
             #print(self.vector * abstand, " |a|:",abs(abstand), " |v|:", abs(self.vector), (self.vector * abstand >= 0 and abs(abstand) <= abs(self.vector* 1.2)),
                   #X[0]>=x_min and X[0]<=x_max and X[1] >=y_min and X[1]<=y_max)
             # checks if cross point enough close to player
-            if self.vector * abstand >= 0 and abs(abstand) <= abs(self.vector * 1.2):
+            if vector * abstand >= 0 and abs(abstand) <= abs(vector * 1.2):
                 # checks if cross point between a, b
                 #print(f"X:{X}, intervals: x:[{x_min,x_max}], y:[{y_min,y_max}]")
                 if X[0]>=x_min and X[0]<=x_max and X[1] >=y_min and X[1]<=y_max:

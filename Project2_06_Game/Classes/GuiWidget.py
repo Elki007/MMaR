@@ -46,8 +46,8 @@ class GuiWidget(qw.QWidget):
         b_move_to_center.clicked.connect(self.on_click_move_to_center)
 
         # button: start game
-        self.b_game = qw.QPushButton('Play', self)
-        self.b_game.setToolTip('Play')
+        self.b_game = qw.QPushButton('Start', self)
+        self.b_game.setToolTip('Start')
         self.b_game.clicked.connect(self.on_click_game)
 
         styling_icon = qta.icon('fa5s.pause',
@@ -55,13 +55,36 @@ class GuiWidget(qw.QWidget):
                                 color='black',
                                 color_active='orange')
 
-        self.b_pause = qw.QPushButton(styling_icon, "play/pause", self)
+        self.b_pause = qw.QPushButton(styling_icon, "", self)
         self.b_pause.setToolTip('play/pause')
         self.b_pause.clicked.connect(self.on_click_play_pause)
 
-        self.b_back = qw.QPushButton("step forward", self)
-        self.b_back.setToolTip('step forward')
-        self.b_back.clicked.connect(self.on_click_play_back)
+        styling_icon = qta.icon('fa5s.step-forward',
+                                # active='fa5s.balance-scale',
+                                color='black',
+                                color_active='orange')
+
+        self.b_sf = qw.QPushButton(styling_icon,"", self)
+        self.b_sf.setToolTip('step forward')
+        self.b_sf.clicked.connect(self.on_click_step_forward)
+
+        styling_icon = qta.icon('fa5s.step-backward',
+                                # active='fa5s.balance-scale',
+                                color='black',
+                                color_active='orange')
+
+        self.b_sb = qw.QPushButton(styling_icon, "", self)
+        self.b_sb.setToolTip('step backward')
+        self.b_sb.clicked.connect(self.on_click_step_backward)
+
+        styling_icon = qta.icon('fa5s.backward',
+                                # active='fa5s.balance-scale',
+                                color='black',
+                                color_active='orange')
+
+        self.b_back = qw.QPushButton(styling_icon, "", self)
+        self.b_back.setToolTip('backward')
+        self.b_back.clicked.connect(self.on_click_backward)
 
         b_save = qw.QPushButton('Save', self)
         b_save.setToolTip('Save')
@@ -115,10 +138,16 @@ class GuiWidget(qw.QWidget):
         hbox_pane_menu = qw.QHBoxLayout()  # pane und side menu
         vbox_side_menu = qw.QVBoxLayout()  # side menu order
 
+        hbox_time_menu = qw.QHBoxLayout()  # time menu
         mini_hbox_checkboxes = qw.QHBoxLayout()
         mini_hbox_checkboxes.addWidget(self.b_show_cv)
         mini_hbox_checkboxes.addWidget(self.b_edit_mode)
 
+        hbox_time_menu = qw.QHBoxLayout()  # time menu
+        hbox_time_menu.addWidget(self.b_back)
+        hbox_time_menu.addWidget(self.b_sb)
+        hbox_time_menu.addWidget(self.b_pause)
+        hbox_time_menu.addWidget(self.b_sf)
         # creates menu order
         vbox_side_menu.addWidget(b_new)  # creates new path
         vbox_side_menu.addWidget(b_clear)  # clears everything
@@ -128,8 +157,7 @@ class GuiWidget(qw.QWidget):
         vbox_side_menu.addWidget(cm_style)
         vbox_side_menu.addLayout(mini_hbox_checkboxes)
         vbox_side_menu.addWidget(self.b_game)
-        vbox_side_menu.addWidget(self.b_pause)
-        vbox_side_menu.addWidget(self.b_back)
+        vbox_side_menu.addLayout(hbox_time_menu)
         vbox_side_menu.addWidget(b_save)
         vbox_side_menu.addWidget(b_load)
 
@@ -229,7 +257,10 @@ class GuiWidget(qw.QWidget):
     def game_loop(self):
         self.player.show()
         if self.run:
-            self.player.next()
+            if self.forward:
+                self.player.next()
+            else:
+                self.player.prev()
             self.pane.update_game()
             self.timer_4_game.start()
 
@@ -240,7 +271,6 @@ class GuiWidget(qw.QWidget):
         self.run = not self.run
         if self.run:
             print("resume")
-            self.player.track = self.pane.track
             styling_icon = qta.icon('fa5s.pause', color='black', color_active='orange')
             self.timer_4_game.start()
         else:
@@ -250,11 +280,28 @@ class GuiWidget(qw.QWidget):
         self.b_pause.setIcon(styling_icon)
         #self.game_loop()
 
-    def on_click_play_back(self):
+    def on_click_step_forward(self):
         self.timer_4_game.stop()
         self.player.show()
         self.player.next()
         self.pane.update_game()
+
+    def on_click_step_backward(self):
+        self.timer_4_game.stop()
+        self.player.show()
+        self.player.prev()
+        self.pane.update_game()
+
+    def on_click_backward(self):
+        #self.timer_4_game.stop()
+        self.forward = not self.forward
+        if self.forward:
+            styling_icon = qta.icon('fa5s.backward', color='black', color_active='orange')
+        else:
+            styling_icon = qta.icon('fa5s.forward', color='black', color_active='orange')
+        self.b_back.setIcon(styling_icon)
+
+        #self.timer_4_game.start()
 
     def on_click_save(self):
         """ Saves all paths """
