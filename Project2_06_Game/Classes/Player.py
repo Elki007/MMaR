@@ -284,7 +284,13 @@ class Player:
                 #reflecting part
                 #print("reflecting")
                 self.x, self.y = at[0], at[1]
+
                 self.explosions.append(Explosion(self))
+                for i in range(len(self.explosions)-1,-1,-1):
+                    if self.explosions[i].destruct:
+                        del self.explosions[i]
+
+
                 before = self.vector
                 self.vector = self.vector.reflect(surface)*0.3
                 if path_type == "speed up":
