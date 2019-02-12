@@ -563,15 +563,16 @@ class Pane(qw.QLabel):
 
         # to zoom in/scroll up
         if event.angleDelta().y() > 0:
+            self.orien.set_trace_zoom_in()
+
+            # change of track_movement
+            self.orien.set_trace_movement_while_zoom_in()
+
             # calculate cvs
             for i in range(len(self.paths)):
                 self.orien.calculate_zoom_translation(self.paths[i])
             self.orien.calculate_zoom_translation_player(self.player)
 
-            self.orien.set_trace_zoom_in()
-
-            # change of track_movement
-            self.orien.set_trace_movement_while_zoom_in()
 
         # to zoom out
         else:

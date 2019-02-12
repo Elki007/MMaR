@@ -180,9 +180,11 @@ class Player:
                 del self.explosions[i]
 
     def next(self):
-        intersection = self.intersection_by_plotted(self.vector)
-        k = (abs(self.g)/9.8)
-        print(k)
+        k = self.parent.pane.orien.trace_zoom
+        intersection = self.intersection_by_plotted(self.vector * k)
+        #print(self.parent.pane.orien.trace_zoom)
+        #self.vector *= k
+        #print(k)
         if intersection:
             dummy, path_type = intersection
             at, a, b = dummy
@@ -231,7 +233,7 @@ class Player:
             #print("hit:", hit_type, surface_quarter)
 
             #print("tst", abs(cos), abs(self.vector), 4 * k)
-            if abs(cos) > 0.7 or abs(self.vector) < 4 * k:
+            if abs(cos) > 0.7 or abs(self.vector * k) < 4 * k:
                 #print("slide")
                 # angle is not enough to reflect, so just project it
                 # may opinion: if we'll always reflect a vector, point will "shake"
@@ -243,7 +245,7 @@ class Player:
                         # acceleration
                         #print("acc")
                         self.vector = self.vector.proj_on(surface)
-                        self.vector += self.g.proj_on(surface) * 1.2 *k* self.time_speed
+                        self.vector += self.g.proj_on(surface) * 1.2 * self.time_speed
                     else:
                         # breaking
                         #if self.vector.y > -2:
@@ -258,7 +260,7 @@ class Player:
                 elif path_type == "slow down":
                     self.vector = self.vector.proj_on(surface)
                     self.vector += self.g.proj_on(surface) * self.time_speed
-                    self.vector *= 0.9*k
+                    self.vector *= 0.9
                 else:
                     self.vector = self.vector.proj_on(surface)
                     self.vector += self.g.proj_on(surface) * self.time_speed
@@ -284,11 +286,11 @@ class Player:
                 self.x, self.y = at[0], at[1]
                 self.explosions.append(Explosion(self))
                 before = self.vector
-                self.vector = self.vector.reflect(surface)*0.3*k
+                self.vector = self.vector.reflect(surface)*0.3
                 if path_type == "speed up":
-                    self.vector *= 1.3 * k
+                    self.vector *= 1.3
                 elif path_type == "slow down":
-                    self.vector *= 0.7 * k
+                    self.vector *= 0.7
 
                 after = self.vector*2
                 # normal vector to surface:
@@ -304,7 +306,7 @@ class Player:
                     else:
                         norm = Vector(surface.y, -surface.x)
 
-                norm = norm.norm() * 3 *k
+                norm = norm.norm() * 3 * k
                 self.x, self.y = self.x + norm.x, self.y + norm.y
                 # check if stopped
                 if self.hit_type == "hit_floor" and before.cos(after) < -0.999 and self.vector.x*2 < 0.001:
@@ -314,7 +316,7 @@ class Player:
         else:
             # free fall part
             self.hit_type = ""
-            self.x, self.y = self.x + self.vector.x, self.y + self.vector.y
+            self.x, self.y = self.x + self.vector.x * k, self.y + self.vector.y * k
             self.vector += self.g * self.time_speed  # *  t
 
         self.dict[self.t] = self.x, self.y, self.vector, self.ground, self.norm, self.hit_type, \

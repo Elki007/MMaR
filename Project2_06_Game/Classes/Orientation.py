@@ -62,13 +62,13 @@ class Orientation:
 
     def set_trace_zoom_in(self):
         self.trace_zoom *= (1 + self.zoom_factor)
-        self.g *= (1 + self.zoom_factor)
-        self.norm *= (1 + self.zoom_factor)
+        #self.g *= (1 + self.zoom_factor)
+        #self.norm *= (1 + self.zoom_factor)
 
     def set_trace_zoom_out(self):
         self.trace_zoom /= (1 + self.zoom_factor)
-        self.g /= (1 + self.zoom_factor)
-        self.norm /= (1 + self.zoom_factor)
+        #self.g /= (1 + self.zoom_factor)
+        #self.norm /= (1 + self.zoom_factor)
 
     def set_trace_movement_while_zoom_in(self):
         self.trace_movement = self.point_of_zoom + ((self.trace_movement - self.point_of_zoom) * (1 + self.zoom_factor))
@@ -196,8 +196,9 @@ class Orientation:
         """ calculates zoom (in or out) for a player if there's one """
         if player is not None:
             if zoom_in:
+                print("zoom in")
                 player.x, player.y = self.point_of_zoom + (np.array([player.x, player.y]) - self.point_of_zoom) * (1 + self.zoom_factor)
-                player.vector *= (1 + self.zoom_factor)
+                #player.vector *= (1 + self.zoom_factor)
             else:
                 player.x, player.y = self.point_of_zoom + (np.array([player.x, player.y]) - self.point_of_zoom) / (1 + self.zoom_factor)
-                player.vector /= (1 + self.zoom_factor)
+                #player.vector /= (1 + self.zoom_factor)
