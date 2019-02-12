@@ -17,12 +17,10 @@ class Explosion:
         self.parts = []
 
         for i in range(self.amount):
-            self.smoke.append(Part(parent))
+            self.parts.append(Part(parent))
 
     def paint(self):
         if self.timer > 0:
-            for i in range(self.amount):
-                self.smoke[i].paint()
             for i in range(len(self.parts) - 1, -1, -1):
                 self.parts[i].paint()
 

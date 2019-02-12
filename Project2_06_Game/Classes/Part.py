@@ -24,7 +24,7 @@ class Part:
         self.x_part += self.part_vector[0]
         self.y_part += self.part_vector[1]
         self.part_vector[1] += (self.gravity * self.weight).y
-
+        # TODO: transformation
         self.painter.setPen(
             qg.QPen(self.color, self.explosion_size, qc.Qt.SolidLine))
         self.painter.drawPoint(self.x_part, self.y_part)
