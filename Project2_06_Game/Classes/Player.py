@@ -109,12 +109,17 @@ class Player:
 
         self.painter.setPen(qg.QPen(qc.Qt.red, thickness, qc.Qt.SolidLine))
         self.painter.drawPath(path)
-        self.painter.setPen(qg.QPen(qc.Qt.red, 2*thickness, qc.Qt.SolidLine))
+        head = pos
+        #self.painter.setPen(qg.QPen(qc.Qt.red, 2*thickness, qc.Qt.SolidLine))
         #self.painter.setBrush(qc.Qt.red)
-        self.painter.drawEllipse(qc.QPoint(pos.x,pos.y), scale,scale)
-        self.painter.drawEllipse(qc.QPoint(pos.x,pos.y), scale/2,scale/2)
+        #self.painter.drawEllipse(qc.QPoint(pos.x,pos.y), scale,scale)
+        #self.painter.drawEllipse(qc.QPoint(pos.x,pos.y), scale/2,scale/2)
 
-        v = self.vector.norm()
+        if abs(self.vector) > 1:
+            v = self.vector.norm()
+            #print(abs(self.vector))
+        else:
+            v = self.vector
         pos -= norm * 2 * scale
         self.painter.setPen(qg.QPen(qc.Qt.green,  thickness, qc.Qt.SolidLine))
         pos -= v * 3 * scale
@@ -130,6 +135,11 @@ class Player:
         pos -= v * 3 * scale
         pos_r = pos + norm * random.randint(int(-scale), int(scale))
         self.painter.drawPoint(pos_r.x,pos_r.y)
+
+        self.painter.setPen(qg.QPen(qc.Qt.red, 2 * thickness, qc.Qt.SolidLine))
+        # self.painter.setBrush(qc.Qt.red)
+        self.painter.drawEllipse(qc.QPoint(head.x, head.y), scale, scale)
+        self.painter.drawEllipse(qc.QPoint(head.x, head.y), scale / 2, scale / 2)
 
         #x, y = self.x + (ground.norm()*20).x, self.y + (ground.norm()*20).y
         #path.lineTo(x,y)
@@ -171,6 +181,8 @@ class Player:
 
     def next(self):
         intersection = self.intersection_by_plotted(self.vector)
+        k = (abs(self.g)/9.8)
+        print(k)
         if intersection:
             dummy, path_type = intersection
             at, a, b = dummy
@@ -218,8 +230,8 @@ class Player:
 
             #print("hit:", hit_type, surface_quarter)
 
-            #print("tst", abs(cos), abs(self.vector))
-            if abs(cos) > 0.7 or abs(self.vector)<4:
+            #print("tst", abs(cos), abs(self.vector), 4 * k)
+            if abs(cos) > 0.7 or abs(self.vector) < 4 * k:
                 #print("slide")
                 # angle is not enough to reflect, so just project it
                 # may opinion: if we'll always reflect a vector, point will "shake"
@@ -231,7 +243,7 @@ class Player:
                         # acceleration
                         #print("acc")
                         self.vector = self.vector.proj_on(surface)
-                        self.vector += self.g.proj_on(surface) * 1.2 * self.time_speed
+                        self.vector += self.g.proj_on(surface) * 1.2 *k* self.time_speed
                     else:
                         # breaking
                         #if self.vector.y > -2:
@@ -246,7 +258,7 @@ class Player:
                 elif path_type == "slow down":
                     self.vector = self.vector.proj_on(surface)
                     self.vector += self.g.proj_on(surface) * self.time_speed
-                    self.vector *= 0.9
+                    self.vector *= 0.9*k
                 else:
                     self.vector = self.vector.proj_on(surface)
                     self.vector += self.g.proj_on(surface) * self.time_speed
@@ -263,7 +275,7 @@ class Player:
                         norm = Vector(-surface.y, surface.x)
                     else:
                         norm = Vector(surface.y, -surface.x)
-                norm = norm.norm() * 3
+                norm = norm.norm() * 3 * k
                 self.x, self.y = self.x + norm.x, self.y + norm.y
 
             else:
@@ -272,11 +284,11 @@ class Player:
                 self.x, self.y = at[0], at[1]
                 self.explosions.append(Explosion(self))
                 before = self.vector
-                self.vector = self.vector.reflect(surface)*0.3
+                self.vector = self.vector.reflect(surface)*0.3*k
                 if path_type == "speed up":
-                    self.vector *= 1.3
+                    self.vector *= 1.3 * k
                 elif path_type == "slow down":
-                    self.vector *= 0.7
+                    self.vector *= 0.7 * k
 
                 after = self.vector*2
                 # normal vector to surface:
@@ -292,7 +304,7 @@ class Player:
                     else:
                         norm = Vector(surface.y, -surface.x)
 
-                norm = norm.norm() * 3
+                norm = norm.norm() * 3 *k
                 self.x, self.y = self.x + norm.x, self.y + norm.y
                 # check if stopped
                 if self.hit_type == "hit_floor" and before.cos(after) < -0.999 and self.vector.x*2 < 0.001:
