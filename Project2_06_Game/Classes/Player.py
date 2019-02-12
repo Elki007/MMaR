@@ -561,6 +561,8 @@ class Player:
     def intersection_by_plotted(self, vector):
         amount = len(self.paths.list_of_paths)
         for n in range(amount):
+            if self.paths.list_of_paths[n].path_type == "ignore":
+                return False
             res = self.intersection_with_array(self.paths.list_of_paths[n], vector)
             if res:
                 return res, self.paths.list_of_paths[n].path_type
