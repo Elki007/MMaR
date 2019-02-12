@@ -310,11 +310,10 @@ class Player:
         self.t += +1
 
     def prev(self):
-        # TODO: Doppelte Tranformation fehlt
         if self.t > 0:
             self.t -=1
         self.x, self.y, self.vector,self.ground,self.norm,self.hit_type, trace_movement, trace_zoom = self.dict[self.t]
-
+        # Doppelte Transformation
         player_pos = (np.array([self.x, self.y]) - trace_movement) / trace_zoom
         self.x, self.y = self.parent.pane.orien.calculate_point_to_screen(*player_pos)
 

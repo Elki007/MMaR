@@ -8,6 +8,7 @@ import qtawesome as qta
 import PyQt5.QtWidgets as qw
 import PyQt5.QtCore as qc
 import PyQt5.QtGui as qg
+import PyQt5.QtMultimedia as qm
 
 from Pane import Pane
 from Path import Path
@@ -24,6 +25,18 @@ class GuiWidget(qw.QWidget):
         self.pane.player_created(self.player)  # So pane can track every new Player object (easier this way)
         self.run = True
         self.forward = True
+
+        # MUSIC
+        # needed to install basic codec as well to be able to play mp3 (does work!):
+        #   http://codecguide.com/download_k-lite_codec_pack_basic.htm
+        # Everything music related is in this class and introduced with '# Music'
+        """
+        self.song = qm.QMediaPlaylist()
+        self.url = qc.QUrl.fromLocalFile("test2.mp3")
+        self.song.addMedia(qm.QMediaContent(self.url))
+        self.song_player = qm.QMediaPlayer()
+        self.song_player.setPlaylist(self.song)
+        """
 
         # button: new path
         b_new = qw.QPushButton('New path', self)
@@ -103,6 +116,7 @@ class GuiWidget(qw.QWidget):
         self.cm_type.addItem("normal")
         self.cm_type.addItem("speed up")
         self.cm_type.addItem("slow down")
+        self.cm_type.addItem("ignore")
         self.cm_type.activated.connect(self.on_click_type)
 
         # different styles for buttons/elements in gui
@@ -266,6 +280,11 @@ class GuiWidget(qw.QWidget):
         self.pane.update()
         #self.game_loop()
 
+        # MUSIC
+        """
+        self.song_player.stop()
+        self.song_player.play()
+        """
 
         self.timer_4_game.start()
 
@@ -278,8 +297,8 @@ class GuiWidget(qw.QWidget):
                 self.player.prev()
             #self.pane.update_game()  # test for tracking_player (has to be deactivated then)
 
-            self.pane.update_player()
-            self.pane.plot()    # TODO: Hier abhängig davon machen, ob Tracking aktiviert ist
+            if self.pane.update_player():
+                self.pane.plot()    # TODO: Hier abhängig davon machen, ob Tracking aktiviert ist
             self.pane.update()
             self.timer_4_game.start()
 
@@ -292,9 +311,16 @@ class GuiWidget(qw.QWidget):
             print("resume")
             styling_icon = qta.icon('fa5s.pause', color='black', color_active='orange')
             self.timer_4_game.start()
+
+            # MUSIC
+            #self.song_player.play()
         else:
             print("pause")
             styling_icon = qta.icon('fa5s.play', color='black', color_active='orange')
+
+            # MUSIC
+            #self.song_player.pause()
+
             self.timer_4_game.stop()
         self.b_pause.setIcon(styling_icon)
         #self.game_loop()
@@ -318,8 +344,10 @@ class GuiWidget(qw.QWidget):
         self.forward = not self.forward
         if self.forward:
             styling_icon = qta.icon('fa5s.backward', color='black', color_active='orange')
+
         else:
             styling_icon = qta.icon('fa5s.forward', color='black', color_active='orange')
+
         self.b_back.setIcon(styling_icon)
 
         #self.timer_4_game.start()

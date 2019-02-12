@@ -173,6 +173,8 @@ class Pane(qw.QLabel):
     def update_player(self):
         if self.trackingPlayer and self.player is not None:
             self.orien.move_to_player(self.player, self.paths, self.parent.width(), self.parent.height())
+            return True
+        return False
 
     def update(self):
         """ draws everything user wants to see """
@@ -616,7 +618,8 @@ class Pane(qw.QLabel):
             self.paths.append(Path(path_type=cm_type))
 
     def change_path_style(self, text):
-        self.paths[-1].changed_style(text)
+        if self.paths.active_path is not None:
+            self.paths[self.paths.active_path].changed_style(text)
 
     def save_all_paths(self):
         return self.paths.save_all_paths()
