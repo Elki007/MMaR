@@ -275,6 +275,7 @@ class GuiWidget(qw.QWidget):
         self.player = Player(self, 20, 200, self.pane, self) #self.pane.width()//2
         self.pane.player_created(self.player)  # So pane can track every new Player object (easier this way)
         self.b_show_cv.setChecked(False)
+        self.on_click_show_cv(self.b_show_cv.checkState())
         self.b_game.setText("Restart")
         #self.on_click_show_cv(self.b_show_cv.checkState())
         self.pane.update()
